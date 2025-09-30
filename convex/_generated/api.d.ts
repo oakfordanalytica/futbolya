@@ -14,11 +14,16 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as auth from "../auth.js";
+import type * as entrenadores from "../entrenadores.js";
 import type * as equipos from "../equipos.js";
 import type * as escuelas from "../escuelas.js";
+import type * as gruposEntrenamiento from "../gruposEntrenamiento.js";
 import type * as http from "../http.js";
+import type * as jugadores from "../jugadores.js";
 import type * as ligas from "../ligas.js";
+import type * as partidos from "../partidos.js";
 import type * as seed from "../seed.js";
+import type * as sesionesYAsistencias from "../sesionesYAsistencias.js";
 import type * as torneos from "../torneos.js";
 import type * as users from "../users.js";
 
@@ -32,11 +37,16 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  entrenadores: typeof entrenadores;
   equipos: typeof equipos;
   escuelas: typeof escuelas;
+  gruposEntrenamiento: typeof gruposEntrenamiento;
   http: typeof http;
+  jugadores: typeof jugadores;
   ligas: typeof ligas;
+  partidos: typeof partidos;
   seed: typeof seed;
+  sesionesYAsistencias: typeof sesionesYAsistencias;
   torneos: typeof torneos;
   users: typeof users;
 }>;
