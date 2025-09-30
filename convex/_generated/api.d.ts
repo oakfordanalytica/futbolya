@@ -14,11 +14,12 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as auth from "../auth.js";
-import type * as campus from "../campus.js";
-import type * as helpers from "../helpers.js";
-import type * as queue from "../queue.js";
-import type * as students from "../students.js";
-import type * as types from "../types.js";
+import type * as equipos from "../equipos.js";
+import type * as escuelas from "../escuelas.js";
+import type * as http from "../http.js";
+import type * as ligas from "../ligas.js";
+import type * as seed from "../seed.js";
+import type * as torneos from "../torneos.js";
 import type * as users from "../users.js";
 
 /**
@@ -31,11 +32,12 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  campus: typeof campus;
-  helpers: typeof helpers;
-  queue: typeof queue;
-  students: typeof students;
-  types: typeof types;
+  equipos: typeof equipos;
+  escuelas: typeof escuelas;
+  http: typeof http;
+  ligas: typeof ligas;
+  seed: typeof seed;
+  torneos: typeof torneos;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

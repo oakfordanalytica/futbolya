@@ -1,35 +1,22 @@
 // convex/auth.ts
-
-import { mutation, query } from "./_generated/server";
-
-/**
- * Get current user from Clerk identity
- * Simple authentication check without role management
- */
-export const getCurrentUser = query({
-    args: {},
-    handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
-
-        return {
-            id: identity.subject,
-            email: identity.email || identity.emailAddress || "",
-            firstName: identity.firstName || identity.givenName || "",
-            lastName: identity.lastName || identity.familyName || "",
-            imageUrl: identity.imageUrl || identity.pictureUrl || "",
-            username: identity.username || ""
-        };
-    }
-});
+import { query } from "./_generated/server";
+import { FutbolYaRole } from "../lib/role-utils";
 
 /**
- * Check if current user is authenticated
+ * Gets the currently authenticated user's identity from Clerk, including their role.
  */
-export const isAuthenticated = query({
-    args: {},
-    handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        return identity !== null;
+export const getMe = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
     }
+    const role = (identity.publicMetadata as any)?.futbolYaRole as FutbolYaRole;
+
+    return {
+        clerkId: identity.subject,
+        email: identity.email,
+        role: role,
+    };
+  },
 });
