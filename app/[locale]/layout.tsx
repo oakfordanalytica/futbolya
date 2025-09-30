@@ -23,8 +23,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "DismissalApp",
-    description: "An innovative app that streamlines student dismissal by managing vehicle pickups efficiently and safely, ensuring a smooth process for schools and parents.",
+    title: "FutbolYa",
+    description: "An innovative app that streamlines student FutbolYa by managing vehicle pickups efficiently and safely, ensuring a smooth process for schools and parents.",
     icons: {
         icon: "/favicon.ico",
     },

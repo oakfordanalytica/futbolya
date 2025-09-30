@@ -6,7 +6,8 @@ import { internalMutation } from "./_generated/server";
 export const createUser = internalMutation({
   args: {
     clerkId: v.string(),
-    email: v.string(),
+    email: v.optional(v.string()),
+    userName: v.string(),
     firstName: v.string(),
     lastName: v.string(),
   },
@@ -35,24 +36,25 @@ export const createUser = internalMutation({
       clerkId: args.clerkId,
       email: args.email,
       personaId: personaId,
+      userName: args.userName,
     });
 
-    // Set the user's role in Clerk's metadata
-    // This is an API call from our backend to Clerk's backend
-    const clerkAPIKey = process.env.CLERK_SECRET_KEY;
-    if (clerkAPIKey) {
-        await fetch(`https://api.clerk.com/v1/users/${args.clerkId}/metadata`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${clerkAPIKey}`
-            },
-            body: JSON.stringify({
-                public_metadata: {
-                    futbolYaRole: "jugador" // Default role
-                }
-            })
-        });
-    }
+    // // Set the user's role in Clerk's metadata
+    // // This is an API call from our backend to Clerk's backend
+    // const clerkAPIKey = process.env.CLERK_SECRET_KEY;
+    // if (clerkAPIKey) {
+    //     await fetch(`https://api.clerk.com/v1/users/${args.clerkId}/metadata`, {
+    //         method: "PATCH",
+    //         headers: {
+    //             "Content-Type": "application/json",
+    //             "Authorization": `Bearer ${clerkAPIKey}`
+    //         },
+    //         body: JSON.stringify({
+    //             public_metadata: {
+    //                 futbolYaRole: "superadmin" // Default role
+    //             }
+    //         })
+    //     });
+    // }
   },
 });

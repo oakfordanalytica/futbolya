@@ -18,13 +18,38 @@ http.route({
     const payload = await request.json();
     switch (payload.type) {
       case "user.created":
-        // This mutation will create the user, persona, and assign a default role.
+        const emailAddress = payload.data.email_addresses[0]?.email_address;
+        const username = payload.data.username;
+
+        // Create user in Convex
         await ctx.runMutation(internal.users.createUser, {
           clerkId: payload.data.id,
-          email: payload.data.email_addresses[0]?.email_address,
+          email: emailAddress ?? "",
+          userName: username,
           firstName: payload.data.first_name,
           lastName: payload.data.last_name,
         });
+
+        // Also set an initial "Pending" role in Clerk
+        const clerkAPIKey = process.env.CLERK_SECRET_KEY;
+        if (clerkAPIKey) {
+          try {
+            await fetch(`https://api.clerk.com/v1/users/${payload.data.id}/metadata`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${clerkAPIKey}`,
+              },
+              body: JSON.stringify({
+                public_metadata: {
+                  futbolYaRole: "Pending"
+                }
+              }),
+            });
+          } catch (e) {
+            console.error("Failed to set initial role:", e);
+          }
+        }
         break;
       // We can handle other events like user.updated or user.deleted here
     }

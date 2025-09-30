@@ -54,7 +54,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Custom Dismissal Colors */
+  /* Custom FutbolYa Colors */
   --color-fuzzy-wuzzy: oklch(0.6387 0.1418 21.88);
   --color-deep-koamaru: oklch(0.37 0.0568 265.16);
   --color-rebecca-purple: oklch(0.4461 0.1378 298.1);

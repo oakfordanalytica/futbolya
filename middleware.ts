@@ -38,6 +38,8 @@ const DEFAULT_REDIRECTS: Record<FutbolYaRole, string> = {
   jugador: '/player/dashboard',
 };
 
+const DEBUG = process.env.DEBUG_ROLE_CHECKING === 'true';
+
 // ============================================================
 // MIDDLEWARE LOGIC
 // ============================================================
@@ -52,6 +54,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   const { userId, sessionClaims } = await auth();
+
+  if (DEBUG) console.log('Auth Claims:', sessionClaims);
 
   // If the user is not authenticated, redirect them to the sign-in page
   if (!userId) {
