@@ -36,6 +36,7 @@ const DEFAULT_REDIRECTS: Record<FutbolYaRole, string> = {
   entrenador: '/coach/dashboard',
   arbitro: '/referee/matches',
   jugador: '/player/dashboard',
+  pending: '/pending-role',
 };
 
 const DEBUG = process.env.DEBUG_ROLE_CHECKING === 'true';

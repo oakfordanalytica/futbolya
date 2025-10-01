@@ -42,7 +42,7 @@ http.route({
               },
               body: JSON.stringify({
                 public_metadata: {
-                  futbolYaRole: "Pending"
+                  futbolYaRole: "pending"
                 }
               }),
             });

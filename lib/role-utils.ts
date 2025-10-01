@@ -1,7 +1,7 @@
 // lib/role-utils.ts
 
 // Define the roles for the FutbolYa application
-export type FutbolYaRole = 'superadmin' | 'admin' | 'entrenador' | 'arbitro' | 'jugador';
+export type FutbolYaRole = 'superadmin' | 'admin' | 'entrenador' | 'arbitro' | 'jugador' | 'pending';
 
 /**
  * Extract role from any Clerk metadata object

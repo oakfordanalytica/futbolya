@@ -52,7 +52,7 @@ function UserRow({ user, onRoleChange }: { user: any, onRoleChange: () => void }
             <SelectValue placeholder="Assign Role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Pending" disabled>Pending</SelectItem>
+            <SelectItem value="pending" disabled>Pending</SelectItem>
             <SelectItem value="jugador">Jugador</SelectItem>
             <SelectItem value="entrenador">Entrenador</SelectItem>
             <SelectItem value="arbitro">Arbitro</SelectItem>
