@@ -241,4 +241,15 @@ export default defineSchema({
     .index("by_sesion", ["sesionEntrenamientoId"])
     .index("by_jugador_sesion", ["jugadorId", "sesionEntrenamientoId"]),
 
+  jugadoresPorPartido: defineTable({
+    partidoId: v.id("partidos"),
+    equipoId: v.id("equipos"),
+    jugadorId: v.id("jugadores"),
+    rolEnPartido: v.union(v.literal("titular"), v.literal("suplente")),
+    numeroCamisetaPartido: v.optional(v.number()),
+  })
+    // Indexes to efficiently query lineups for a specific match/team
+    .index("by_partido_equipo", ["partidoId", "equipoId"])
+    .index("by_partido_jugador", ["partidoId", "jugadorId"]),
+
 });

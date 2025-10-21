@@ -100,7 +100,7 @@ export const getWithPlayers = query({
   args: { id: v.id("equipos") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];;
+    if (!identity) return null;
 
     // 1. Fetch the team itself
     const team = await ctx.db.get(args.id);

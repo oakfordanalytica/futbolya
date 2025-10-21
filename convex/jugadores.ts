@@ -83,7 +83,7 @@ export const listWithPersonas = query({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
-             throw new Error("Authentication required."); // Or return [] if preferred
+             return []; // Or return [] if preferred
         }
         // Basic auth check done, proceed. Add role checks if necessary.
 

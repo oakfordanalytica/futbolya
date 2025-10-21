@@ -27,8 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // For team selection
+import { AddPlayerToTeam } from "@/components/add-player-to-team";
 
 
 function AddTeamForm({ setOpen }: { setOpen: (open: boolean) => void }) {
@@ -152,65 +154,139 @@ function AddTeamForm({ setOpen }: { setOpen: (open: boolean) => void }) {
 
 export default function ManageTeamsPage() {
   const teams = useQuery(api.equipos.list, {});
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  // --- NEW STATE: Track selected team for roster management ---
+  const [selectedTeamId, setSelectedTeamId] = useState<Id<"equipos"> | null>(null);
+  const selectedTeamRosterData = useQuery(
+    api.equipos.getWithPlayers,
+    selectedTeamId ? { id: selectedTeamId } : "skip" // Skip query if no team is selected
+  );
 
-  // TODO: Add filtering by school later
+  const selectedTeam = teams?.find(t => t._id === selectedTeamId);
+
+  // --- Function to refetch team data (passed as callback) ---
+  // Note: Convex useQuery usually handles refetching automatically after mutations.
+  // This is more for explicitly triggering UI updates if needed, might not be necessary.
+  const handlePlayerAdded = () => {
+    console.log("Player added, Convex should update roster automatically.");
+    // You could potentially force a refetch if automatic updates seem delayed,
+    // but it's often better to rely on Convex's reactivity.
+  };
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto p-4 md:p-8 space-y-6">
+      {/* --- Section: Add New Team --- */}
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Manage Teams</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
           <DialogTrigger asChild>
             <Button>Add New Team</Button>
           </DialogTrigger>
-          <DialogContent>
+          {/* ... DialogContent for AddTeamForm ... */}
+           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create a New Team</DialogTitle>
               <DialogDescription>
                 Assign teams to schools and age categories.
               </DialogDescription>
             </DialogHeader>
-            <AddTeamForm setOpen={setIsDialogOpen} />
+            <AddTeamForm setOpen={setIsTeamDialogOpen} />
           </DialogContent>
         </Dialog>
       </div>
 
-       <Card>
-          <CardHeader>
-              <CardTitle>Existing Teams</CardTitle>
-              {/* TODO: Add School Filter Dropdown */}
-          </CardHeader>
-          <CardContent>
-              {teams === undefined && (
-                 <div className="space-y-2">
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-2/3" />
-                 </div>
-              )}
+      {/* --- Section: Select Team & Manage Roster --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Team List/Selector */}
+        <Card className="lg:col-span-1">
+            <CardHeader>
+                <CardTitle>Select Team</CardTitle>
+                <CardDescription>Choose a team to manage its roster.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {teams === undefined && (
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                    </div>
+                )}
+                {teams && teams.length === 0 && (
+                    <p className="text-muted-foreground">No teams created yet.</p>
+                )}
+                {teams && teams.length > 0 && (
+                    <RadioGroup
+                        value={selectedTeamId ?? ""}
+                        onValueChange={(value) => setSelectedTeamId(value as Id<"equipos">)}
+                        className="space-y-2"
+                    >
+                       {teams.map((team) => (
+                         <div key={team._id} className="flex items-center space-x-2">
+                            <RadioGroupItem value={team._id} id={`team-${team._id}`} />
+                            <Label htmlFor={`team-${team._id}`} className="cursor-pointer">{team.nombre}</Label>
+                         </div>
+                       ))}
+                    </RadioGroup>
+                )}
+            </CardContent>
+        </Card>
 
-              {teams && teams.length === 0 && (
-                <p className="text-muted-foreground">No teams found. Add one to get started!</p>
-              )}
+        {/* Add Player Form (Conditional) */}
+        <div className="lg:col-span-2">
+            {selectedTeamId ? (
+                <AddPlayerToTeam
+                    key={selectedTeamId} // Add key to force re-render/refetch on team change
+                    equipoId={selectedTeamId}
+                    teamName={selectedTeam?.nombre}
+                    onPlayerAdded={handlePlayerAdded}
+                 />
+            ) : (
+                <Card className="flex items-center justify-center h-40 border-dashed">
+                    <p className="text-muted-foreground">Select a team to add players</p>
+                </Card>
+            )}
 
-              {teams && teams.length > 0 && (
-                <ul className="divide-y">
-                  {teams.map((team) => (
-                    <li key={team._id} className="py-3 flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{team.nombre}</p>
-                        {/* TODO: Fetch and display School Name */}
-                        {/* <p className="text-sm text-muted-foreground">School Name Here</p> */}
-                      </div>
-                       {/* TODO: Fetch and display Category Name */}
-                      {/* <span className="text-sm text-muted-foreground">Category Name</span> */}
-                    </li>
-                  ))}
-                </ul>
-              )}
-          </CardContent>
-      </Card>
+            {/* --- Display Current Roster --- */}
+            {selectedTeamId && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Current Roster for {selectedTeam?.nombre || 'Selected Team'}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedTeamRosterData === undefined && (
+                    <div className="space-y-2"> {/* Skeleton Loader */}
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-6 w-1/2" />
+                    </div>
+                  )}
+                  {selectedTeamRosterData === null && ( // Team query returned null (shouldn't happen if selected from list)
+                      <p className="text-destructive">Error loading roster.</p>
+                  )}
+                  {selectedTeamRosterData && selectedTeamRosterData.players && selectedTeamRosterData.players.length === 0 && (
+                    <p className="text-muted-foreground">No players currently on this roster.</p>
+                  )}
+                  {selectedTeamRosterData && selectedTeamRosterData.players && selectedTeamRosterData.players.length > 0 && (
+                    <ul className="divide-y">
+                      {selectedTeamRosterData.players.map((player) => (
+                        player && ( // Add check for null player just in case filter(Boolean) wasn't enough previously
+                          <li key={player._id} className="py-2 flex justify-between items-center">
+                            <span>
+                                {player.persona?.nombrePersona} {player.persona?.apellidoPersona}
+                            </span>
+                            {/* TODO: Display jersey number from jugadoresPorEquipo if needed */}
+                            {/* We don't have jersey # directly here, need jugadoresPorEquipo */}
+                            {/* <span className="text-sm text-muted-foreground">#{player.numeroCamiseta}</span> */}
+                            {/* TODO: Add a Remove Player button */}
+                          </li>
+                        )
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+        </div>
+      </div>
     </div>
   );
 }

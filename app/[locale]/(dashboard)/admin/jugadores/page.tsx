@@ -40,6 +40,10 @@ function AddPlayerForm({ setOpen }: { setOpen: (open: boolean) => void }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | undefined>();
+  const [dropdown, setDropdown] =
+    useState<React.ComponentProps<typeof Calendar>["captionLayout"]>(
+      "dropdown"
+    )
   const [docNumber, setDocNumber] = useState("");
   const [selectedDocTypeId, setSelectedDocTypeId] = useState<Id<"tiposDocumento"> | "">("");
   const [selectedSchoolId, setSelectedSchoolId] = useState<Id<"escuelas"> | "">("");
@@ -140,8 +144,35 @@ function AddPlayerForm({ setOpen }: { setOpen: (open: boolean) => void }) {
                         mode="single"
                         selected={birthDate}
                         onSelect={setBirthDate}
+                        captionLayout={dropdown}
                         initialFocus
                     />
+                    {/* <div className="flex flex-col gap-3">
+                      <Label htmlFor="dropdown" className="px-1">
+                        Dropdown
+                      </Label>
+                      <Select
+                        value={dropdown}
+                        onValueChange={(value) =>
+                          setDropdown(
+                            value as React.ComponentProps<typeof Calendar>["captionLayout"]
+                          )
+                        }
+                      >
+                        <SelectTrigger
+                          id="dropdown"
+                          size="sm"
+                          className="bg-background w-full"
+                        >
+                          <SelectValue placeholder="Dropdown" />
+                        </SelectTrigger>
+                        <SelectContent align="center">
+                          <SelectItem value="dropdown">Month and Year</SelectItem>
+                          <SelectItem value="dropdown-months">Month Only</SelectItem>
+                          <SelectItem value="dropdown-years">Year Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div> */}
                 </PopoverContent>
             </Popover>
           </div>

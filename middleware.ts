@@ -73,46 +73,47 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // Handle pending/no role
   if (!userRole || userRole === 'pending') {
-      if (pathname.includes('/pending-role')) {
-          return intlMiddleware(req);
-      }
-      return NextResponse.redirect(new URL(`/${locale}/pending-role`, req.url));
+    if (pathname.includes('/pending-role')) {
+      return intlMiddleware(req);
+    }
+    return NextResponse.redirect(new URL(`/${locale}/pending-role`, req.url));
+  }
+
+  if (isAdminRoute(req) && !isAdminOrSuperAdmin(userRole)) { // Using helper
+    console.log(`Redirecting non-admin user from admin route. Role: ${userRole}`);
+    const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
+    const url = new URL(`/${locale}${redirectPath}`, req.url);
+    return NextResponse.redirect(url);
   }
 
   // Check coach routes
   if (isCoachRoute(req) && userRole !== 'entrenador') {
-       console.log(`Redirecting non-coach user from coach route. Role: ${userRole}`);
-       const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
-       const url = new URL(`/${locale}${redirectPath}`, req.url);
-      return NextResponse.redirect(url);
+    console.log(`Redirecting non-coach user from coach route. Role: ${userRole}`);
+    const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
+    const url = new URL(`/${locale}${redirectPath}`, req.url);
+    return NextResponse.redirect(url);
   }
 
     // Check referee routes
   if (isRefereeRoute(req) && userRole !== 'arbitro') {
-      console.log(`Redirecting non-referee user from referee route. Role: ${userRole}`);
-      const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
-      const url = new URL(`/${locale}${redirectPath}`, req.url);
-      return NextResponse.redirect(url);
+    console.log(`Redirecting non-referee user from referee route. Role: ${userRole}`);
+    const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
+    const url = new URL(`/${locale}${redirectPath}`, req.url);
+    return NextResponse.redirect(url);
   }
 
-  if (isAdminRoute(req) && !isAdminOrSuperAdmin(userRole)) { // Using helper
-       console.log(`Redirecting non-admin user from admin route. Role: ${userRole}`);
-       const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
-       const url = new URL(`/${locale}${redirectPath}`, req.url);
-       return NextResponse.redirect(url);
-   }
-
   // --- Redirect from generic dashboard ---
-   const isGenericDashboard = pathname === `/${locale}` || pathname === `/${locale}/`; // Adjust if needed
-   if (isGenericDashboard && userRole && userRole in DEFAULT_REDIRECTS) {
-        const specificRedirect = DEFAULT_REDIRECTS[userRole];
-        // Only redirect if there's a specific page AND it's not the admin root (to avoid loops)
-        if (specificRedirect && specificRedirect !== '/admin') {
-             console.log(`Redirecting user with role ${userRole} from generic dashboard to ${specificRedirect}`);
-            const url = new URL(`/${locale}${specificRedirect}`, req.url);
-            return NextResponse.redirect(url);
-        }
-   }
+  const isGenericDashboard = pathname === `/${locale}` || pathname === `/${locale}/`; // Or check against your actual generic dashboard path if different
+
+  // Check if the user is on the generic dashboard and has a role with a specific redirect defined.
+  if (isGenericDashboard && userRole && DEFAULT_REDIRECTS[userRole]) {
+    const specificRedirect = DEFAULT_REDIRECTS[userRole];
+
+    // Perform the redirect to the role-specific page
+    console.log(`User on generic dashboard with role ${userRole}. Redirecting to ${specificRedirect}`);
+    const url = new URL(`/${locale}${specificRedirect}`, req.url);
+    return NextResponse.redirect(url);
+  }
 
 
   return intlMiddleware(req);

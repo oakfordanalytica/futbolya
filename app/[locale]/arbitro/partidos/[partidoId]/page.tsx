@@ -30,8 +30,12 @@ import { /*FutbolIcon, PersonStandingIcon,*/ ClockIcon } from 'lucide-react'; //
 // Type for player selection (adjust based on actual data structure if needed)
 type Player = {
   _id: Id<"jugadores">;
-  persona: { nombrePersona: string; apellidoPersona: string; } | null;
-  // Add numeroCamiseta if available directly or fetched separately
+  persona: {
+      _id: Id<"personas">;
+      nombrePersona: string;
+      apellidoPersona: string;
+  } | null;
+  // Add numeroCamiseta from jugadoresPorEquipo if needed later
 };
 
 export default function RefereeMatchPage() {
@@ -42,6 +46,17 @@ export default function RefereeMatchPage() {
   const matchData = useQuery(api.partidos.getWithEvents, { id: partidoId });
   const updateScore = useMutation(api.partidos.updateScore);
   const addEvent = useMutation(api.partidos.addEvent);
+  const localTeamId = matchData?.equipoLocalId;
+  const visitorTeamId = matchData?.equipoVisitanteId;
+
+  const localTeamRosterData = useQuery(
+      api.equipos.getWithPlayers,
+      localTeamId ? { id: localTeamId } : "skip"
+  );
+  const visitorTeamRosterData = useQuery(
+      api.equipos.getWithPlayers,
+      visitorTeamId ? { id: visitorTeamId } : "skip"
+  );
 
   // --- Component State ---
   const [minute, setMinute] = useState<number | string>("");
@@ -53,8 +68,8 @@ export default function RefereeMatchPage() {
   const [error, setError] = useState<string | null>(null);
 
   // --- Loading and Error Handling ---
-  if (matchData === undefined) {
-    return <RefereeMatchPageSkeleton />; // Show skeleton loader
+  if (matchData === undefined || localTeamRosterData === undefined || visitorTeamRosterData === undefined) {
+    return <RefereeMatchPageSkeleton />;
   }
 
   if (matchData === null) {
@@ -149,10 +164,16 @@ export default function RefereeMatchPage() {
   // --- Render Logic ---
   const { equipoLocal, equipoVisitante, golesLocal, golesVisitante, events } = matchData;
 
-  // TODO: Need to fetch player lists for selection dialog
-  // This might require a separate query or enhancing getWithEvents
-  const localPlayers: Player[] = []; // Placeholder - Fetch actual players
-  const visitorPlayers: Player[] = []; // Placeholder - Fetch actual players
+  const localPlayers: Player[] = 
+    localTeamRosterData && localTeamRosterData !== null && 'players' in localTeamRosterData
+      ? (localTeamRosterData.players?.filter(Boolean) as Player[]) || []
+      : [];
+  
+  const visitorPlayers: Player[] = 
+    visitorTeamRosterData && visitorTeamRosterData !== null && 'players' in visitorTeamRosterData
+      ? (visitorTeamRosterData.players?.filter(Boolean) as Player[]) || []
+      : [];
+
   const playersForDialog = selectedTeamForEvent === 'local' ? localPlayers : visitorPlayers;
 
 
@@ -247,16 +268,22 @@ export default function RefereeMatchPage() {
                   variant={selectedPlayer?._id === player._id ? "default" : "outline"}
                   onClick={() => setSelectedPlayer(player)}
                   className="w-full justify-start"
+                  disabled={!player || !player.persona}
                 >
-                  {/* Add Number if available */}
                   {player.persona?.nombrePersona} {player.persona?.apellidoPersona}
                 </Button>
               ))
             ) : (
-              <p className="text-muted-foreground">No players loaded for this team.</p>
+              <p className="text-muted-foreground text-center py-4">
+                {
+                    selectedTeamForEvent === 'local' && localTeamRosterData === null ? "Local team data not found." :
+                    selectedTeamForEvent === 'visitante' && visitorTeamRosterData === null ? "Visitor team data not found." :
+                    "No players loaded for this team's roster."
+                }
+              </p>
             )}
           </div>
-          <DialogFooter>
+            <DialogFooter>
             <DialogClose asChild>
                 <Button variant="outline" disabled={loading}>Cancel</Button>
             </DialogClose>
