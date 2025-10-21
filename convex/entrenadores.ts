@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { FutbolYaRole } from "../lib/role-utils";
+import { extractFutbolYaRole, FutbolYaRole } from "../lib/role-utils";
 
 /**
  * Creates a new coach (entrenador).
@@ -27,8 +27,8 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Authentication required.");
 
-    const userRole = (identity.publicMetadata as any)?.futbolYaRole as FutbolYaRole;
-    if (!["admin", "superadmin"].includes(userRole)) {
+    const userRole = extractFutbolYaRole(identity);
+    if (userRole && !["admin", "superadmin"].includes(userRole)) {
       throw new Error("You do not have permission to create a coach.");
     }
 

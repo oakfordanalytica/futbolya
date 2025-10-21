@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { FutbolYaRole } from "../lib/role-utils";
+import { extractFutbolYaRole, isAdminOrSuperAdmin } from "../lib/role-utils"; // Adjust path if needed
 
 // =================================================================
 // MUTATIONS (Write Operations)
@@ -21,24 +21,25 @@ export const create = mutation({
     email: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Authentication & Authorization
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      return [];
+      throw new Error("Authentication required."); // Changed from return [] to throw error consistently
     }
 
-    const userRole = identity.futbolYaRole as FutbolYaRole;
+    const userRole = extractFutbolYaRole(identity);
     if (userRole !== 'admin' && userRole !== 'superadmin') {
         throw new Error("You do not have permission to create a school.");
     }
 
-    // Input validation
-    if (!args.nombreEscuela.trim()) {
-        throw new Error("School name cannot be empty.");
+    if (!isAdminOrSuperAdmin(userRole)) {
+        console.error(`Permission denied for user ${identity.subject}. Role found: ${userRole}`);
+        throw new Error(`You do not have permission to create a school. Required: admin/superadmin, Found: ${userRole ?? 'none'}`);
     }
 
-    // Create the school
-    const schoolId = await ctx.db.insert("escuelas", {
+    if (!args.nombreEscuela.trim()) {
+      throw new Error("School name cannot be empty.");
+    }
+     const schoolId = await ctx.db.insert("escuelas", {
       nombreEscuela: args.nombreEscuela,
       nit: args.nit,
       direccion: args.direccion,

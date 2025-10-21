@@ -89,3 +89,32 @@ export const getWithEvents = query({
         return { ...partido, events, equipoLocal, equipoVisitante };
     }
 });
+
+/**
+ * Lists all scheduled matches.
+ * Consider adding filters and pagination later.
+ */
+export const listAll = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+             throw new Error("Authentication required."); // Or return []
+        }
+        // TODO: Add role checks if needed (e.g., only admins see all matches?)
+
+        const partidos = await ctx.db.query("partidos")
+            .order("desc") // Sort by creation time or match date
+            // .index("by_fecha") // If you add an index on 'fecha'
+            .collect();
+
+        // Optional: Fetch team names here for a richer list if needed immediately
+        // const partidosWithTeams = await Promise.all(partidos.map(async (p) => {
+        //     const local = await ctx.db.get(p.equipoLocalId);
+        //     const visitor = await ctx.db.get(p.equipoVisitanteId);
+        //     return {...p, localName: local?.nombre, visitorName: visitor?.nombre };
+        // }));
+        // return partidosWithTeams;
+
+        return partidos; // Return basic list for now
+    }
+});

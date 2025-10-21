@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { FutbolYaRole } from "../lib/role-utils";
+import { extractFutbolYaRole } from "../lib/role-utils";
 
 /**
  * Creates a new league.
@@ -16,9 +16,9 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Authentication required.");
+    if (!identity) return [];
 
-    const userRole = (identity.publicMetadata as any)?.futbolYaRole as FutbolYaRole;
+    const userRole = extractFutbolYaRole(identity);
     if (userRole !== 'admin' && userRole !== 'superadmin') {
       throw new Error("You do not have permission to create a league.");
     }
@@ -40,7 +40,7 @@ export const create = mutation({
 export const list = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Authentication required.");
+    if (!identity) return [];
 
     return await ctx.db.query("ligas").order("desc").collect();
   },

@@ -37,7 +37,7 @@ export const setUserRole = action({
     if (!identity) throw new Error("Authentication required.");
 
     // Use the flattened role structure that's working
-    const userRole = identity.futbolYaRole as FutbolYaRole;
+    const userRole = (identity.publicMetadata as any)?.futbolYaRole as FutbolYaRole;
     
     console.log("User attempting to assign role:", userRole);
     

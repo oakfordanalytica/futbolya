@@ -1,38 +1,60 @@
 // lib/role-utils.ts
+import type { UserIdentity } from "convex/server";
 
-// Define the roles for the FutbolYa application
 export type FutbolYaRole = 'superadmin' | 'admin' | 'entrenador' | 'arbitro' | 'jugador' | 'pending';
 
-/**
- * Extract role from any Clerk metadata object
- */
-export function extractRoleFromMetadata(metadata: {
-    publicMetadata?: { dismissalRole?: string; role?: string; futbolYaRole?: string };
-    privateMetadata?: { dismissalRole?: string; role?: string; futbolYaRole?: string };
-    metadata?: { dismissalRole?: string; role?: string; futbolYaRole?: string };
-    dismissalRole?: string;
-    role?: string;
-    futbolYaRole?: string;
-}): FutbolYaRole {
-    const publicMeta = metadata.publicMetadata || metadata;
-    const privateMeta = metadata.privateMetadata;
-    const meta = metadata.metadata;
+// Define a type for the relevant part of sessionClaims, allowing both cases
+type ClaimsWithPublicMetadata = {
+    publicMetadata?: { // camelCase
+        futbolYaRole?: string;
+        [key: string]: any;
+    };
+    public_metadata?: { // snake_case
+        futbolYaRole?: string;
+        [key: string]: any;
+    };
+    [key: string]: any; // Allow other top-level claims
+} | null | undefined;
 
-    // Priority order for role extraction - Add futbolYaRole to the priority list
-    const role = publicMeta?.futbolYaRole || 
-        publicMeta?.dismissalRole ||
-        publicMeta?.role ||
-        privateMeta?.futbolYaRole ||
-        privateMeta?.dismissalRole ||
-        privateMeta?.role ||
-        meta?.futbolYaRole ||
-        meta?.dismissalRole ||
-        meta?.role;
 
-    return (role as FutbolYaRole) || undefined;
+export function extractFutbolYaRole(
+    identityOrClaims: UserIdentity | ClaimsWithPublicMetadata
+): FutbolYaRole | undefined {
+    if (!identityOrClaims) {
+        return undefined;
+    }
+
+    let role: string | undefined | null = undefined;
+
+    // --- CHECK BOTH CASES ---
+    // Prefer public_metadata if available (matches JWT template screenshot)
+    const metaData = (identityOrClaims as any).public_metadata || (identityOrClaims as any).publicMetadata;
+
+    if (metaData && typeof metaData === 'object') {
+        role = metaData.futbolYaRole;
+    }
+    // --- END CHECK ---
+
+
+    // Fallback check for potentially flattened property (less likely but safe)
+    if (!role && 'futbolYaRole' in identityOrClaims) {
+         role = (identityOrClaims as any).futbolYaRole;
+    }
+
+    // Validate against known roles before returning
+    const validRoles: FutbolYaRole[] = ['superadmin', 'admin', 'entrenador', 'arbitro', 'jugador', 'pending'];
+    if (role && validRoles.includes(role as FutbolYaRole)) {
+        return role as FutbolYaRole;
+    }
+
+    console.warn("Could not extract valid FutbolYaRole. Found:", role, "Input Object:", identityOrClaims); // Added warning
+    return undefined; // Default if no valid role found
 }
 
-// You can add more role-based check functions here as needed
-export function isSuperAdmin(userRole: FutbolYaRole | null): boolean {
+export function isSuperAdmin(userRole?: FutbolYaRole): boolean {
     return userRole === 'superadmin';
+}
+
+export function isAdminOrSuperAdmin(userRole?: FutbolYaRole): boolean {
+    return userRole === 'admin' || userRole === 'superadmin';
 }

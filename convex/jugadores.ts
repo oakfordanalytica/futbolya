@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { FutbolYaRole } from "../lib/role-utils";
+import { extractFutbolYaRole, FutbolYaRole } from "../lib/role-utils";
 
 /**
  * Creates a new player.
@@ -29,8 +29,8 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Authentication required.");
 
-    const userRole = (identity.publicMetadata as any)?.futbolYaRole as FutbolYaRole;
-    if (!["admin", "superadmin", "entrenador"].includes(userRole)) {
+    const userRole = extractFutbolYaRole(identity);
+    if (userRole && !["admin", "superadmin", "entrenador"].includes(userRole)) {
       throw new Error("You do not have permission to create a player.");
     }
 
@@ -72,5 +72,38 @@ export const getWithPersona = query({
         if (!persona) return null; // Should not happen in consistent data
 
         return { ...jugador, persona };
+    }
+});
+
+/**
+ * Lists all players with their persona details.
+ * Add filtering/pagination in a real app.
+ */
+export const listWithPersonas = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+             throw new Error("Authentication required."); // Or return [] if preferred
+        }
+        // Basic auth check done, proceed. Add role checks if necessary.
+
+        const jugadores = await ctx.db.query("jugadores").order("desc").collect();
+
+        // Join with persona data
+        const playersWithDetails = await Promise.all(
+            jugadores.map(async (jugador) => {
+                const persona = await ctx.db.get(jugador.personaId);
+                // Optionally fetch school/position names here too if needed for the list view
+                // const school = await ctx.db.get(jugador.escuelaId);
+                // const position = await ctx.db.get(jugador.posicionId);
+                return {
+                    ...jugador,
+                    persona: persona ?? null, // Handle potential null case
+                    // schoolName: school?.nombreEscuela,
+                    // positionName: position?.nombre
+                 };
+            })
+        );
+        return playersWithDetails;
     }
 });

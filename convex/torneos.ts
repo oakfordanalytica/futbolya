@@ -2,7 +2,8 @@
 
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { FutbolYaRole } from "../lib/role-utils";
+import { extractFutbolYaRole, FutbolYaRole } from "../lib/role-utils";
+import { Id } from "./_generated/dataModel";
 
 /**
  * Creates a new tournament.
@@ -22,7 +23,7 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Authentication required.");
 
-    const userRole = (identity.publicMetadata as any)?.futbolYaRole as FutbolYaRole;
+    const userRole = extractFutbolYaRole(identity);
     if (userRole !== 'admin' && userRole !== 'superadmin') {
       throw new Error("You do not have permission to create a tournament.");
     }
@@ -105,5 +106,37 @@ export const getFullTournament = query({
         );
 
         return { ...tournament, phases: phasesWithGroups };
+    }
+});
+
+/**
+ * Gets the first group associated with the first phase of a tournament.
+ * (Suitable for the simplified POC structure)
+ */
+export const getFirstGroupOfTournament = query({
+    args: { tournamentId: v.id("torneos") },
+    handler: async (ctx, args) => {
+        // Find the first phase for this tournament
+        const firstPhase = await ctx.db.query("torneoFases")
+            .withIndex("by_torneo", q => q.eq("torneoId", args.tournamentId as Id<"torneos">))
+            .order("asc") // Assuming 'orden' field exists or just take the first found
+            .first(); // Get only the first phase
+
+        if (!firstPhase) {
+            console.warn(`No phases found for tournament ${args.tournamentId}`);
+            return null; // No phases found
+        }
+
+        // Find the first group within that phase
+        const firstGroup = await ctx.db.query("torneoGrupos")
+            .withIndex("by_fase", q => q.eq("torneoFaseId", firstPhase._id))
+            .order("asc") // Assuming 'orden' or just take first
+            .first(); // Get only the first group
+
+        if (!firstGroup) {
+             console.warn(`No groups found for phase ${firstPhase._id} in tournament ${args.tournamentId}`);
+        }
+
+        return firstGroup; // Return the whole group object (contains _id and nombre)
     }
 });

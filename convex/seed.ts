@@ -157,3 +157,34 @@ export const clearTables = internalMutation({
         }
     }
 })
+
+// =================================================================
+// QUERIES TO FETCH LOOKUP DATA (Add these)
+// =================================================================
+import { query } from "./_generated/server"; // Make sure query is imported
+
+export const getTiposDocumento = query({
+    handler: async ({ db }) => {
+        // No auth check needed if this data is considered public or accessible to all logged-in users
+        return await db.query("tiposDocumento").collect();
+    }
+});
+
+export const getPosicionesCancha = query({
+    handler: async ({ db }) => {
+        return await db.query("posicionesCancha").collect();
+    }
+});
+
+export const getCategoriasEdad = query({
+     handler: async ({ db }) => {
+        return await db.query("categoriasEdad").order("asc").collect(); // Optional: order by age
+    }
+});
+
+// You might also want one for Naciones if you add that dropdown
+export const getNaciones = query({
+    handler: async ({ db }) => {
+        return await db.query("naciones").collect();
+    }
+});

@@ -5,7 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 import { getLocaleFromPathname } from './lib/locale-setup';
-import { extractRoleFromMetadata, FutbolYaRole } from './lib/role-utils';
+import { extractFutbolYaRole, FutbolYaRole, isAdminOrSuperAdmin } from './lib/role-utils';
+import { UserIdentity } from 'convex/server';
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -66,38 +67,54 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   // Extract the user's role from Clerk's metadata
-  const userRole = extractRoleFromMetadata(sessionClaims as any);
+  const userRole = extractFutbolYaRole(sessionClaims);
 
-  // If the user has no role, redirect them to a pending page
-  if (!userRole) {
-      if (!pathname.includes('/pending-role')) {
-          return NextResponse.redirect(new URL(`/${locale}/pending-role`, req.url));
+  if (DEBUG) console.log('Extracted Role in Middleware:', userRole);
+
+  // Handle pending/no role
+  if (!userRole || userRole === 'pending') {
+      if (pathname.includes('/pending-role')) {
+          return intlMiddleware(req);
       }
-      return intlMiddleware(req);
+      return NextResponse.redirect(new URL(`/${locale}/pending-role`, req.url));
   }
 
-  // --- Role-Based Access Control ---
-  // Check for admin routes
-  if (isAdminRoute(req) && userRole !== 'admin' && userRole !== 'superadmin') {
-      const url = new URL(`/${locale}${DEFAULT_REDIRECTS[userRole]}`, req.url);
-      return NextResponse.redirect(url);
-  }
-
-  // Check for coach routes
+  // Check coach routes
   if (isCoachRoute(req) && userRole !== 'entrenador') {
-      const url = new URL(`/${locale}${DEFAULT_REDIRECTS[userRole]}`, req.url);
+       console.log(`Redirecting non-coach user from coach route. Role: ${userRole}`);
+       const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
+       const url = new URL(`/${locale}${redirectPath}`, req.url);
       return NextResponse.redirect(url);
   }
 
-    // Check for referee routes
+    // Check referee routes
   if (isRefereeRoute(req) && userRole !== 'arbitro') {
-      const url = new URL(`/${locale}${DEFAULT_REDIRECTS[userRole]}`, req.url);
+      console.log(`Redirecting non-referee user from referee route. Role: ${userRole}`);
+      const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
+      const url = new URL(`/${locale}${redirectPath}`, req.url);
       return NextResponse.redirect(url);
   }
 
+  if (isAdminRoute(req) && !isAdminOrSuperAdmin(userRole)) { // Using helper
+       console.log(`Redirecting non-admin user from admin route. Role: ${userRole}`);
+       const redirectPath = DEFAULT_REDIRECTS[userRole] || '/pending-role';
+       const url = new URL(`/${locale}${redirectPath}`, req.url);
+       return NextResponse.redirect(url);
+   }
 
-  // If no specific route is matched and the user is authenticated,
-  // allow them to proceed. This covers shared dashboards, profile pages, etc.
+  // --- Redirect from generic dashboard ---
+   const isGenericDashboard = pathname === `/${locale}` || pathname === `/${locale}/`; // Adjust if needed
+   if (isGenericDashboard && userRole && userRole in DEFAULT_REDIRECTS) {
+        const specificRedirect = DEFAULT_REDIRECTS[userRole];
+        // Only redirect if there's a specific page AND it's not the admin root (to avoid loops)
+        if (specificRedirect && specificRedirect !== '/admin') {
+             console.log(`Redirecting user with role ${userRole} from generic dashboard to ${specificRedirect}`);
+            const url = new URL(`/${locale}${specificRedirect}`, req.url);
+            return NextResponse.redirect(url);
+        }
+   }
+
+
   return intlMiddleware(req);
 });
 
