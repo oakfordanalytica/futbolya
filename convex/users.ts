@@ -12,23 +12,26 @@ export const createUser = internalMutation({
     lastName: v.string(),
   },
   handler: async (ctx, args) => {
-    // For now, every new user also creates a 'persona' record.
-    // We'll also default them to the 'jugador' role for now.
-    // In a real app, you'd have a more complex registration flow
-    // where a user selects their role or is invited.
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
 
-    // TODO: Replace with a more robust lookup for default document/nation IDs
+    if (existingUser) {
+      console.log(`User with clerkId ${args.clerkId} already exists. Skipping creation.`);
+      return;
+    }
+
     const defaultTipoDoc = (await ctx.db.query("tiposDocumento").first())?._id;
     if (!defaultTipoDoc) {
         throw new Error("Default TipoDocumento not found. Please seed the database.");
     }
 
-
     const personaId = await ctx.db.insert("personas", {
       nombrePersona: args.firstName,
       apellidoPersona: args.lastName,
-      fechaNacimiento: "1900-01-01", // Placeholder
-      numeroDocumento: "00000000",   // Placeholder
+      fechaNacimiento: "1900-01-01",
+      numeroDocumento: "00000000",
       tipoDocumentoId: defaultTipoDoc,
     });
 

@@ -24,10 +24,10 @@ export const create = mutation({
     // Authentication & Authorization
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Authentication required.");
+      return [];
     }
 
-    const userRole = (identity.publicMetadata as any)?.futbolYaRole as FutbolYaRole;
+    const userRole = identity.futbolYaRole as FutbolYaRole;
     if (userRole !== 'admin' && userRole !== 'superadmin') {
         throw new Error("You do not have permission to create a school.");
     }
@@ -68,7 +68,7 @@ export const get = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       // Or return null if public access is desired in some cases
-      throw new Error("Authentication required.");
+      return null;
     }
 
     const school = await ctx.db.get(args.id);
@@ -84,7 +84,7 @@ export const list = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Authentication required.");
+      return [];
     }
 
     const schools = await ctx.db.query("escuelas").order("desc").collect();

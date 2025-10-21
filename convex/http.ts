@@ -3,6 +3,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { Webhook } from "svix";
 
 const http = httpRouter();
 
@@ -10,12 +11,35 @@ http.route({
   path: "/clerk-webhook",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    // This is an unsecured webhook, so we need to verify the source
-    // You can do this by checking the `svix-id`, `svix-timestamp`, and `svix-signature` headers
-    // For simplicity in this example, we'll skip that part, but DO NOT skip it in production.
-    // See: https://docs.clerk.com/integration/webhooks#verify-the-webhook-request
+    // Verify the webhook signature
+    const svixId = request.headers.get("svix-id");
+    const svixTimestamp = request.headers.get("svix-timestamp");
+    const svixSignature = request.headers.get("svix-signature");
 
-    const payload = await request.json();
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      return new Response("Missing svix headers", { status: 400 });
+    }
+
+    const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error("CLERK_WEBHOOK_SECRET is not set");
+    }
+
+    const body = await request.text();
+    const wh = new Webhook(webhookSecret);
+
+    let payload;
+    try {
+      payload = wh.verify(body, {
+        "svix-id": svixId,
+        "svix-timestamp": svixTimestamp,
+        "svix-signature": svixSignature,
+      }) as any;
+    } catch (err) {
+      console.error("Webhook verification failed:", err);
+      return new Response("Invalid signature", { status: 400 });
+    }
+    
     switch (payload.type) {
       case "user.created":
         const emailAddress = payload.data.email_addresses[0]?.email_address;
