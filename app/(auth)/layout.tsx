@@ -1,4 +1,4 @@
-import { SlimLayout } from "@/components/ui/slim-layout";
+import { SlimLayout } from "@/components/layouts/slim-layout";
 
 export default async function RootLayout({
   children,

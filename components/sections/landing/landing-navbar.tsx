@@ -17,6 +17,7 @@ import {
   NavbarItem,
   NavbarSpacer,
 } from "@/components/ui/navbar";
+import { PinnedLeagues } from "@/components/sections/landing/pinned-leagues";
 
 const navItems = [
   { label: "Features", url: "#features" },
@@ -47,6 +48,9 @@ export function SidebarLandingNavbar() {
           <Button color="blue">
             Get started <span className="hidden lg:inline">today</span>
           </Button>
+        </SidebarSection>
+        <SidebarSection className="mt-6">
+          <PinnedLeagues />
         </SidebarSection>
       </SidebarBody>
     </Sidebar>
