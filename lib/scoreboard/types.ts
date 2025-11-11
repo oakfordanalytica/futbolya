@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react";
 import type { League, Match, PinnedLeague } from "../mocks/types";
 
 /**
@@ -9,4 +10,20 @@ export interface ScoreboardData {
   leagues: League[];
   matches: Match[];
   pinnedLeagues: PinnedLeague[];
+}
+
+export type StatusFilterOption = "All" | "Live" | "Finished";
+
+export interface ScoreboardHeaderProps {
+  leagues: League[];
+  selectedFilter: StatusFilterOption;
+  onFilterChange: (value: StatusFilterOption) => void;
+  selectedLeague: string;
+  isLeagueOpen: boolean;
+  setIsLeagueOpen: Dispatch<SetStateAction<boolean>>;
+  handleLeagueSelect: (league: string) => void;
+  selectedDate?: Date;
+  month?: Date;
+  setMonth: (date: Date | undefined) => void;
+  handleDateSelect: (date: Date | undefined) => void;
 }

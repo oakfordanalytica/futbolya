@@ -1,6 +1,5 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
 import {
   Card,
   CardAction,
@@ -33,23 +32,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { WeekStrip } from "@/components/ui/week-strip";
-import type { League } from "@/lib/mocks/types";
-
-export type StatusFilterOption = "All" | "Live" | "Finished";
-
-interface ScoreboardHeaderProps {
-  leagues: League[];
-  selectedFilter: StatusFilterOption;
-  onFilterChange: (value: StatusFilterOption) => void;
-  selectedLeague: string;
-  isLeagueOpen: boolean;
-  setIsLeagueOpen: Dispatch<SetStateAction<boolean>>;
-  handleLeagueSelect: (league: string) => void;
-  selectedDate?: Date;
-  month?: Date;
-  setMonth: (date: Date | undefined) => void;
-  handleDateSelect: (date: Date | undefined) => void;
-}
+import type {
+  ScoreboardHeaderProps,
+  StatusFilterOption,
+} from "@/lib/scoreboard/types";
 
 export function ScoreboardHeader({
   leagues,

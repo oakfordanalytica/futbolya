@@ -3,12 +3,10 @@
 import { useMemo, useState } from "react";
 
 import { ScoreboardBody } from "@/components/sections/landing/scoreboard-body";
-import {
-  ScoreboardHeader,
-  type StatusFilterOption,
-} from "@/components/sections/landing/scoreboard-header";
+import { ScoreboardHeader } from "@/components/sections/landing/scoreboard-header";
 import { useScoreboardFilters } from "@/hooks/use-scoreboard-filters";
 import type { League, Match } from "@/lib/mocks/types";
+import type { StatusFilterOption } from "@/lib/scoreboard/types";
 
 const FINISHED_STATUSES = new Set(["ft", "final", "finished"]);
 
@@ -18,8 +16,7 @@ interface ScoreboardProps {
 }
 
 export function Scoreboard({ leagues, matches }: ScoreboardProps) {
-  const [statusFilter, setStatusFilter] =
-    useState<StatusFilterOption>("All");
+  const [statusFilter, setStatusFilter] = useState<StatusFilterOption>("All");
 
   const {
     selectedLeague,

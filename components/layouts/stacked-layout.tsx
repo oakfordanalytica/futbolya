@@ -82,15 +82,13 @@ export function StackedLayout({
       </header>
 
       {/* Content */}
-      <main className="flex flex-1 flex-col pb-2 lg:px-2">
-        <div
-          className={`overflow-hidden grow lg:rounded-lg lg:bg-zinc-100 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10 ${clsx(fullWidth ? "" : "p-6 lg:p-10")}`}
-        >
-          <div className={clsx(fullWidth ? "mx-auto " : "mx-auto max-w-6xl")}>
-            {children}
-          </div>
+      <div
+        className={`overflow-hidden grow lg:rounded-lg lg:bg-zinc-100 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10 ${clsx(fullWidth ? "" : "p-6 lg:p-10")}`}
+      >
+        <div className={clsx(fullWidth ? "mx-auto " : "mx-auto max-w-6xl")}>
+          {children}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

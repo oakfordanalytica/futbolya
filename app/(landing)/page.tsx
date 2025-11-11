@@ -1,18 +1,24 @@
+// ################################################################################
+// # File: layout.tsx                                                             #
+// # Check: 11/11/2025                                                            #
+// ################################################################################
+
 import type { Metadata } from "next";
 import { landingMetadata } from "@/lib/seo/landing";
 import { Container } from "@/components/sections/landing/container";
 import { PinnedLeagues } from "@/components/sections/landing/pinned-leagues";
 import { Scoreboard } from "@/components/sections/landing/scoreboard";
 
-// TODO: This component will be replaced by convex, Eg:
-// import { useQuery, useMutation } from "convex/react";
+// TODO: This will be replaced by convex. EG:
+// import { useQuery } from "convex/react";
+// import { api } from "../convex/_generated/api";
 import { getScoreboardData } from "@/lib/scoreboard/utils";
 
 export const metadata: Metadata = landingMetadata;
 
 export default async function Home() {
-  // TODO: This will be replaced by convex. Eg:
-  // const {leagues, matches, pinnedLeagues} = useQuery(api.scoreboard.get);
+  // TODO: This will be replaced by convex. EG:
+  // const tasks = useQuery(api.tasks.get);
   const {
     leagues: scoreboardLeagues,
     matches: scoreboardMatches,
@@ -20,15 +26,13 @@ export default async function Home() {
   } = await getScoreboardData();
 
   return (
-    <Container className="flex pt-8 gap-8 w-full">
-      <main className="flex flex-col gap-4 w-full max-w-4xl">
+    <Container className="grid gap-8 pt-8 grid-cols-1 lg:grid-cols-5">
+      <aside className="hidden lg:block">
+        <PinnedLeagues leagues={pinnedLeagues} />
+      </aside>
+      <main className="lg:col-start-2 lg:-col-end-1">
         <Scoreboard leagues={scoreboardLeagues} matches={scoreboardMatches} />
       </main>
-      <aside className="hidden lg:block w-64 shrink-0">
-        <div className="sticky top-8">
-          <PinnedLeagues leagues={pinnedLeagues} />
-        </div>
-      </aside>
     </Container>
   );
 }
