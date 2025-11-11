@@ -1,13 +1,5 @@
 import type { League, Match, PinnedLeague } from "./types";
 
-export async function getOrder(id: string) {
-  return (await getOrders()).find((order) => order.id.toString() === id)!;
-}
-
-export async function getRecentOrders() {
-  return (await getOrders()).slice(0, 10);
-}
-
 export const matches: Match[] = [
   {
     id: 1,

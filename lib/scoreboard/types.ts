@@ -12,6 +12,10 @@ export interface ScoreboardData {
   pinnedLeagues: PinnedLeague[];
 }
 
+export interface PinnedLeaguesProps {
+  leagues?: PinnedLeague[];
+}
+
 export type StatusFilterOption = "All" | "Live" | "Finished";
 
 export interface ScoreboardHeaderProps {

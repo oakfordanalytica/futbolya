@@ -44,7 +44,7 @@ export function ScoreboardBody({ matches }: ScoreboardBodyProps) {
   const groupedMatches = groupByCompetition(matches);
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-2">
       {groupedMatches.map((group) => (
         <ScoreboardCompetition
           key={group.competition}

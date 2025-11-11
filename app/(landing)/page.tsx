@@ -5,10 +5,9 @@
 
 import type { Metadata } from "next";
 import { landingMetadata } from "@/lib/seo/landing";
-import { Container } from "@/components/sections/landing/container";
+import { Container } from "@/components/ui/container";
 import { PinnedLeagues } from "@/components/sections/landing/pinned-leagues";
 import { Scoreboard } from "@/components/sections/landing/scoreboard";
-
 // TODO: This will be replaced by convex. EG:
 // import { useQuery } from "convex/react";
 // import { api } from "../convex/_generated/api";
@@ -26,7 +25,7 @@ export default async function Home() {
   } = await getScoreboardData();
 
   return (
-    <Container className="grid gap-8 pt-8 grid-cols-1 lg:grid-cols-5">
+    <Container className="grid gap-8 py-4 grid-cols-1 lg:grid-cols-5">
       <aside className="hidden lg:block">
         <PinnedLeagues leagues={pinnedLeagues} />
       </aside>
