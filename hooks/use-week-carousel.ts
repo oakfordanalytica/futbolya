@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { addDays, startOfWeek } from "date-fns";
+import { addDays, startOfWeek, differenceInWeeks } from "date-fns";
 import type { CarouselApi } from "@/components/ui/carousel";
 
 interface UseWeekCarouselProps {
@@ -30,6 +30,29 @@ export function useWeekCarousel({ selectedDate }: UseWeekCarouselProps = {}) {
     if (!api) return;
     api.scrollTo(10, true);
   }, [api]);
+
+  // Scroll to week containing selected date
+  useEffect(() => {
+    if (!api || !selectedDate) return;
+
+    const baseWeek = startOfWeek(initialDateRef.current, {
+      weekStartsOn: 0,
+    });
+    const selectedWeek = startOfWeek(selectedDate, {
+      weekStartsOn: 0,
+    });
+
+    // Calculate week difference
+    const weekDiff = differenceInWeeks(selectedWeek, baseWeek);
+
+    // Middle week is at index 10, so target index is 10 + weekDiff
+    const targetIndex = 10 + weekDiff;
+
+    // Only scroll if target is within bounds (0-20)
+    if (targetIndex >= 0 && targetIndex < weeks.length) {
+      api.scrollTo(targetIndex);
+    }
+  }, [selectedDate, api, weeks.length]);
 
   return {
     weeks,

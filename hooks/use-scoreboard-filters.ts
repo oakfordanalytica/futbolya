@@ -10,8 +10,10 @@ export function useScoreboardFilters() {
   const [isLeagueOpen, setIsLeagueOpen] = useState(false);
 
   // Date filter
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [month, setMonth] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    new Date(),
+  );
+  const [month, setMonth] = useState<Date | undefined>(new Date());
 
   // Text input for natural language date
   const [dateInput, setDateInput] = useState("");

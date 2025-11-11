@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
@@ -24,9 +24,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { leagues } from "@/lib/mocks/data";
 import { cn } from "@/lib/utils";
-import { WeekStrip } from "../ui/week-strip";
+import { WeekStrip } from "@/components/ui/week-strip";
 import { useScoreboardFilters } from "@/hooks/use-scoreboard-filters";
 
 export function ScoreboardHeader() {
@@ -41,14 +48,52 @@ export function ScoreboardHeader() {
     handleDateSelect,
   } = useScoreboardFilters();
 
+  const [selectedFilter, setSelectedFilter] = React.useState("All");
+
+  const filterOptions = ["All", "Live", "Finished"];
+
   return (
     <Card className="w-full max-w-4xl p-3 gap-2 ">
       <CardHeader className="px-0">
         <CardDescription>
-          <ButtonGroup>
-            <Button variant="outline">All</Button>
-            <Button variant="outline">Live</Button>
-            <Button variant="outline">Finished</Button>
+          {/* Mobile: Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild className="md:hidden">
+              <Button variant="outline" className="w-full justify-between">
+                {selectedFilter}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-full" align="start">
+              <DropdownMenuGroup>
+                {filterOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    onClick={() => setSelectedFilter(option)}
+                  >
+                    {option}
+                    <Check
+                      className={cn(
+                        "ml-auto",
+                        selectedFilter === option ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Desktop: Button Group */}
+          <ButtonGroup className="hidden md:flex">
+            {filterOptions.map((option) => (
+              <Button
+                key={option}
+                variant={selectedFilter === option ? "default" : "outline"}
+                onClick={() => setSelectedFilter(option)}
+              >
+                {option}
+              </Button>
+            ))}
           </ButtonGroup>
         </CardDescription>
         <CardAction>
