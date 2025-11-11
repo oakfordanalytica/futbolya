@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type { Dispatch, SetStateAction } from "react";
 import {
   Card,
   CardAction,
@@ -31,29 +31,48 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { leagues } from "@/lib/mocks/data";
 import { cn } from "@/lib/utils";
 import { WeekStrip } from "@/components/ui/week-strip";
-import { useScoreboardFilters } from "@/hooks/use-scoreboard-filters";
+import type { League } from "@/lib/mocks/types";
 
-export function ScoreboardHeader() {
-  const {
-    selectedLeague,
-    isLeagueOpen,
-    setIsLeagueOpen,
-    handleLeagueSelect,
-    selectedDate,
-    month,
-    setMonth,
-    handleDateSelect,
-  } = useScoreboardFilters();
+export type StatusFilterOption = "All" | "Live" | "Finished";
 
-  const [selectedFilter, setSelectedFilter] = React.useState("All");
+interface ScoreboardHeaderProps {
+  leagues: League[];
+  selectedFilter: StatusFilterOption;
+  onFilterChange: (value: StatusFilterOption) => void;
+  selectedLeague: string;
+  isLeagueOpen: boolean;
+  setIsLeagueOpen: Dispatch<SetStateAction<boolean>>;
+  handleLeagueSelect: (league: string) => void;
+  selectedDate?: Date;
+  month?: Date;
+  setMonth: (date: Date | undefined) => void;
+  handleDateSelect: (date: Date | undefined) => void;
+}
 
-  const filterOptions = ["All", "Live", "Finished"];
+export function ScoreboardHeader({
+  leagues,
+  selectedFilter,
+  onFilterChange,
+  selectedLeague,
+  isLeagueOpen,
+  setIsLeagueOpen,
+  handleLeagueSelect,
+  selectedDate,
+  month,
+  setMonth,
+  handleDateSelect,
+}: ScoreboardHeaderProps) {
+  const filterOptions: StatusFilterOption[] = ["All", "Live", "Finished"];
+
+  const selectedLeagueLabel = selectedLeague
+    ? (leagues.find((league) => league.value === selectedLeague)?.label ??
+      "Choose League")
+    : "Choose League";
 
   return (
-    <Card className="w-full  p-3 gap-2 rounded-none md:rounded-lg">
+    <Card className="w-full p-3 gap-2 rounded-none md:rounded-lg">
       <CardHeader className="px-0">
         <CardDescription>
           {/* Mobile: Dropdown Menu */}
@@ -68,7 +87,7 @@ export function ScoreboardHeader() {
                 {filterOptions.map((option) => (
                   <DropdownMenuItem
                     key={option}
-                    onClick={() => setSelectedFilter(option)}
+                    onClick={() => onFilterChange(option)}
                   >
                     {option}
                     <Check
@@ -89,7 +108,7 @@ export function ScoreboardHeader() {
               <Button
                 key={option}
                 variant={selectedFilter === option ? "default" : "outline"}
-                onClick={() => setSelectedFilter(option)}
+                onClick={() => onFilterChange(option)}
               >
                 {option}
               </Button>
@@ -105,10 +124,7 @@ export function ScoreboardHeader() {
                 aria-expanded={isLeagueOpen}
                 className="w-[200px] justify-between"
               >
-                {selectedLeague
-                  ? leagues.find((league) => league.value === selectedLeague)
-                      ?.label
-                  : "Choose League"}
+                {selectedLeagueLabel}
                 <ChevronsUpDown className="opacity-50" />
               </Button>
             </PopoverTrigger>

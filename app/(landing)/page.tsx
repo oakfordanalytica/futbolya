@@ -1,41 +1,34 @@
-import {
-  NavbarLandingNavbar,
-  SidebarLandingNavbar,
-} from "@/components/sections/landing/landing-navbar";
-
 import type { Metadata } from "next";
-import { StackedLayout } from "@/components/layouts/stacked-layout";
-import { ScoreboardHeader } from "@/components/sections/landing/scoreboard-header";
-import { ScoreboardBody } from "@/components/sections/landing/scoreboard-body";
+import { landingMetadata } from "@/lib/seo/landing";
+import { Container } from "@/components/sections/landing/container";
 import { PinnedLeagues } from "@/components/sections/landing/pinned-leagues";
+import { Scoreboard } from "@/components/sections/landing/scoreboard";
 
-export const metadata: Metadata = {
-  title: {
-    template: "%s - TaxPal",
-    default: "TaxPal - Accounting made simple for small businesses",
-  },
-  description:
-    "Most bookkeeping software is accurate, but hard to use. We make the opposite trade-off, and hope you don't get audited.",
-};
+// TODO: This component will be replaced by convex, Eg:
+// import { useQuery, useMutation } from "convex/react";
+import { getScoreboardData } from "@/lib/scoreboard/utils";
 
-export default function Home() {
+export const metadata: Metadata = landingMetadata;
+
+export default async function Home() {
+  // TODO: This will be replaced by convex. Eg:
+  // const {leagues, matches, pinnedLeagues} = useQuery(api.scoreboard.get);
+  const {
+    leagues: scoreboardLeagues,
+    matches: scoreboardMatches,
+    pinnedLeagues,
+  } = await getScoreboardData();
+
   return (
-    <StackedLayout
-      fullWidth
-      navbar={<NavbarLandingNavbar />}
-      sidebar={<SidebarLandingNavbar />}
-    >
-      <div className="flex gap-6 mx-auto md:pt-8 max-w-7xl w-full md:px-4">
-        <main className="flex flex-col gap-4 w-full max-w-4xl antialiased">
-          <ScoreboardHeader />
-          <ScoreboardBody />
-        </main>
-        <aside className="hidden lg:block w-64 shrink-0">
-          <div className="sticky top-8">
-            <PinnedLeagues />
-          </div>
-        </aside>
-      </div>
-    </StackedLayout>
+    <Container className="flex pt-8 gap-8 w-full">
+      <main className="flex flex-col gap-4 w-full max-w-4xl">
+        <Scoreboard leagues={scoreboardLeagues} matches={scoreboardMatches} />
+      </main>
+      <aside className="hidden lg:block w-64 shrink-0">
+        <div className="sticky top-8">
+          <PinnedLeagues leagues={pinnedLeagues} />
+        </div>
+      </aside>
+    </Container>
   );
 }

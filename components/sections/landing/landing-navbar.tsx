@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/sections/landing/Logo";
+import { Logo } from "@/components/logo";
 import {
   Navbar,
   NavbarDivider,

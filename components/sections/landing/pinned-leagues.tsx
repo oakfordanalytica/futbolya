@@ -1,25 +1,15 @@
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, StarIcon } from "lucide-react";
+import type { PinnedLeague } from "@/lib/mocks/types";
 
-const pinnedLeagues = [
-  { id: 1, name: "Premier League", flag: "🏴󐁧󐁢󐁥󐁮󐁧󐁿" },
-  { id: 2, name: "Ligue 1", flag: "🇫🇷" },
-  { id: 3, name: "Bundesliga", flag: "🇩🇪" },
-  { id: 4, name: "Serie A", flag: "🇮🇹" },
-  { id: 5, name: "Eredivisie", flag: "🇳🇱" },
-  { id: 6, name: "LaLiga", flag: "🇪🇸" },
-  { id: 7, name: "Euro", flag: "🇪🇺" },
-  { id: 8, name: "Champions League", flag: "🇪🇺" },
-  { id: 9, name: "Europa League", flag: "🇪🇺" },
-  { id: 10, name: "Conference League", flag: "🇪🇺" },
-  { id: 11, name: "UEFA Nations Lea...", flag: "🇪🇺" },
-  { id: 12, name: "Copa Libertadores", flag: "🇧🇷" },
-  { id: 13, name: "World Cup", flag: "🌍" },
-  { id: 14, name: "World Cup U17", flag: "🌍" },
-];
+interface PinnedLeaguesProps {
+  leagues?: PinnedLeague[];
+}
 
-export function PinnedLeagues() {
+export function PinnedLeagues({ leagues }: PinnedLeaguesProps) {
+  const safeLeagues = leagues ?? [];
+
   return (
     <div className="space-y-6">
       {/* Pinned Leagues Section */}
@@ -31,7 +21,7 @@ export function PinnedLeagues() {
           </h2>
         </div>
         <nav className="space-y-1">
-          {pinnedLeagues.map((league) => (
+          {safeLeagues.map((league) => (
             <a
               key={league.id}
               href={`/league/${league.id}`}
