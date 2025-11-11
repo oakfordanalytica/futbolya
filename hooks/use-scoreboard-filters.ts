@@ -11,7 +11,6 @@ export function useScoreboardFilters() {
 
   // Date filter
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [month, setMonth] = useState<Date | undefined>(undefined);
 
   // Text input for natural language date
@@ -26,7 +25,6 @@ export function useScoreboardFilters() {
     setSelectedDate(date);
     setMonth(date);
     setDateInput(date ? formatDate(date) : "");
-    setIsCalendarOpen(false);
   };
 
   const handleDateInputChange = (input: string) => {
@@ -47,8 +45,6 @@ export function useScoreboardFilters() {
 
     // Date state
     selectedDate,
-    isCalendarOpen,
-    setIsCalendarOpen,
     month,
     setMonth,
     dateInput,

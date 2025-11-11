@@ -9,9 +9,8 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Button } from "../ui/button";
-import { Check, ChevronsUpDown, CalendarIcon } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Command,
   CommandEmpty,
@@ -27,7 +26,7 @@ import {
 } from "@/components/ui/popover";
 import { leagues } from "@/lib/mocks/data";
 import { cn } from "@/lib/utils";
-import { WeekStrip } from "../week-strip";
+import { WeekStrip } from "../ui/week-strip";
 import { useScoreboardFilters } from "@/hooks/use-scoreboard-filters";
 
 export function ScoreboardHeader() {
@@ -37,16 +36,14 @@ export function ScoreboardHeader() {
     setIsLeagueOpen,
     handleLeagueSelect,
     selectedDate,
-    isCalendarOpen,
-    setIsCalendarOpen,
     month,
     setMonth,
     handleDateSelect,
   } = useScoreboardFilters();
 
   return (
-    <Card className="w-full max-w-4xl">
-      <CardHeader>
+    <Card className="w-full max-w-4xl p-3 gap-2 ">
+      <CardHeader className="px-0">
         <CardDescription>
           <ButtonGroup>
             <Button variant="outline">All</Button>
@@ -100,35 +97,13 @@ export function ScoreboardHeader() {
           </Popover>
         </CardAction>
       </CardHeader>
-      <CardContent>
-        <div className="relative">
-          <WeekStrip
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-          />
-          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                id="date-picker"
-                variant="ghost"
-                className="absolute top-1/2 right-0 size-8 -translate-y-1/2"
-              >
-                <CalendarIcon className="size-3.5" />
-                <span className="sr-only">Select date</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto overflow-hidden p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                captionLayout="dropdown"
-                month={month}
-                onMonthChange={setMonth}
-                onSelect={handleDateSelect}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+      <CardContent className="px-0">
+        <WeekStrip
+          selectedDate={selectedDate}
+          onDateSelect={handleDateSelect}
+          month={month}
+          onMonthChange={setMonth}
+        />
       </CardContent>
     </Card>
   );
