@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/sections/landing/Logo";
-import { SlimLayout } from "@/components/ui/slim-layout";
+import { SlimLayout } from "@/components/layouts/slim-layout";
 
 export default function NotFound() {
   return (
@@ -19,9 +19,7 @@ export default function NotFound() {
       <p className="mt-3 text-sm text-gray-700">
         Sorry, we couldn’t find the page you’re looking for.
       </p>
-      <Button href="/" className="mt-10">
-        Go back home
-      </Button>
+      <Button className="mt-10">Go back home</Button>
     </SlimLayout>
   );
 }

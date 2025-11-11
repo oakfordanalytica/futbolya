@@ -4,7 +4,6 @@ import * as Headless from "@headlessui/react";
 import clsx from "clsx";
 import { LayoutGroup, motion } from "motion/react";
 import React, { forwardRef, useId } from "react";
-import { TouchTarget } from "./button";
 import { Link } from "./link";
 
 export function Sidebar({
@@ -177,7 +176,7 @@ export const SidebarItem = forwardRef(function SidebarItem(
           data-current={current ? "true" : undefined}
           ref={ref}
         >
-          <TouchTarget>{children}</TouchTarget>
+          {children}
         </Headless.CloseButton>
       ) : (
         <Headless.Button
@@ -186,7 +185,7 @@ export const SidebarItem = forwardRef(function SidebarItem(
           data-current={current ? "true" : undefined}
           ref={ref}
         >
-          <TouchTarget>{children}</TouchTarget>
+          {children}
         </Headless.Button>
       )}
     </span>

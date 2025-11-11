@@ -5,8 +5,9 @@ import {
 
 import type { Metadata } from "next";
 import clsx from "clsx";
-import { StackedLayout } from "@/components/ui/stacked-layout";
+import { StackedLayout } from "@/components/layouts/stacked-layout";
 import { ScoreboardHeader } from "@/components/sections/landing/scoreboard-header";
+import { ScoreboardBody } from "@/components/sections/landing/scoreboard-body";
 
 export const metadata: Metadata = {
   title: {
@@ -25,8 +26,9 @@ export default function Home() {
       sidebar={<SidebarLandingNavbar />}
     >
       {/*<Header /> */}
-      <main className="bg-white antialiased">
+      <main className=" flex flex-col gap-4 max-w-4xl antialiased mx-auto md:pt-8">
         <ScoreboardHeader />
+        <ScoreboardBody />
         {/*<Hero />
         <PrimaryFeatures />
         <SecondaryFeatures />

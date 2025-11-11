@@ -53,7 +53,7 @@ export function ScoreboardHeader() {
   const filterOptions = ["All", "Live", "Finished"];
 
   return (
-    <Card className="w-full max-w-4xl p-3 gap-2 ">
+    <Card className="w-full  p-3 gap-2 rounded-none md:rounded-lg">
       <CardHeader className="px-0">
         <CardDescription>
           {/* Mobile: Dropdown Menu */}
