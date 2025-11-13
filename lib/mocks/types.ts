@@ -1,9 +1,31 @@
-export type EventType = "goal" | "yellow_card" | "red_card";
+// ################################################################################
+// # File: lib\mocks\types.ts                                                     #
+// # Check: 11/12/2025                                                            #
+// ################################################################################
+
+export type EventType = "goal" | "yellow_card" | "red_card" | "substitution";
+
+export interface Player {
+  id: number;
+  name: string;
+  number: number;
+  position?: string; // e.g., 'GK', 'DF', 'MF', 'FW'
+}
+
+export interface Lineup {
+  teamName: string;
+  formation: string; // e.g., "4-3-3"
+  starters: Player[];
+  substitutes: Player[];
+}
 
 export interface MatchEvent {
   type: EventType;
-  name: string;
-  minute?: string;
+  team: "team1" | "team2"; // Which team did the event
+  minute: string;
+  playerIn?: Player; // For substitutions
+  playerOut?: Player; // For substitutions
+  playerName?: string; // For goals, cards
   detail?: string;
 }
 
@@ -40,6 +62,11 @@ export interface Match {
   venue?: string;
   city?: string;
   country?: string;
-  events1?: MatchEvent[];
-  events2?: MatchEvent[];
+  events?: MatchEvent[];
+  lineups?: {
+    team1: Lineup;
+    team2: Lineup;
+  };
+  events1?: unknown; // Marked as unknown to catch errors
+  events2?: unknown; // Marked as unknown to catch errors
 }

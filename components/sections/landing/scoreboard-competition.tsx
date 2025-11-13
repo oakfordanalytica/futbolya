@@ -2,16 +2,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import type { EventType, Match, MatchEvent } from "@/lib/mocks/types";
+import { EVENT_ICONS } from "@/lib/scoreboard/config";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
-const EVENT_ICONS: Record<EventType, string> = {
-  goal: "⚽",
-  red_card: "🟥",
-  yellow_card: "🟨",
-};
-
-function groupEventsByType(events?: MatchEvent[]) {
+function groupEventsByType(
+  events: MatchEvent[] | undefined,
+  team: "team1" | "team2",
+) {
   return (events ?? []).reduce(
     (acc, event) => {
+      if (event.team !== team) {
+        return acc;
+      }
+
       const eventType = event.type;
       if (!acc[eventType]) {
         acc[eventType] = [];
@@ -45,11 +48,16 @@ export function ScoreboardCompetition({
             {matches.map((match) => {
               const team1Won = match.score1 > match.score2;
               const team2Won = match.score2 > match.score1;
-              const team1EventsByType = groupEventsByType(match.events1);
-              const team2EventsByType = groupEventsByType(match.events2);
-              const hasEvents =
-                (match.events1?.length ?? 0) > 0 ||
-                (match.events2?.length ?? 0) > 0;
+              const team1EventsByType = groupEventsByType(match.events, "team1");
+              const team2EventsByType = groupEventsByType(match.events, "team2");
+              const team1Events = (match.events ?? []).filter(
+                (e) => e.team === "team1",
+              );
+              const team2Events = (match.events ?? []).filter(
+                (e) => e.team === "team2",
+              );
+              const hasEvents = (match.events?.length ?? 0) > 0;
+
               const teams = [
                 {
                   id: "team1",
@@ -58,7 +66,7 @@ export function ScoreboardCompetition({
                   flag: match.team1Flag,
                   won: team1Won,
                   eventsByType: team1EventsByType,
-                  events: match.events1,
+                  events: team1Events,
                 },
                 {
                   id: "team2",
@@ -67,7 +75,7 @@ export function ScoreboardCompetition({
                   flag: match.team2Flag,
                   won: team2Won,
                   eventsByType: team2EventsByType,
-                  events: match.events2,
+                  events: team2Events,
                 },
               ];
 
@@ -78,7 +86,7 @@ export function ScoreboardCompetition({
                       {match.status}
                     </span>
                   </TableCell>
-                  <TableCell className="py-3 min-w-[200px] pr-0 align-top">
+                  <TableCell className="py-3 min-w-[200px] pr-0 align-center">
                     <div className="flex flex-col gap-3">
                       {teams.map((team) => (
                         <div
@@ -124,12 +132,42 @@ export function ScoreboardCompetition({
                                 ([eventType, events]) => {
                                   const type = eventType as EventType;
                                   const icon = EVENT_ICONS[type];
+                                  if (!icon) return null;
+
+                                  if (type === "substitution") {
+                                    return events.map((event, idx) => (
+                                      <div
+                                        key={`${type}-${idx}`}
+                                        className="flex items-start gap-2"
+                                      >
+                                        <span className="text-base shrink-0 leading-snug pt-0.5">
+                                          {icon}
+                                        </span>
+                                        <div className="flex flex-col">
+                                          <div className="flex items-center gap-1.5 text-green-600">
+                                            <ArrowUp className="size-3 shrink-0" />
+                                            <span className="text-muted-foreground leading-snug wrap-break-word">
+                                              {event.playerIn?.name ?? "Sub In"}
+                                              {event.minute ? ` - ${event.minute}` : ""}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-1.5 text-red-600">
+                                            <ArrowDown className="size-3 shrink-0" />
+                                            <span className="text-muted-foreground leading-snug wrap-break-word">
+                                              {event.playerOut?.name ?? "Sub Out"}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ));
+                                  }
+
                                   const eventText = events
                                     .map((event) => {
                                       const minutePart = event.minute
                                         ? ` - ${event.minute}`
                                         : "";
-                                      return `${event.name}${minutePart}`;
+                                      return `${event.playerName}${minutePart}`;
                                     })
                                     .join(", ");
 
@@ -146,9 +184,10 @@ export function ScoreboardCompetition({
                                       </span>
                                     </div>
                                   );
+                                  // --- END OF LOGIC BLOCK ---
                                 },
                               )}
-                              {(team.events || []).length === 0 && (
+                              {(team.events || []).filter(e => e.type === 'goal').length === 0 && (
                                 <span className="text-muted-foreground">
                                   No Goals
                                 </span>

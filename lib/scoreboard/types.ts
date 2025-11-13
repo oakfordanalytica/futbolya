@@ -1,5 +1,10 @@
+// ################################################################################
+// # File: lib\scoreboard\types.ts                                                #
+// # Check: 11/12/2025                                                            #
+// ################################################################################
+
 import type { Dispatch, SetStateAction } from "react";
-import type { League, Match, PinnedLeague } from "../mocks/types";
+import type { League, Match, PinnedLeague, EventType, Player } from "../mocks/types";
 
 /**
  * Represents the payload needed to render the landing scoreboard.
@@ -30,4 +35,12 @@ export interface ScoreboardHeaderProps {
   month?: Date;
   setMonth: (date: Date | undefined) => void;
   handleDateSelect: (date: Date | undefined) => void;
+}
+
+export interface ParsedFormation {
+  gk: Player[];
+  def: Player[];
+  mid: Player[];
+  fwd: Player[];
+  lines: Player[][];
 }
