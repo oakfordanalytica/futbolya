@@ -10,7 +10,7 @@ import {
   DialogBody,
   DialogDescription,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog-catalyst";
 
 function Command({
   className,

@@ -198,10 +198,17 @@ export const getMyOrganizations = query({
   args: {},
   returns: v.array(
     v.object({
-      id: v.string(),
+      _id: v.string(),
       slug: v.string(),
       name: v.string(),
-      role: v.string(),
+      role: v.union(
+        v.literal("SuperAdmin"),
+        v.literal("LeagueAdmin"),
+        v.literal("ClubAdmin"),
+        v.literal("TechnicalDirector"),
+        v.literal("Player"),
+        v.literal("Referee")
+      ),
       type: v.union(v.literal("league"), v.literal("club")),
       logoUrl: v.optional(v.string()),
     })
@@ -223,10 +230,10 @@ export const getMyOrganizations = query({
       .collect();
 
     const orgs: Array<{
-      id: string;
+      _id: string;
       slug: string;
       name: string;
-      role: string;
+      role: "SuperAdmin" | "LeagueAdmin" | "ClubAdmin" | "TechnicalDirector" | "Player" | "Referee";
       type: "league" | "club";
       logoUrl?: string;
     }> = [];
@@ -236,7 +243,7 @@ export const getMyOrganizations = query({
         const league = await ctx.db.get(assignment.organizationId as Id<"leagues">);
         if (league && league.status === "active") {
           orgs.push({
-            id: league._id,
+            _id: league._id,
             slug: league.slug,
             name: league.name,
             role: assignment.role,
@@ -248,7 +255,7 @@ export const getMyOrganizations = query({
         const club = await ctx.db.get(assignment.organizationId as Id<"clubs">);
         if (club) {
           orgs.push({
-            id: club._id,
+            _id: club._id,
             slug: club.slug,
             name: club.name,
             role: assignment.role,
@@ -271,7 +278,15 @@ export const getMyRoleInOrg = query({
     orgSlug: v.string(),
     orgType: v.union(v.literal("league"), v.literal("club")),
   },
-  returns: v.union(v.string(), v.null()),
+  returns: v.union(
+    v.literal("SuperAdmin"),
+    v.literal("LeagueAdmin"),
+    v.literal("ClubAdmin"),
+    v.literal("TechnicalDirector"),
+    v.literal("Player"),
+    v.literal("Referee"),
+    v.null()
+  ),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
@@ -284,19 +299,20 @@ export const getMyRoleInOrg = query({
     if (!profile) return null;
 
     // Find the organization
-    let orgId: string | undefined;
+    let orgId: string | null = null;
+    
     if (args.orgType === "league") {
       const league = await ctx.db
         .query("leagues")
         .withIndex("by_slug", (q) => q.eq("slug", args.orgSlug))
         .unique();
-      orgId = league?._id;
+      orgId = league?._id ?? null;
     } else {
       const club = await ctx.db
         .query("clubs")
         .withIndex("by_slug", (q) => q.eq("slug", args.orgSlug))
         .unique();
-      orgId = club?._id;
+      orgId = club?._id ?? null;
     }
 
     if (!orgId) return null;

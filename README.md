@@ -8,11 +8,8 @@ futbolya
 ├─ app
 │  ├─ (auth)
 │  │  ├─ layout.tsx
-│  │  ├─ sign-in
-│  │  │  └─ [[...rest]]
-│  │  │     └─ page.tsx
-│  │  └─ [org]
-│  │     └─ sign-up
+│  │  └─ sign-in
+│  │     └─ [[...rest]]
 │  │        └─ page.tsx
 │  ├─ (landing)
 │  │  ├─ layout.tsx
@@ -25,13 +22,14 @@ futbolya
 │  │  └─ [org]
 │  │     ├─ admin
 │  │     │  ├─ page.tsx
-│  │     │  └─ settings
-│  │     │     ├─ address.tsx
+│  │     │  ├─ settings
+│  │     │  │  ├─ address.tsx
+│  │     │  │  └─ page.tsx
+│  │     │  └─ users
 │  │     │     └─ page.tsx
 │  │     └─ layout.tsx
 │  ├─ globals.css
 │  └─ layout.tsx
-├─ clerk_rules.mdc
 ├─ components
 │  ├─ app-sidebar.tsx
 │  ├─ layouts
@@ -83,6 +81,7 @@ futbolya
 │     ├─ combobox.tsx
 │     ├─ command.tsx
 │     ├─ container.tsx
+│     ├─ context-switcher.tsx
 │     ├─ description-list.tsx
 │     ├─ dialog.tsx
 │     ├─ divider.tsx
@@ -92,6 +91,7 @@ futbolya
 │     ├─ football-field.tsx
 │     ├─ heading.tsx
 │     ├─ input.tsx
+│     ├─ label.tsx
 │     ├─ link.tsx
 │     ├─ listbox.tsx
 │     ├─ mode-toggle.tsx
@@ -113,23 +113,15 @@ futbolya
 │     └─ week-strip.tsx
 ├─ components.json
 ├─ convex
-│  ├─ admin.ts
 │  ├─ auth.config.ts
-│  ├─ auth.ts
-│  ├─ entrenadores.ts
-│  ├─ equipos.ts
-│  ├─ escuelas.ts
-│  ├─ gruposEntrenamiento.ts
+│  ├─ bootstrap.ts
+│  ├─ clerk.ts
+│  ├─ clubs.ts
 │  ├─ http.ts
-│  ├─ jugadores.ts
-│  ├─ ligas.ts
-│  ├─ partidos.ts
-│  ├─ README.md
+│  ├─ lib
+│  │  ├─ auth.ts
+│  │  └─ auth_types.ts
 │  ├─ schema.ts
-│  ├─ seed.ts
-│  ├─ sesionesYAsistencias.ts
-│  ├─ torneos.ts
-│  ├─ tsconfig.json
 │  ├─ users.ts
 │  └─ _generated
 │     ├─ api.d.ts
@@ -137,18 +129,13 @@ futbolya
 │     ├─ dataModel.d.ts
 │     ├─ server.d.ts
 │     └─ server.js
-├─ convex_rules.mdc
 ├─ eslint.config.mjs
 ├─ hooks
 │  ├─ use-scoreboard-filters.ts
 │  └─ use-week-carousel.ts
-├─ instructions
-│  ├─ clerk.instructions.md
-│  └─ convex.instructions.md
 ├─ lib
 │  ├─ auth
 │  │  ├─ auth.ts
-│  │  ├─ index.ts
 │  │  └─ types.ts
 │  ├─ config
 │  │  └─ features.ts

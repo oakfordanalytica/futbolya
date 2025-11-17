@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
@@ -10,7 +11,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary border  shadow-xs text-primary-foreground hover:bg-primary/90",
+          "bg-primary border shadow-xs text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
@@ -37,24 +38,56 @@ const buttonVariants = cva(
   },
 );
 
+type ButtonProps = React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+    href?: string;
+    plain?: boolean;
+  };
+
 function Button({
   className,
   variant,
   size,
   asChild = false,
+  href,
+  plain = false,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
+}: ButtonProps) {
+  // If plain is true, use minimal styling
+  const finalVariant = plain ? "ghost" : variant;
+
+  const classes = cn(buttonVariants({ variant: finalVariant, size, className }));
+
+  // If href is provided, render as Link
+  if (href) {
+    return (
+      <Link href={href} className={classes} {...(props as any)}>
+        {props.children}
+      </Link>
+    );
+  }
+
   const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={classes}
       {...props}
     />
+  );
+}
+
+export function TouchTarget({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <span
+        className="absolute left-1/2 top-1/2 size-[max(100%,2.75rem)] -translate-x-1/2 -translate-y-1/2 pointer-fine:hidden"
+        aria-hidden="true"
+      />
+      {children}
+    </>
   );
 }
 

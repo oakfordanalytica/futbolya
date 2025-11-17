@@ -1,7 +1,6 @@
-import type { RoleNavigationConfig } from "./types";
-import type { UserRole, HasRoleFunction } from "../auth/types";
-import { getUserRole, getRoleBasePath } from "../auth/auth";
-import { NAVIGATION_CONFIG } from "./config";
+import type { AppRole } from "@/convex/lib/auth_types";
+import type { RoleNavigationConfig, NavigationContext } from "./types";
+import { NAVIGATION_CONFIG, ROLE_BASE_PATHS } from "./config";
 
 /**
  * =============================================================================
@@ -14,8 +13,17 @@ import { NAVIGATION_CONFIG } from "./config";
  * @param role - Rol del usuario
  * @returns Array de items de navegación
  */
-export function getNavigationForRole(role: UserRole): RoleNavigationConfig {
+export function getNavigationForRole(role: AppRole): RoleNavigationConfig {
   return NAVIGATION_CONFIG[role];
+}
+
+/**
+ * Obtiene la ruta base para un rol
+ * @param role - Rol del usuario
+ * @returns Segmento de ruta (admin, coach, player, referee)
+ */
+export function getRoleBasePath(role: AppRole): string {
+  return ROLE_BASE_PATHS[role];
 }
 
 /**
@@ -27,19 +35,20 @@ export function getNavigationForRole(role: UserRole): RoleNavigationConfig {
  *
  * @example
  * ```ts
- * buildNavUrl("cpca-sports", "admin", "settings")
- * // Returns: "/cpca-sports/admin/settings"
+ * buildNavUrl("liga-del-valle", "LeagueAdmin", "users")
+ * // Returns: "/liga-del-valle/admin/users"
  *
- * buildNavUrl("cpca-sports", "admin", "")
- * // Returns: "/cpca-sports/admin"
+ * buildNavUrl("liga-del-valle", "Player", "")
+ * // Returns: "/liga-del-valle/player"
  * ```
  */
 export function buildNavUrl(
   orgSlug: string,
-  role: UserRole,
+  role: AppRole,
   path: string = "",
 ): string {
-  const basePath = getRoleBasePath(orgSlug, role);
+  const roleBase = getRoleBasePath(role);
+  const basePath = `/${orgSlug}/${roleBase}`;
   return path ? `${basePath}/${path}` : basePath;
 }
 
@@ -66,21 +75,27 @@ export function isNavItemActive(
 /**
  * Obtiene toda la información de navegación necesaria para el sidebar
  * @param orgSlug - Slug de la organización
- * @param hasRole - Función has() de Clerk
- * @returns Objeto con rol y configuración de navegación
+ * @param role - Rol del usuario en la organización actual
+ * @returns Objeto con contexto de navegación completo
  */
 export function getNavigationContext(
   orgSlug: string,
-  hasRole: HasRoleFunction,
-) {
-  const role = getUserRole(hasRole);
-
+  role: AppRole | null,
+): NavigationContext {
   if (!role) {
-    return { role: null, navItems: [] };
+    return {
+      role: null,
+      navItems: [],
+      basePath: "",
+    };
   }
+
+  const roleBase = getRoleBasePath(role);
+  const basePath = `/${orgSlug}/${roleBase}`;
 
   return {
     role,
     navItems: getNavigationForRole(role),
+    basePath,
   };
 }

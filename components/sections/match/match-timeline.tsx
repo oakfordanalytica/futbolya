@@ -21,7 +21,7 @@ function getMinuteAsNumber(minute: string): number {
   return parseInt(parts[0], 10) + (parseInt(parts[1], 10) || 0);
 }
 
-export function MatchTimeline({ events, matchStatus }: MatchTimelineProps) {
+export function MatchTimeline({ events/*, matchStatus */}: MatchTimelineProps) {
   const maxEventMinute = Math.max(
     ...events.map((e) => getMinuteAsNumber(e.minute)),
     90,
@@ -73,7 +73,7 @@ export function MatchTimeline({ events, matchStatus }: MatchTimelineProps) {
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="font-semibold">
-                        {event.minute}' - {eventPlayer}
+                        {event.minute}&apos; - {eventPlayer}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {eventDetail}

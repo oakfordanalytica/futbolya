@@ -27,6 +27,7 @@ export default clerkMiddleware(
     }
 
     const authData = await auth();
+    console.log(authData.sessionClaims?.publicMetadata);
     const userId = authData.userId;
     const orgSlug = authData.orgSlug;
 
