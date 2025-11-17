@@ -21,10 +21,6 @@ futbolya
 │  ├─ (shell)
 │  │  └─ [org]
 │  │     ├─ admin
-│  │     │  ├─ page.tsx
-│  │     │  ├─ settings
-│  │     │  │  ├─ address.tsx
-│  │     │  │  └─ page.tsx
 │  │     │  └─ users
 │  │     │     └─ page.tsx
 │  │     └─ layout.tsx
@@ -83,6 +79,7 @@ futbolya
 │     ├─ container.tsx
 │     ├─ context-switcher.tsx
 │     ├─ description-list.tsx
+│     ├─ dialog-catalyst.tsx
 │     ├─ dialog.tsx
 │     ├─ divider.tsx
 │     ├─ dropdown-menu.tsx
@@ -100,6 +97,7 @@ futbolya
 │     ├─ player-chip.tsx
 │     ├─ popover.tsx
 │     ├─ radio.tsx
+│     ├─ select-catalyst.tsx
 │     ├─ select.tsx
 │     ├─ separator.tsx
 │     ├─ sidebar.tsx

@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { Webhook } from "svix";
-import { WebhookEvent } from "@clerk/clerk-sdk-node";
+import { WebhookEvent } from "@clerk/backend";
 import { internal } from "./_generated/api";
 
 const handleClerkWebhook = httpAction(async (ctx, request) => {

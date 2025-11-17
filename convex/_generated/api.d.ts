@@ -9,11 +9,16 @@
  */
 
 import type * as bootstrap from "../bootstrap.js";
+import type * as categories from "../categories.js";
 import type * as clerk from "../clerk.js";
 import type * as clubs from "../clubs.js";
+import type * as divisions from "../divisions.js";
 import type * as http from "../http.js";
+import type * as leagues from "../leagues.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_auth_types from "../lib/auth_types.js";
+import type * as players from "../players.js";
+import type * as staff from "../staff.js";
 import type * as users from "../users.js";
 
 import type {
@@ -32,11 +37,16 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   bootstrap: typeof bootstrap;
+  categories: typeof categories;
   clerk: typeof clerk;
   clubs: typeof clubs;
+  divisions: typeof divisions;
   http: typeof http;
+  leagues: typeof leagues;
   "lib/auth": typeof lib_auth;
   "lib/auth_types": typeof lib_auth_types;
+  players: typeof players;
+  staff: typeof staff;
   users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

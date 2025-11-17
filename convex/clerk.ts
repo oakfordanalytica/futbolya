@@ -1,4 +1,4 @@
-import { createClerkClient } from "@clerk/clerk-sdk-node";
+import { createClerkClient } from "@clerk/backend";
 
 // Initialize the Clerk Admin SDK
 // Make sure CLERK_SECRET_KEY is set in your Convex dashboard environment variables

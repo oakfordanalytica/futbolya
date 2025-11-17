@@ -1,101 +1,134 @@
 import type { AppRole } from "@/convex/lib/auth_types";
-import type { RoleNavigationConfig, NavigationContext } from "./types";
-import { NAVIGATION_CONFIG, ROLE_BASE_PATHS } from "./config";
+import type { NavItem, NavigationContext } from "./types";
+import {
+  HomeIcon,
+  UsersIcon,
+  TrophyIcon,
+  UserGroupIcon,
+  Cog6ToothIcon,
+  BuildingOfficeIcon,
+  ChartBarIcon,
+} from "@heroicons/react/24/outline";
 
 /**
- * =============================================================================
- * FUNCIONES DE NAVEGACIÓN
- * =============================================================================
- */
-
-/**
- * Obtiene la configuración de navegación para un rol
- * @param role - Rol del usuario
- * @returns Array de items de navegación
- */
-export function getNavigationForRole(role: AppRole): RoleNavigationConfig {
-  return NAVIGATION_CONFIG[role];
-}
-
-/**
- * Obtiene la ruta base para un rol
- * @param role - Rol del usuario
- * @returns Segmento de ruta (admin, coach, player, referee)
- */
-export function getRoleBasePath(role: AppRole): string {
-  return ROLE_BASE_PATHS[role];
-}
-
-/**
- * Construye una URL completa para navegación
- * @param orgSlug - Slug de la organización
- * @param role - Rol del usuario
- * @param path - Ruta relativa (opcional)
- * @returns URL completa
- *
- * @example
- * ```ts
- * buildNavUrl("liga-del-valle", "LeagueAdmin", "users")
- * // Returns: "/liga-del-valle/admin/users"
- *
- * buildNavUrl("liga-del-valle", "Player", "")
- * // Returns: "/liga-del-valle/player"
- * ```
- */
-export function buildNavUrl(
-  orgSlug: string,
-  role: AppRole,
-  path: string = "",
-): string {
-  const roleBase = getRoleBasePath(role);
-  const basePath = `/${orgSlug}/${roleBase}`;
-  return path ? `${basePath}/${path}` : basePath;
-}
-
-/**
- * Verifica si una ruta de navegación está activa
- * @param currentPathname - Pathname actual
- * @param itemUrl - URL del item de navegación
- * @param isHome - Si es la ruta home del rol
- * @returns true si está activa
- */
-export function isNavItemActive(
-  currentPathname: string,
-  itemUrl: string,
-  isHome: boolean,
-): boolean {
-  if (isHome) {
-    // Para home: comparación exacta
-    return currentPathname === itemUrl;
-  }
-  // Para otras rutas: coincidencia por prefijo
-  return currentPathname.startsWith(itemUrl);
-}
-
-/**
- * Obtiene toda la información de navegación necesaria para el sidebar
- * @param orgSlug - Slug de la organización
- * @param role - Rol del usuario en la organización actual
- * @returns Objeto con contexto de navegación completo
+ * Get navigation items based on role
  */
 export function getNavigationContext(
   orgSlug: string,
   role: AppRole | null,
 ): NavigationContext {
   if (!role) {
+    return { role: null, navItems: [], basePath: "" };
+  }
+
+  const roleBasePaths: Record<AppRole, string> = {
+    SuperAdmin: "admin",
+    LeagueAdmin: "admin",
+    ClubAdmin: "admin",
+    TechnicalDirector: "coach",
+    Player: "player",
+    Referee: "referee",
+  };
+
+  const basePath = `/${orgSlug}/${roleBasePaths[role]}`;
+
+  // SuperAdmin and LeagueAdmin navigation (League context)
+  if (role === "SuperAdmin" || role === "LeagueAdmin") {
     return {
-      role: null,
-      navItems: [],
-      basePath: "",
+      role,
+      basePath,
+      navItems: [
+        { label: "Dashboard", href: "", icon: HomeIcon },
+        { label: "Clubs", href: "clubs", icon: BuildingOfficeIcon },
+        { label: "Divisions", href: "divisions", icon: ChartBarIcon },
+        { label: "Categories", href: "categories", icon: TrophyIcon },
+        { label: "Users", href: "users", icon: UsersIcon },
+        { label: "Settings", href: "settings", icon: Cog6ToothIcon },
+      ],
     };
   }
 
-  const roleBase = getRoleBasePath(role);
-  const basePath = `/${orgSlug}/${roleBase}`;
+  // ClubAdmin navigation (Club context)
+  if (role === "ClubAdmin") {
+    return {
+      role,
+      basePath,
+      navItems: [
+        { label: "Dashboard", href: "", icon: HomeIcon },
+        { label: "Players", href: "players", icon: UserGroupIcon },
+        { label: "Staff", href: "staff", icon: UsersIcon },
+        { label: "Categories", href: "categories", icon: TrophyIcon },
+        { label: "Users", href: "users", icon: UsersIcon },
+        { label: "Settings", href: "settings", icon: Cog6ToothIcon },
+      ],
+    };
+  }
 
-  return {
-    role,
-    navItems: getNavigationForRole(role),
-    basePath,
-  };
+  // TechnicalDirector navigation
+  if (role === "TechnicalDirector") {
+    return {
+      role,
+      basePath,
+      navItems: [
+        { label: "Dashboard", href: "", icon: HomeIcon },
+        { label: "My Categories", href: "categories", icon: TrophyIcon },
+        { label: "Players", href: "players", icon: UserGroupIcon },
+      ],
+    };
+  }
+
+  // Player navigation
+  if (role === "Player") {
+    return {
+      role,
+      basePath,
+      navItems: [
+        { label: "Dashboard", href: "", icon: HomeIcon },
+        { label: "My Profile", href: "profile", icon: UsersIcon },
+        { label: "My Matches", href: "matches", icon: TrophyIcon },
+      ],
+    };
+  }
+
+  // Referee navigation
+  if (role === "Referee") {
+    return {
+      role,
+      basePath,
+      navItems: [
+        { label: "Dashboard", href: "", icon: HomeIcon },
+        { label: "My Matches", href: "matches", icon: TrophyIcon },
+      ],
+    };
+  }
+
+  return { role, basePath, navItems: [] };
+}
+
+/**
+ * Build full navigation URL
+ */
+export function buildNavUrl(basePath: string, itemHref: string): string {
+  if (itemHref === "") {
+    return basePath;
+  }
+  const cleanHref = itemHref.startsWith("/") ? itemHref.slice(1) : itemHref;
+  return `${basePath}/${cleanHref}`;
+}
+
+/**
+ * Check if navigation item is active
+ */
+export function isNavItemActive(
+  currentPath: string,
+  itemHref: string,
+  isIndex: boolean = false,
+): boolean {
+  if (isIndex) {
+    // For index routes, match exactly or with trailing slash
+    return currentPath === itemHref || currentPath === `${itemHref}/`;
+  }
+
+  // For other routes, check if current path starts with item href
+  return currentPath.startsWith(itemHref);
 }

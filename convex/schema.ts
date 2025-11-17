@@ -205,13 +205,14 @@ export default defineSchema({
    * Each division is a separate competition tier.
    */
   divisions: defineTable({
-    tournamentId: v.id("tournaments"),
-    name: v.string(), // e.g., "Division A"
-    level: v.number(), // 1 = highest (A), 2 = B, etc.
+    name: v.string(),
+    displayName: v.string(),
     description: v.optional(v.string()),
+    level: v.number(),
+    leagueId: v.id("leagues"),
   })
-    .index("by_tournamentId", ["tournamentId"])
-    .index("by_tournamentId_and_level", ["tournamentId", "level"]),
+    .index("by_leagueId", ["leagueId"])
+    .index("by_leagueId_and_level", ["leagueId", "level"]),
 
   /**
    * Links categories (teams) to divisions for a tournament.

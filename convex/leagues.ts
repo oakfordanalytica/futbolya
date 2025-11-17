@@ -1,0 +1,181 @@
+import { v } from "convex/values";
+import { query, mutation } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+
+/**
+ * List all leagues (SuperAdmin only)
+ */
+export const listAll = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("leagues"),
+      _creationTime: v.number(),
+      name: v.string(),
+      slug: v.string(),
+      country: v.string(),
+      logoUrl: v.optional(v.string()),
+      status: v.union(v.literal("active"), v.literal("inactive")),
+    })
+  ),
+  handler: async (ctx) => {
+    // TODO: Add role check for SuperAdmin
+    const leagues = await ctx.db
+      .query("leagues")
+      .order("desc")
+      .collect();
+
+    const result: Array<{
+      _id: Id<"leagues">;
+      _creationTime: number;
+      name: string;
+      slug: string;
+      country: string;
+      logoUrl: string | undefined;
+      status: "active" | "inactive";
+    }> = leagues.map((league) => ({
+      _id: league._id,
+      _creationTime: league._creationTime,
+      name: league.name,
+      slug: league.slug,
+      country: league.country,
+      logoUrl: league.logoUrl,
+      status: league.status,
+    }));
+
+    return result;
+  },
+});
+
+/**
+ * Get league by slug
+ */
+export const getBySlug = query({
+  args: { slug: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.id("leagues"),
+      _creationTime: v.number(),
+      name: v.string(),
+      slug: v.string(),
+      shortName: v.optional(v.string()),
+      country: v.string(),
+      region: v.optional(v.string()),
+      logoUrl: v.optional(v.string()),
+      status: v.union(v.literal("active"), v.literal("inactive")),
+      foundedYear: v.optional(v.number()),
+      website: v.optional(v.string()),
+      email: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      address: v.optional(v.string()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("leagues")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .unique();
+  },
+});
+
+/**
+ * Get league by ID
+ */
+export const getById = query({
+  args: { leagueId: v.id("leagues") },
+  returns: v.union(
+    v.object({
+      _id: v.id("leagues"),
+      _creationTime: v.number(),
+      name: v.string(),
+      slug: v.string(),
+      shortName: v.optional(v.string()),
+      country: v.string(),
+      region: v.optional(v.string()),
+      logoUrl: v.optional(v.string()),
+      status: v.union(v.literal("active"), v.literal("inactive")),
+      foundedYear: v.optional(v.number()),
+      website: v.optional(v.string()),
+      email: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      address: v.optional(v.string()),
+      federationId: v.optional(v.string()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.leagueId);
+  },
+});
+
+/**
+ * Get league statistics
+ */
+export const getStats = query({
+  args: { leagueId: v.id("leagues") },
+  returns: v.object({
+    totalClubs: v.number(),
+    affiliatedClubs: v.number(),
+    invitedClubs: v.number(),
+    totalPlayers: v.number(),
+    totalCategories: v.number(),
+    totalReferees: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    // Count clubs
+    const clubs = await ctx.db
+      .query("clubs")
+      .withIndex("by_leagueId", (q) => q.eq("leagueId", args.leagueId))
+      .collect();
+
+    const affiliatedClubs = clubs.filter(
+      (c) => c.status === "affiliated"
+    ).length;
+    const invitedClubs = clubs.filter((c) => c.status === "invited").length;
+
+    // Count categories across all clubs
+    let totalCategories = 0;
+    for (const club of clubs) {
+      const categories = await ctx.db
+        .query("categories")
+        .withIndex("by_clubId", (q) => q.eq("clubId", club._id))
+        .collect();
+      totalCategories += categories.length;
+    }
+
+    // Count referees for this league
+    const referees = await ctx.db
+      .query("referees")
+      .withIndex("by_leagueId", (q) => q.eq("leagueId", args.leagueId))
+      .collect();
+
+    // Count players across all categories
+    let totalPlayers = 0;
+    for (const club of clubs) {
+      const categories = await ctx.db
+        .query("categories")
+        .withIndex("by_clubId", (q) => q.eq("clubId", club._id))
+        .collect();
+
+      for (const category of categories) {
+        const players = await ctx.db
+          .query("players")
+          .withIndex("by_currentCategoryId", (q) =>
+            q.eq("currentCategoryId", category._id)
+          )
+          .collect();
+        totalPlayers += players.length;
+      }
+    }
+
+    return {
+      totalClubs: clubs.length,
+      affiliatedClubs,
+      invitedClubs,
+      totalPlayers,
+      totalCategories,
+      totalReferees: referees.length,
+    };
+  },
+});
