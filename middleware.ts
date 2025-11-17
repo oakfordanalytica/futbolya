@@ -4,21 +4,27 @@ import { getRouteByRole } from "@/lib/auth/auth";
 
 const isPublic = createRouteMatcher([
   "/",
-  "/sign-in(.*)", // login global (superadmin)
-  "/:org/sign-in(.*)", // login de tenant
+  "/sign-in(.*)",
+  "/:org/sign-in(.*)",
   "/:org/sign-up(.*)",
-  "/:org/apply(.*)", // páginas públicas del tenant (si las tienes)
+  "/:org/apply(.*)",
 ]);
 
 export default clerkMiddleware(
   async (auth, req) => {
-    const { userId, orgSlug, has } = await auth();
     const { pathname } = req.nextUrl;
-    if (!isPublic(req)) await auth.protect();
+
+    if (!isPublic(req)) {
+      await auth.protect();
+    }
+
+    const authData = await auth();
+    const userId = authData.userId;
+    const orgSlug = authData.orgSlug;
 
     if (pathname === "/" && userId) {
       if (orgSlug) {
-        const targetPath = getRouteByRole(orgSlug, has);
+        const targetPath = getRouteByRole(authData, orgSlug);
         return NextResponse.redirect(new URL(targetPath, req.url));
       } else {
         return NextResponse.next();
@@ -30,10 +36,8 @@ export default clerkMiddleware(
       const slugInUrl = orgRouteMatch[1];
 
       if (slugInUrl === orgSlug) {
-        if (slugInUrl === orgSlug) {
-          const targetPath = getRouteByRole(orgSlug, has);
-          return NextResponse.redirect(new URL(targetPath, req.url));
-        }
+        const targetPath = getRouteByRole(authData, orgSlug);
+        return NextResponse.redirect(new URL(targetPath, req.url));
       }
     }
     return NextResponse.next();
@@ -47,9 +51,7 @@ export default clerkMiddleware(
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };

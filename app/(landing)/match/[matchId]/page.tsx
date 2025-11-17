@@ -11,7 +11,7 @@ import { MatchLineups } from "@/components/sections/match/match-lineups";
 import { MatchTimeline } from "@/components/sections/match/match-timeline";
 import { MatchEventSummary } from "@/components/sections/match/match-event-summary";
 import { MatchAd } from "@/components/sections/match/match-ad";
-import { Separator } from "@/components/ui/separator";
+import { Divider } from "@/components/ui/divider";
 
 interface MatchPageProps {
   params: {
@@ -46,7 +46,7 @@ export default async function MatchPage(props: MatchPageProps) {
 
         <main className="flex flex-col gap-6 lg:w-3/5 order-1 lg:order-2">
           <MatchTimeline events={sortedEvents} matchStatus={match.status} />
-          <Separator />
+          <Divider />
           <MatchEventSummary
             events={sortedEvents}
             team1Name={match.team1}

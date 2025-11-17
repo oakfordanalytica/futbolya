@@ -1,19 +1,27 @@
-/**
- * Roles de organización disponibles en la aplicación
- * Estos deben coincidir con los roles configurados en Clerk
- */
-export type UserRole = "admin" | "staff" | "member";
+import type { auth } from "@clerk/nextjs/server";
+export type PlatformRole = "SuperAdmin";
+export type OrganizationRole =
+  | "LeagueAdmin"
+  | "ClubAdmin"
+  | "Coach"
+  | "Player"
+  | "Referee";
+export type AppRole = PlatformRole | OrganizationRole;
 
-/**
- * Mapeo de roles de Clerk a roles de la aplicación
- */
-export const CLERK_ROLES = {
-  ADMIN: "org:admin",
-  STAFF: "org:staff",
-  MEMBER: "org:member",
-} as const;
+export type AppClaims = {
+  roles?: Record<string, AppRole>;
+};
 
-/**
- * Función de verificación de roles de Clerk
- */
-export type HasRoleFunction = (params: { role: string }) => boolean;
+// Get the resolved type of the auth() object
+type AuthObject = Awaited<ReturnType<typeof auth>>;
+
+// Extend with our custom metadata
+export type AppAuth = {
+  userId: string | null;
+  orgSlug: string | null;
+  sessionClaims: (AuthObject["sessionClaims"] & {
+    metadata?: {
+      publicMetadata?: AppClaims;
+    };
+  }) | null;
+};

@@ -1,255 +1,378 @@
-// convex/schema.ts
-
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// Define reusable validators for clarity and consistency
-const tipoEventoValidator = v.union(
-  v.literal("Gol"), v.literal("Tarjeta Amarilla"), v.literal("Tarjeta Roja"),
-  v.literal("Sustitución"), v.literal("Falta"), v.literal("Tiro de Esquina"),
-  v.literal("Tiro Libre"), v.literal("Inicio Partido"), v.literal("Descanso"),
-  v.literal("Segundo Tiempo"), v.literal("Fin Partido"), v.literal("Penal")
+// === ROLE DEFINITIONS ===
+const platformRole = v.literal("SuperAdmin");
+const leagueRole = v.literal("LeagueAdmin");
+const clubRole = v.union(
+  v.literal("ClubAdmin"),
+  v.literal("TechnicalDirector"),
+  v.literal("Player")
 );
+const officialRole = v.literal("Referee");
+const allRoles = v.union(platformRole, leagueRole, clubRole, officialRole);
 
-const estadoArbitrajeValidator = v.union(
-    v.literal("sin_asignar"), v.literal("en_progreso"), v.literal("asignado"),
-    v.literal("confirmado"), v.literal("finalizado")
+// === ORGANIZATION TYPES ===
+const orgType = v.union(v.literal("league"), v.literal("club"));
+
+// === STATUS ENUMS ===
+const leagueStatus = v.union(v.literal("active"), v.literal("inactive"));
+const clubStatus = v.union(
+  v.literal("affiliated"),
+  v.literal("invited"),
+  v.literal("suspended")
 );
-
+const tournamentStatus = v.union(
+  v.literal("draft"),
+  v.literal("upcoming"),
+  v.literal("ongoing"),
+  v.literal("completed"),
+  v.literal("cancelled")
+);
+const phaseStatus = v.union(
+  v.literal("pending"),
+  v.literal("active"),
+  v.literal("completed")
+);
+const playerStatus = v.union(
+  v.literal("active"),
+  v.literal("injured"),
+  v.literal("on_loan"),
+  v.literal("inactive")
+);
 
 export default defineSchema({
-  // =================================================================
-  // USERS & PROFILES
-  // =================================================================
-  users: defineTable({
+  // ========================================
+  // PART 1: USER MANAGEMENT & RBAC
+  // ========================================
+
+  /**
+   * Core user profile linked to Clerk authentication.
+   * Every user in the system has exactly one profile.
+   */
+  profiles: defineTable({
     clerkId: v.string(),
-    email: v.optional(v.string()),
-    userName: v.string(),
-    personaId: v.id("personas"),
-  })
-    .index("by_clerk_id", ["clerkId"])
-    .index("by_persona_id", ["personaId"]),
-
-  personas: defineTable({
-    nombrePersona: v.string(),
-    apellidoPersona: v.string(),
-    fechaNacimiento: v.string(), // ISO 8601 YYYY-MM-DD
-    numeroDocumento: v.string(),
-    tipoDocumentoId: v.id("tiposDocumento"),
-    nacionId: v.optional(v.id("naciones")),
-    genero: v.optional(v.string()),
-  }).index("by_numero_documento", ["numeroDocumento"]),
-
-  // =================================================================
-  // LOOKUP TABLES (Data that rarely changes)
-  // =================================================================
-  naciones: defineTable({
-    nombre: v.string(),
-  }),
-
-  tiposDocumento: defineTable({
-    nombreDocumento: v.string(),
-    codigoDocumento: v.string(),
-  }),
-
-  tiposLicencia: defineTable({
-    nombre: v.string(),
-  }),
-
-  categoriasEdad: defineTable({
-    nombre: v.string(),
-    edadMaxima: v.number(),
-  }),
-
-  posicionesCancha: defineTable({
-    nombre: v.string(),
-    codigo: v.string(),
-    descripcion: v.string(),
-  }),
-
-  // =================================================================
-  // CORE ENTITIES
-  // =================================================================
-  escuelas: defineTable({
-    nombreEscuela: v.string(),
-    comet: v.optional(v.string()),
-    nit: v.optional(v.string()),
-    direccion: v.optional(v.string()),
-    telefono: v.optional(v.string()),
-    email: v.optional(v.string()),
-    logoStorageId: v.optional(v.id("_storage")),
-  }),
-
-  ligas: defineTable({
-    nombre: v.string(),
-    descripcion: v.optional(v.string()),
-    logoStorageId: v.optional(v.id("_storage")),
-    activo: v.boolean(),
-  }),
-
-  federacionArbitros: defineTable({
-    nombre: v.string(),
-    nit: v.string(),
-    direccion: v.string(),
-    telefono: v.string(),
     email: v.string(),
-    nacionId: v.id("naciones"),
-    ciudad: v.string(),
-    presidente: v.string(),
-    fechaFundacion: v.optional(v.string()),
-    numeroRegistro: v.string(),
-    estado: v.union(v.literal("activa"), v.literal("inactiva"), v.literal("suspendida")),
-    logoStorageId: v.optional(v.id("_storage")),
-  }),
-
-  // =================================================================
-  // ROLE-SPECIFIC PROFILES
-  // =================================================================
-  jugadores: defineTable({
-    personaId: v.id("personas"),
-    escuelaId: v.id("escuelas"),
-    posicionId: v.id("posicionesCancha"),
-    comet: v.string(),
-    categoriaEdadId: v.optional(v.id("categoriasEdad")),
-    fotoStorageId: v.optional(v.id("_storage")),
-  }).index("by_persona_id", ["personaId"]),
-
-  entrenadores: defineTable({
-    personaId: v.id("personas"),
-    escuelaId: v.optional(v.id("escuelas")),
-    comet: v.string(),
-    fechaIngresoEscuela: v.string(),
-    tipoLicenciaId: v.optional(v.id("tiposLicencia")),
-    fotoStorageId: v.optional(v.id("_storage")),
-  }).index("by_persona_id", ["personaId"]),
-
-  arbitros: defineTable({
-    personaId: v.id("personas"),
-    federacionId: v.id("federacionArbitros"),
-    numeroLicencia: v.string(),
-    categoria: v.union(v.literal("FIFA"), v.literal("Nacional"), v.literal("Regional"), v.literal("Novato")),
-    tipo: v.union(v.literal("Principal"), v.literal("Asistente"), v.literal("Cuarto")),
-    fechaCertificacion: v.string(),
-    estado: v.union(v.literal("activo"), v.literal("inactivo"), v.literal("suspendido"), v.literal("retirado")),
-  }).index("by_persona_id", ["personaId"]),
-
-  // =================================================================
-  // TEAMS & TOURNAMENTS
-  // =================================================================
-  equipos: defineTable({
-    nombre: v.string(),
-    escuelaId: v.id("escuelas"),
-    categoriaEdadId: v.optional(v.id("categoriasEdad")),
-    entrenadorId: v.optional(v.id("entrenadores")),
-  }).index("by_escuela", ["escuelaId"]),
-
-  jugadoresPorEquipo: defineTable({
-      jugadorId: v.id("jugadores"),
-      equipoId: v.id("equipos"),
-      numeroCamiseta: v.optional(v.number()),
-  }).index("by_equipo", ["equipoId"]),
-
-
-  torneos: defineTable({
-    nombre: v.string(),
-    descripcion: v.optional(v.string()),
-    fechaInicio: v.string(),
-    fechaFin: v.optional(v.string()),
-    categoriaEdadId: v.id("categoriasEdad"),
-    ligaId: v.id("ligas"),
-    estado: v.union(v.literal("activo"), v.literal("finalizado"), v.literal("suspendido")),
-  }),
-
-  torneoFases: defineTable({
-      nombre: v.string(),
-      torneoId: v.id("torneos"),
-      tipoFase: v.union(v.literal("Grupos"), v.literal("Eliminatoria"), v.literal("Liga")),
-      orden: v.number(),
-  }).index("by_torneo", ["torneoId"]),
-
-  torneoGrupos: defineTable({
-      nombre: v.string(),
-      torneoFaseId: v.id("torneoFases"),
-      descripcion: v.optional(v.string()),
-      orden: v.optional(v.number()),
-  }).index("by_fase", ["torneoFaseId"]),
-
-  equiposPorGrupo: defineTable({
-      equipoId: v.id("equipos"),
-      grupoId: v.id("torneoGrupos"),
-  }).index("by_grupo", ["grupoId"]),
-
-
-  // =================================================================
-  // MATCHES
-  // =================================================================
-  partidos: defineTable({
-    fecha: v.string(), // ISO 8601 format with time
-    grupoId: v.id("torneoGrupos"),
-    equipoLocalId: v.id("equipos"),
-    equipoVisitanteId: v.id("equipos"),
-    arbitroId: v.optional(v.id("arbitros")),
-    estadoArbitraje: v.optional(estadoArbitrajeValidator),
-    golesLocal: v.optional(v.number()),
-    golesVisitante: v.optional(v.number()),
-  }).index("by_grupo", ["grupoId"]),
-
-  partidoEventos: defineTable({
-    partidoId: v.id("partidos"),
-    tipoEvento: tipoEventoValidator,
-    minuto: v.number(),
-    equipo: v.union(v.literal("local"), v.literal("visitante")),
-    jugadorId: v.optional(v.id("jugadores")),
-    jugadorSustituidoId: v.optional(v.id("jugadores")), // For substitutions
-    descripcion: v.optional(v.string()),
-  }).index("by_partido", ["partidoId"]),
-
-  // =================================================================
-  // TRAINING & ATTENDANCE
-  // =================================================================
-
-  gruposEntrenamiento: defineTable({
-    entrenadorId: v.id("entrenadores"),
-    categoriaEdadId: v.id("categoriasEdad"),
-    escuelaId: v.id("escuelas"),
-    anio: v.optional(v.number()),
-  }).index("by_entrenador", ["entrenadorId"]),
-
-  sesionesEntrenamiento: defineTable({
-    grupoEntrenamientoId: v.id("gruposEntrenamiento"),
-    entrenadorId: v.id("entrenadores"),
-    fecha: v.string(), // ISO 8601
-    jornada: v.union(v.literal("mañana"), v.literal("tarde")),
-    nombre: v.string(),
-    descripcion: v.string(),
-    duracion: v.number(), // in minutes
-    // More detailed fields can be added here as needed
-  }).index("by_grupo", ["grupoEntrenamientoId"]),
-
-  asistenciaEstados: defineTable({
-      nombre: v.string(),
-      codigo: v.string(), // e.g., "P", "A", "J"
-      color: v.string(), // Hex color for UI
-  }).index("by_codigo", ["codigo"]),
-
-  asistencias: defineTable({
-    jugadorId: v.id("jugadores"),
-    sesionEntrenamientoId: v.id("sesionesEntrenamiento"),
-    estadoId: v.id("asistenciaEstados"),
-    observaciones: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    displayName: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+    dateOfBirth: v.optional(v.string()),
   })
-    .index("by_sesion", ["sesionEntrenamientoId"])
-    .index("by_jugador_sesion", ["jugadorId", "sesionEntrenamientoId"]),
+    .index("by_clerkId", ["clerkId"])
+    .index("by_email", ["email"]),
 
-  jugadoresPorPartido: defineTable({
-    partidoId: v.id("partidos"),
-    equipoId: v.id("equipos"),
-    jugadorId: v.id("jugadores"),
-    rolEnPartido: v.union(v.literal("titular"), v.literal("suplente")),
-    numeroCamisetaPartido: v.optional(v.number()),
+  /**
+   * Role assignments implementing multi-tenant RBAC.
+   * A user can have multiple roles across different organizations.
+   * organizationId is polymorphic (can be league or club ID).
+   */
+  roleAssignments: defineTable({
+    profileId: v.id("profiles"),
+    role: allRoles,
+    organizationId: v.string(), // Polymorphic: leagues._id OR clubs._id
+    organizationType: orgType,
+    assignedAt: v.optional(v.number()),
+    assignedBy: v.optional(v.id("profiles")),
   })
-    // Indexes to efficiently query lineups for a specific match/team
-    .index("by_partido_equipo", ["partidoId", "equipoId"])
-    .index("by_partido_jugador", ["partidoId", "jugadorId"]),
+    .index("by_profileId", ["profileId"])
+    .index("by_profileId_and_organizationId", ["profileId", "organizationId"])
+    .index("by_organizationId", ["organizationId"]),
 
+  // ========================================
+  // PART 2: ORGANIZATIONAL HIERARCHY
+  // ========================================
+
+  /**
+   * Top-level tenant: A regional league (e.g., "Liga del Valle").
+   * Leagues are affiliated with a national federation.
+   */
+  leagues: defineTable({
+    name: v.string(),
+    slug: v.string(), // URL-safe identifier
+    shortName: v.optional(v.string()),
+    logoUrl: v.optional(v.string()),
+    federationId: v.optional(v.string()), // Reference to external federation
+    region: v.optional(v.string()),
+    country: v.string(),
+    status: leagueStatus,
+    foundedYear: v.optional(v.number()),
+    website: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+    address: v.optional(v.string()),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_status", ["status"])
+    .index("by_country_and_region", ["country", "region"]),
+
+  /**
+   * Second-level tenant: A club affiliated with a league.
+   * Clubs can be "affiliated" (permanent) or "invited" (temporary).
+   */
+  clubs: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    shortName: v.optional(v.string()),
+    logoUrl: v.optional(v.string()),
+    leagueId: v.id("leagues"),
+    fifaId: v.optional(v.string()),
+    headquarters: v.optional(v.string()),
+    status: clubStatus,
+    taxId: v.optional(v.string()), // NIT in Colombia
+    foundedYear: v.optional(v.number()),
+    colors: v.optional(v.array(v.string())),
+    website: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_leagueId", ["leagueId"])
+    .index("by_leagueId_and_status", ["leagueId", "status"]),
+
+  /**
+   * Club categories (age divisions) represent teams within a club.
+   * Example: "Sub-17 Division A" of Club América
+   */
+  categories: defineTable({
+    clubId: v.id("clubs"),
+    name: v.string(), // e.g., "Sub-17"
+    ageGroup: v.string(), // e.g., "U17", "U20"
+    gender: v.union(v.literal("male"), v.literal("female"), v.literal("mixed")),
+    technicalDirectorId: v.optional(v.id("profiles")),
+    assistantCoachIds: v.optional(v.array(v.id("profiles"))),
+    status: v.union(v.literal("active"), v.literal("inactive")),
+  })
+    .index("by_clubId", ["clubId"])
+    .index("by_clubId_and_ageGroup", ["clubId", "ageGroup"])
+    .index("by_technicalDirectorId", ["technicalDirectorId"]),
+
+  // ========================================
+  // PART 3: TOURNAMENT & COMPETITION SYSTEM
+  // ========================================
+
+  /**
+   * Tournaments are competitions organized by leagues.
+   * Can be league-wide, national, or invitational.
+   */
+  tournaments: defineTable({
+    leagueId: v.id("leagues"),
+    name: v.string(),
+    slug: v.string(),
+    description: v.optional(v.string()),
+    ageGroup: v.string(), // e.g., "U17"
+    gender: v.union(v.literal("male"), v.literal("female"), v.literal("mixed")),
+    season: v.string(), // e.g., "2025"
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    status: tournamentStatus,
+    // Division configuration
+    enableDivisions: v.boolean(),
+    divisionCount: v.optional(v.number()), // How many divisions (A, B, C, D)
+    // Promotion/Relegation rules
+    promotionCount: v.optional(v.number()), // Teams promoted per division
+    relegationCount: v.optional(v.number()), // Teams relegated per division
+  })
+    .index("by_leagueId", ["leagueId"])
+    .index("by_slug", ["slug"])
+    .index("by_leagueId_and_season", ["leagueId", "season"])
+    .index("by_status", ["status"]),
+
+  /**
+   * Tournament phases (e.g., "Group Stage", "Knockout", "Finals").
+   * Defines the structure and progression of a tournament.
+   */
+  tournamentPhases: defineTable({
+    tournamentId: v.id("tournaments"),
+    name: v.string(),
+    phaseType: v.union(
+      v.literal("group_stage"),
+      v.literal("knockout"),
+      v.literal("round_robin"),
+      v.literal("final")
+    ),
+    order: v.number(), // Sequence in the tournament
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    status: phaseStatus,
+  })
+    .index("by_tournamentId", ["tournamentId"])
+    .index("by_tournamentId_and_order", ["tournamentId", "order"]),
+
+  /**
+   * Divisions within a tournament (A, B, C, D).
+   * Each division is a separate competition tier.
+   */
+  divisions: defineTable({
+    tournamentId: v.id("tournaments"),
+    name: v.string(), // e.g., "Division A"
+    level: v.number(), // 1 = highest (A), 2 = B, etc.
+    description: v.optional(v.string()),
+  })
+    .index("by_tournamentId", ["tournamentId"])
+    .index("by_tournamentId_and_level", ["tournamentId", "level"]),
+
+  /**
+   * Links categories (teams) to divisions for a tournament.
+   * This is the "registration" of a team in a division.
+   */
+  divisionEntries: defineTable({
+    divisionId: v.id("divisions"),
+    categoryId: v.id("categories"),
+    registeredAt: v.number(),
+    registeredBy: v.optional(v.id("profiles")),
+    // For tracking promotion/relegation
+    previousDivisionId: v.optional(v.id("divisions")),
+  })
+    .index("by_divisionId", ["divisionId"])
+    .index("by_categoryId", ["categoryId"])
+    .index("by_divisionId_and_categoryId", ["divisionId", "categoryId"]),
+
+  /**
+   * Rankings/Standings for each team in a division.
+   * Updated after each match.
+   */
+  standings: defineTable({
+    divisionId: v.id("divisions"),
+    categoryId: v.id("categories"),
+    // Match statistics
+    matchesPlayed: v.number(),
+    wins: v.number(),
+    draws: v.number(),
+    losses: v.number(),
+    goalsFor: v.number(),
+    goalsAgainst: v.number(),
+    goalDifference: v.number(),
+    points: v.number(),
+    // Additional metrics
+    position: v.number(), // Current rank
+    form: v.optional(v.array(v.string())), // Last 5 results: ["W", "L", "D", "W", "W"]
+    // Promotion/Relegation indicators
+    promotionEligible: v.optional(v.boolean()),
+    relegationZone: v.optional(v.boolean()),
+  })
+    .index("by_divisionId", ["divisionId"])
+    .index("by_divisionId_and_position", ["divisionId", "position"])
+    .index("by_categoryId", ["categoryId"]),
+
+  // ========================================
+  // PART 4: PLAYER MANAGEMENT
+  // ========================================
+
+  /**
+   * Player records linked to profiles and categories.
+   * Stores athlete-specific data and career history.
+   */
+  players: defineTable({
+    profileId: v.id("profiles"),
+    currentCategoryId: v.optional(v.id("categories")),
+    // Personal details
+    nationality: v.optional(v.string()),
+    secondNationality: v.optional(v.string()),
+    placeOfBirth: v.optional(v.string()),
+    // Player info
+    position: v.optional(
+      v.union(
+        v.literal("goalkeeper"),
+        v.literal("defender"),
+        v.literal("midfielder"),
+        v.literal("forward")
+      )
+    ),
+    jerseyNumber: v.optional(v.number()),
+    height: v.optional(v.number()), // in cm
+    weight: v.optional(v.number()), // in kg
+    preferredFoot: v.optional(v.union(v.literal("left"), v.literal("right"), v.literal("both"))),
+    // Status
+    status: playerStatus,
+    joinedDate: v.optional(v.string()),
+    // Career tracking for valorization
+    trainingHours: v.optional(v.number()),
+    matchesPlayed: v.optional(v.number()),
+    goals: v.optional(v.number()),
+    assists: v.optional(v.number()),
+    // Medical
+    bloodType: v.optional(v.string()),
+    allergies: v.optional(v.array(v.string())),
+    medicalNotes: v.optional(v.string()),
+  })
+    .index("by_profileId", ["profileId"])
+    .index("by_currentCategoryId", ["currentCategoryId"])
+    .index("by_status", ["status"]),
+
+  /**
+   * Player transfers between categories/clubs.
+   * Essential for transfer market valorization.
+   */
+  playerTransfers: defineTable({
+    playerId: v.id("players"),
+    fromCategoryId: v.optional(v.id("categories")),
+    toCategoryId: v.id("categories"),
+    transferDate: v.string(),
+    transferType: v.union(
+      v.literal("promotion"), // Within same club
+      v.literal("transfer"), // Between clubs
+      v.literal("loan"),
+      v.literal("trial")
+    ),
+    fee: v.optional(v.number()), // For valorization
+    approvedBy: v.optional(v.id("profiles")),
+    notes: v.optional(v.string()),
+  })
+    .index("by_playerId", ["playerId"])
+    .index("by_toCategoryId", ["toCategoryId"])
+    .index("by_transferDate", ["transferDate"]),
+
+  // ========================================
+  // PART 5: REFEREE MANAGEMENT
+  // ========================================
+
+  /**
+   * Referee profiles for match officials.
+   * Managed at the league level.
+   */
+  referees: defineTable({
+    profileId: v.id("profiles"),
+    leagueId: v.id("leagues"),
+    // Certification
+    certificationLevel: v.string(), // "Escalafón" - e.g., "National", "Regional"
+    certificationDate: v.optional(v.string()),
+    licenseNumber: v.optional(v.string()),
+    // Assignment criteria
+    zone: v.optional(v.string()), // Geographic zone for assignment
+    availableDays: v.optional(v.array(v.string())), // ["Monday", "Wednesday"]
+    maxMatchesPerWeek: v.optional(v.number()),
+    // Performance tracking
+    matchesOfficiated: v.optional(v.number()),
+    rating: v.optional(v.number()), // Average rating
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("inactive")),
+  })
+    .index("by_profileId", ["profileId"])
+    .index("by_leagueId", ["leagueId"])
+    .index("by_leagueId_and_certificationLevel", ["leagueId", "certificationLevel"])
+    .index("by_zone", ["zone"]),
+
+  // ========================================
+  // PART 6: SETTINGS & CONFIGURATION
+  // ========================================
+
+  /**
+   * League-specific settings and rules.
+   * Configurable by LeagueAdmin.
+   */
+  leagueSettings: defineTable({
+    leagueId: v.id("leagues"),
+    // Division rules
+    divisionNames: v.optional(v.array(v.string())), // ["Elite", "First", "Second"]
+    promotionRules: v.optional(v.string()), // JSON or description
+    relegationRules: v.optional(v.string()),
+    // Match rules
+    matchDuration: v.optional(v.number()), // minutes
+    halftimeDuration: v.optional(v.number()),
+    pointsForWin: v.optional(v.number()),
+    pointsForDraw: v.optional(v.number()),
+    // Age group definitions
+    ageGroupDefinitions: v.optional(v.string()), // JSON config
+  }).index("by_leagueId", ["leagueId"]),
 });
