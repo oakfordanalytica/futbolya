@@ -19,7 +19,7 @@ function getRoleBasePath(orgSlug: string, role: AppRole): string {
     case "LeagueAdmin":
     case "ClubAdmin":
       return `/${orgSlug}/admin`;
-    case "Coach":
+    case "TechnicalDirector":
       return `/${orgSlug}/coach`;
     case "Player":
       return `/${orgSlug}/player`;

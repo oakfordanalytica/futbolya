@@ -1,11 +1,21 @@
 /**
- * These types are shared between the frontend and backend.
+ * Shared authentication types.
+ * This is the single source of truth for role definitions.
  */
 
-// The types of organizations a user can have a role in
 export type OrgType = "league" | "club";
 
-// All possible roles in the application
 export type PlatformRole = "SuperAdmin";
-export type OrganizationRole = "LeagueAdmin" | "ClubAdmin" | "Coach" | "Player" | "Referee";
+
+export type OrganizationRole = 
+  | "LeagueAdmin" 
+  | "ClubAdmin" 
+  | "TechnicalDirector"
+  | "Player" 
+  | "Referee";
+
 export type AppRole = PlatformRole | OrganizationRole;
+
+export type AppClaims = {
+  roles?: Record<string, AppRole>;
+};
