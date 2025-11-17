@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as bootstrap from "../bootstrap.js";
 import type * as clerk from "../clerk.js";
 import type * as clubs from "../clubs.js";
 import type * as http from "../http.js";
@@ -30,6 +31,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  bootstrap: typeof bootstrap;
   clerk: typeof clerk;
   clubs: typeof clubs;
   http: typeof http;

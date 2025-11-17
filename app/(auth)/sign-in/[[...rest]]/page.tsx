@@ -1,8 +1,18 @@
 import { SignIn } from "@clerk/nextjs";
-import React from "react";
 
-function SignInPage() {
-  return <SignIn />;
+export default function SignInPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <SignIn 
+        appearance={{
+          elements: {
+            rootBox: "mx-auto",
+            card: "shadow-lg",
+          },
+        }}
+        signUpUrl={undefined}
+        forceRedirectUrl="/"
+      />
+    </div>
+  );
 }
-
-export default SignInPage;

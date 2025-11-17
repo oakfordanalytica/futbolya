@@ -490,3 +490,482 @@ export const syncRolesToClerk = internalAction({
     return null;
   },
 });
+
+/**
+ * Create a user profile that can be claimed later.
+ * Email is optional - admins can add it later when available.
+ */
+export const createInvitedUser = mutation({
+  args: {
+    email: v.optional(v.string()),
+    firstName: v.string(),
+    lastName: v.string(),
+    phoneNumber: v.optional(v.string()),
+    role: v.union(
+      v.literal("TechnicalDirector"),
+      v.literal("Player"),
+      v.literal("Referee")
+    ),
+    organizationId: v.string(),
+    organizationType: v.union(v.literal("league"), v.literal("club")),
+  },
+  returns: v.id("profiles"),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // TODO: Add authorization check - only admins can create users
+
+    // If email provided, check if user already exists
+    if (args.email) {
+      const email = args.email; // Narrow the type
+      const existing = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .unique();
+
+      if (existing) {
+        throw new Error("User with this email already exists");
+      }
+    }
+
+    // Create profile without Clerk ID (they'll claim it when they sign in)
+    const profileId = await ctx.db.insert("profiles", {
+      clerkId: "", // Empty until they claim their account
+      email: args.email ?? "", // Can be empty if not provided yet
+      firstName: args.firstName,
+      lastName: args.lastName,
+      displayName: `${args.firstName} ${args.lastName}`,
+      phoneNumber: args.phoneNumber,
+    });
+
+    // Assign their role immediately
+    await ctx.db.insert("roleAssignments", {
+      profileId,
+      role: args.role,
+      organizationId: args.organizationId,
+      organizationType: args.organizationType,
+      assignedAt: Date.now(),
+    });
+
+    return profileId;
+  },
+});
+
+/**
+ * Update a user's email (when admin gets it later).
+ */
+export const updateUserEmail = mutation({
+  args: {
+    profileId: v.id("profiles"),
+    email: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // TODO: Add authorization check
+
+    // Check if email is already taken
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+
+    if (existing && existing._id !== args.profileId) {
+      throw new Error("Email already in use");
+    }
+
+    await ctx.db.patch(args.profileId, {
+      email: args.email,
+    });
+
+    return null;
+  },
+});
+
+/**
+ * List all profiles (for admin to see who needs email/account setup).
+ */
+export const listAllProfiles = query({
+  args: {
+    organizationId: v.optional(v.string()),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("profiles"),
+      _creationTime: v.number(),
+      clerkId: v.string(),
+      email: v.string(),
+      firstName: v.optional(v.string()),
+      lastName: v.optional(v.string()),
+      displayName: v.optional(v.string()),
+      avatarUrl: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      hasAccount: v.boolean(), // Whether they've claimed their account
+      roles: v.array(
+        v.object({
+          role: v.string(),
+          organizationId: v.string(),
+          organizationType: v.union(v.literal("league"), v.literal("club")),
+        })
+      ),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // TODO: Add authorization check - only admins should see all users
+
+    let profiles = await ctx.db.query("profiles").collect();
+
+    // If organizationId provided, filter by that organization
+    if (args.organizationId) {
+      const orgId = args.organizationId;
+      const allAssignments = await ctx.db
+        .query("roleAssignments")
+        .withIndex("by_organizationId", (q) =>
+          q.eq("organizationId", orgId)
+        )
+        .collect();
+
+      const profileIds = new Set(allAssignments.map((a) => a.profileId));
+      profiles = profiles.filter((p) => profileIds.has(p._id));
+    }
+
+    const result = [];
+    for (const profile of profiles) {
+      const assignments = await ctx.db
+        .query("roleAssignments")
+        .withIndex("by_profileId", (q) => q.eq("profileId", profile._id))
+        .collect();
+
+      result.push({
+        ...profile,
+        hasAccount: profile.clerkId !== "", // Has claimed their account
+        roles: assignments.map((a) => ({
+          role: a.role,
+          organizationId: a.organizationId,
+          organizationType: a.organizationType,
+        })),
+      });
+    }
+
+    return result;
+  },
+});
+
+/**
+ * Create an admin user (LeagueAdmin, ClubAdmin, TechnicalDirector, Referee).
+ * Email is REQUIRED and Clerk account is created immediately.
+ */
+export const createAdminUser = mutation({
+  args: {
+    email: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phoneNumber: v.optional(v.string()),
+    role: v.union(
+      v.literal("LeagueAdmin"),
+      v.literal("ClubAdmin"),
+      v.literal("TechnicalDirector"),
+      v.literal("Referee")
+    ),
+    organizationId: v.string(),
+    organizationType: v.union(v.literal("league"), v.literal("club")),
+  },
+  returns: v.object({
+    profileId: v.id("profiles"),
+    clerkAccountCreated: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // TODO: Add authorization check - only admins can create users
+
+    // Verify organization exists
+    if (args.organizationType === "league") {
+      const league = await ctx.db.get(args.organizationId as Id<"leagues">);
+      if (!league) throw new Error("League not found");
+    } else {
+      const club = await ctx.db.get(args.organizationId as Id<"clubs">);
+      if (!club) throw new Error("Club not found");
+    }
+
+    // Check if email is already in use
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+
+    if (existing) {
+      throw new Error("User with this email already exists");
+    }
+
+    // Create profile first (without Clerk ID)
+    const profileId = await ctx.db.insert("profiles", {
+      clerkId: "",
+      email: args.email,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      displayName: `${args.firstName} ${args.lastName}`,
+      phoneNumber: args.phoneNumber,
+    });
+
+    // Assign role
+    await ctx.db.insert("roleAssignments", {
+      profileId,
+      role: args.role,
+      organizationId: args.organizationId,
+      organizationType: args.organizationType,
+      assignedAt: Date.now(),
+    });
+
+    // Create Clerk account asynchronously
+    await ctx.scheduler.runAfter(0, internal.users.createClerkAccount, {
+      profileId,
+      email: args.email,
+      firstName: args.firstName,
+      lastName: args.lastName,
+    });
+
+    return { profileId, clerkAccountCreated: true };
+  },
+});
+
+/**
+ * Create a player without email (email optional).
+ * Clerk account will be created when email is added later.
+ */
+export const createPlayer = mutation({
+  args: {
+    email: v.optional(v.string()),
+    firstName: v.string(),
+    lastName: v.string(),
+    phoneNumber: v.optional(v.string()),
+    dateOfBirth: v.optional(v.string()),
+    organizationId: v.string(), // Club ID
+  },
+  returns: v.id("profiles"),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // TODO: Add authorization check - only club admins can create players
+
+    // Verify club exists
+    const club = await ctx.db.get(args.organizationId as Id<"clubs">);
+    if (!club) throw new Error("Club not found");
+
+    // If email provided, check if it's already in use
+    if (args.email) {
+      const email = args.email;
+      const existing = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .unique();
+
+      if (existing) {
+        throw new Error("User with this email already exists");
+      }
+    }
+
+    // Create profile
+    const profileId = await ctx.db.insert("profiles", {
+      clerkId: "",
+      email: args.email ?? "",
+      firstName: args.firstName,
+      lastName: args.lastName,
+      displayName: `${args.firstName} ${args.lastName}`,
+      phoneNumber: args.phoneNumber,
+      dateOfBirth: args.dateOfBirth,
+    });
+
+    // Assign Player role
+    await ctx.db.insert("roleAssignments", {
+      profileId,
+      role: "Player",
+      organizationId: args.organizationId,
+      organizationType: "club",
+      assignedAt: Date.now(),
+    });
+
+    // If email was provided, create Clerk account
+    if (args.email && args.firstName && args.lastName) {
+      await ctx.scheduler.runAfter(0, internal.users.createClerkAccount, {
+        profileId,
+        email: args.email,
+        firstName: args.firstName,
+        lastName: args.lastName,
+      });
+    }
+
+    return profileId;
+  },
+});
+
+/**
+ * Update player email and trigger Clerk account creation.
+ */
+export const updatePlayerEmail = mutation({
+  args: {
+    profileId: v.id("profiles"),
+    email: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // TODO: Add authorization check
+
+    const profile = await ctx.db.get(args.profileId);
+    if (!profile) throw new Error("Profile not found");
+
+    // Check if email is already taken
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+
+    if (existing && existing._id !== args.profileId) {
+      throw new Error("Email already in use");
+    }
+
+    // Update email
+    await ctx.db.patch(args.profileId, {
+      email: args.email,
+    });
+
+    // If profile doesn't have Clerk account yet, create it
+    if (!profile.clerkId && profile.firstName && profile.lastName) {
+      await ctx.scheduler.runAfter(0, internal.users.createClerkAccount, {
+        profileId: args.profileId,
+        email: args.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+      });
+    }
+
+    return null;
+  },
+});
+
+/**
+ * Internal action to create Clerk account and link to profile.
+ */
+export const createClerkAccount = internalAction({
+  args: {
+    profileId: v.id("profiles"),
+    email: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { clerkClient } = await import("./clerk");
+
+    try {
+      // Create user in Clerk
+      const clerkUser = await clerkClient.users.createUser({
+        emailAddress: [args.email],
+        firstName: args.firstName,
+        lastName: args.lastName,
+        skipPasswordChecks: true,
+        skipPasswordRequirement: true,
+      });
+
+      // Link Clerk ID to profile
+      await ctx.runMutation(internal.users.linkClerkAccount, {
+        profileId: args.profileId,
+        clerkId: clerkUser.id,
+      });
+
+      // Sync roles to Clerk metadata
+      await ctx.runAction(internal.users.syncRolesToClerk, {
+        profileId: args.profileId,
+      });
+
+      console.log(`✅ Clerk account created for ${args.email}`);
+    } catch (error) {
+      console.error("Failed to create Clerk account:", error);
+      // Don't throw - allow the profile to exist without Clerk account
+      // Admin can retry or user can sign up manually
+    }
+
+    return null;
+  },
+});
+
+/**
+ * Link Clerk account to existing profile.
+ */
+export const linkClerkAccount = internalMutation({
+  args: {
+    profileId: v.id("profiles"),
+    clerkId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.profileId, {
+      clerkId: args.clerkId,
+    });
+    return null;
+  },
+});
+
+/**
+ * Get profile by Clerk ID (for webhook).
+ */
+export const getProfileByClerkId = internalQuery({
+  args: { clerkId: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.id("profiles"),
+      _creationTime: v.number(),
+      clerkId: v.string(),
+      email: v.string(),
+      firstName: v.optional(v.string()),
+      lastName: v.optional(v.string()),
+      displayName: v.optional(v.string()),
+      avatarUrl: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      dateOfBirth: v.optional(v.string()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("profiles")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
+  },
+});
+
+export const getProfileByEmail = internalQuery({
+  args: { email: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.id("profiles"),
+      _creationTime: v.number(),
+      clerkId: v.string(),
+      email: v.string(),
+      firstName: v.optional(v.string()),
+      lastName: v.optional(v.string()),
+      displayName: v.optional(v.string()),
+      avatarUrl: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      dateOfBirth: v.optional(v.string()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("profiles")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+  },
+});

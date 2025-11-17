@@ -6,13 +6,21 @@ const isPublic = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/:org/sign-in(.*)",
-  "/:org/sign-up(.*)",
   "/:org/apply(.*)",
+]);
+
+const isSignUp = createRouteMatcher([
+  "/sign-up(.*)",
+  "/:org/sign-up(.*)",
 ]);
 
 export default clerkMiddleware(
   async (auth, req) => {
     const { pathname } = req.nextUrl;
+
+    if (isSignUp(req)) {
+      return NextResponse.redirect(new URL("/sign-in", req.url));
+    }
 
     if (!isPublic(req)) {
       await auth.protect();

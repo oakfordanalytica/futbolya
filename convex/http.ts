@@ -11,18 +11,38 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
   }
 
   switch (event.type) {
-    case "user.created":
-      await ctx.runMutation(internal.users.createProfileInternal, {
-        clerkId: event.data.id,
-        email: event.data.email_addresses[0]?.email_address ?? "",
-        firstName: event.data.first_name ?? undefined,
-        lastName: event.data.last_name ?? undefined,
-        avatarUrl: event.data.image_url,
-      });
+    case "user.created": {
+      const email = event.data.email_addresses[0]?.email_address ?? "";
+      
+      // Check if this email was pre-created by admin
+      const existingProfile = await ctx.runQuery(
+        internal.users.getProfileByEmail,
+        { email }
+      );
+
+      if (existingProfile && !existingProfile.clerkId) {
+        // Link existing profile to this Clerk account
+        await ctx.runMutation(internal.users.linkClerkAccount, {
+          profileId: existingProfile._id,
+          clerkId: event.data.id,
+        });
+
+        // Sync pre-assigned roles to Clerk
+        await ctx.runAction(internal.users.syncRolesToClerk, {
+          profileId: existingProfile._id,
+        });
+      } else if (!existingProfile) {
+        // New user signing up (shouldn't happen with sign-ups disabled)
+        await ctx.runMutation(internal.users.createProfileInternal, {
+          clerkId: event.data.id,
+          email,
+          firstName: event.data.first_name ?? undefined,
+          lastName: event.data.last_name ?? undefined,
+          avatarUrl: event.data.image_url ?? undefined,
+        });
+      }
       break;
-    case "user.updated":
-      // TODO: Add logic to update user profile if needed
-      break;
+    }
   }
 
   return new Response(null, { status: 200 });
@@ -35,7 +55,9 @@ http.route({
   handler: handleClerkWebhook,
 });
 
-async function validateClerkRequest(request: Request): Promise<WebhookEvent | undefined> {
+async function validateClerkRequest(
+  request: Request
+): Promise<WebhookEvent | undefined> {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
   if (!webhookSecret) {
     throw new Error("CLERK_WEBHOOK_SECRET is not set");
@@ -47,7 +69,7 @@ async function validateClerkRequest(request: Request): Promise<WebhookEvent | un
     "svix-timestamp": request.headers.get("svix-timestamp")!,
     "svix-signature": request.headers.get("svix-signature")!,
   };
-  
+
   const wh = new Webhook(webhookSecret);
   try {
     const event = wh.verify(payloadString, svixHeaders) as WebhookEvent;
