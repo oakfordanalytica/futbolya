@@ -6,15 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -31,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Container } from "@/components/ui/container";
+import { LeagueForm } from "@/components/forms/LeagueForm";
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -51,41 +44,11 @@ export default function LeagueDetailPage() {
   const league = useQuery(api.leagues.getById, { leagueId });
   const statistics = useQuery(api.leagues.getStats, { leagueId });
 
-  const updateLeague = useMutation(api.leagues.update);
   const deleteLeague = useMutation(api.leagues.deleteLeague);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [editForm, setEditForm] = useState({
-    name: "",
-    shortName: "",
-    country: "",
-    region: "",
-    foundedYear: "",
-    website: "",
-    email: "",
-    phoneNumber: "",
-    address: "",
-    status: "active" as "active" | "inactive",
-  });
-
-  // Set form when league loads
-  if (league && editForm.name === "") {
-    setEditForm({
-      name: league.name,
-      shortName: league.shortName || "",
-      country: league.country,
-      region: league.region || "",
-      foundedYear: league.foundedYear?.toString() || "",
-      website: league.website || "",
-      email: league.email || "",
-      phoneNumber: league.phoneNumber || "",
-      address: league.address || "",
-      status: league.status,
-    });
-  }
 
   if (!league) {
     return (
@@ -101,33 +64,6 @@ export default function LeagueDetailPage() {
       </Container>
     );
   }
-
-  const handleEdit = async () => {
-    setLoading(true);
-    try {
-      await updateLeague({
-        leagueId,
-        name: editForm.name,
-        shortName: editForm.shortName || undefined,
-        country: editForm.country,
-        region: editForm.region || undefined,
-        foundedYear: editForm.foundedYear
-          ? parseInt(editForm.foundedYear)
-          : undefined,
-        website: editForm.website || undefined,
-        email: editForm.email || undefined,
-        phoneNumber: editForm.phoneNumber || undefined,
-        address: editForm.address || undefined,
-        status: editForm.status,
-      });
-      setIsEditOpen(false);
-    } catch (error) {
-      console.error(error);
-      alert(error instanceof Error ? error.message : "Failed to update league");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDelete = async () => {
     setLoading(true);
@@ -160,12 +96,18 @@ export default function LeagueDetailPage() {
               <ArrowLeftIcon className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-4">
-              {league.logoUrl && (
+              {league.logoUrl ? (
                 <img
                   src={league.logoUrl}
                   alt={league.name}
                   className="h-16 w-16 rounded-lg object-cover"
                 />
+              ) : (
+                <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-bold text-2xl">
+                    {league.name[0]?.toUpperCase()}
+                  </span>
+                </div>
               )}
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">
@@ -423,158 +365,12 @@ export default function LeagueDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit League</DialogTitle>
-              <DialogDescription>
-                Update the league information
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label htmlFor="edit-name">
-                  League Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, name: e.target.value })
-                  }
-                  placeholder="e.g., Spanish Football Federation"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-shortName">Short Name</Label>
-                <Input
-                  id="edit-shortName"
-                  value={editForm.shortName}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, shortName: e.target.value })
-                  }
-                  placeholder="e.g., RFEF"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-country">
-                  Country <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-country"
-                  value={editForm.country}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, country: e.target.value })
-                  }
-                  placeholder="e.g., Spain"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-region">Region</Label>
-                <Input
-                  id="edit-region"
-                  value={editForm.region}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, region: e.target.value })
-                  }
-                  placeholder="e.g., Andalusia"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-foundedYear">Founded Year</Label>
-                <Input
-                  id="edit-foundedYear"
-                  type="number"
-                  value={editForm.foundedYear}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, foundedYear: e.target.value })
-                  }
-                  placeholder="e.g., 1909"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, email: e.target.value })
-                  }
-                  placeholder="e.g., contact@league.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-phoneNumber">Phone Number</Label>
-                <Input
-                  id="edit-phoneNumber"
-                  type="tel"
-                  value={editForm.phoneNumber}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, phoneNumber: e.target.value })
-                  }
-                  placeholder="e.g., +34 912 345 678"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-address">Address</Label>
-                <Input
-                  id="edit-address"
-                  value={editForm.address}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, address: e.target.value })
-                  }
-                  placeholder="e.g., Calle Principal 123, Madrid"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-website">Website</Label>
-                <Input
-                  id="edit-website"
-                  type="url"
-                  value={editForm.website}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, website: e.target.value })
-                  }
-                  placeholder="e.g., https://league.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-status">
-                  Status <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={editForm.status}
-                  onValueChange={(value: "active" | "inactive") =>
-                    setEditForm({ ...editForm, status: value })
-                  }
-                >
-                  <SelectTrigger id="edit-status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleEdit}
-                disabled={loading || !editForm.name || !editForm.country}
-              >
-                {loading ? "Saving..." : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Edit Dialog - Now using shared LeagueForm */}
+        <LeagueForm
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          leagueId={leagueId}
+        />
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
@@ -588,10 +384,8 @@ export default function LeagueDetailPage() {
                   (statistics.totalClubs > 0 || statistics.totalCategories > 0) && (
                     <span className="block mt-2 text-destructive">
                       Warning: This league has {statistics.totalClubs} club
-                      {statistics.totalClubs !== 1 ? "s" : ""} and{" "}
-                      {statistics.totalCategories} categor
-                      {statistics.totalCategories !== 1 ? "ies" : "y"}. You
-                      cannot delete it until all clubs and divisions are removed.
+                      {statistics.totalClubs !== 1 ? "s" : ""}. You cannot
+                      delete it until all clubs and divisions are removed.
                     </span>
                   )}
               </DialogDescription>
@@ -608,9 +402,7 @@ export default function LeagueDetailPage() {
                 onClick={handleDelete}
                 disabled={
                   loading ||
-                  (statistics &&
-                    (statistics.totalClubs > 0 ||
-                      statistics.totalCategories > 0))
+                  (statistics && statistics.totalClubs > 0)
                 }
               >
                 {loading ? "Deleting..." : "Delete League"}

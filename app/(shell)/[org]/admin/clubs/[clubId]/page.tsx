@@ -6,15 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -31,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Container } from "@/components/ui/container";
+import { ClubForm } from "@/components/forms/ClubForm";
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -53,37 +46,11 @@ export default function ClubDetailPage() {
     ? useQuery(api.leagues.getById, { leagueId: club.leagueId })
     : undefined;
 
-  const updateClub = useMutation(api.clubs.update);
   const deleteClub = useMutation(api.clubs.deleteClub);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [editForm, setEditForm] = useState({
-    name: "",
-    shortName: "",
-    headquarters: "",
-    foundedYear: "",
-    website: "",
-    email: "",
-    phoneNumber: "",
-    status: "affiliated" as "affiliated" | "invited" | "suspended",
-  });
-
-  // Set form when club loads
-  if (club && editForm.name === "") {
-    setEditForm({
-      name: club.name,
-      shortName: club.shortName || "",
-      headquarters: club.headquarters || "",
-      foundedYear: club.foundedYear?.toString() || "",
-      website: club.website || "",
-      email: club.email || "",
-      phoneNumber: club.phoneNumber || "",
-      status: club.status,
-    });
-  }
 
   if (!club || !league) {
     return (
@@ -99,31 +66,6 @@ export default function ClubDetailPage() {
       </Container>
     );
   }
-
-  const handleEdit = async () => {
-    setLoading(true);
-    try {
-      await updateClub({
-        clubId,
-        name: editForm.name,
-        shortName: editForm.shortName || undefined,
-        headquarters: editForm.headquarters || undefined,
-        foundedYear: editForm.foundedYear
-          ? parseInt(editForm.foundedYear)
-          : undefined,
-        website: editForm.website || undefined,
-        email: editForm.email || undefined,
-        phoneNumber: editForm.phoneNumber || undefined,
-        status: editForm.status,
-      });
-      setIsEditOpen(false);
-    } catch (error) {
-      console.error(error);
-      alert(error instanceof Error ? error.message : "Failed to update club");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDelete = async () => {
     setLoading(true);
@@ -163,12 +105,18 @@ export default function ClubDetailPage() {
               <ArrowLeftIcon className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-4">
-              {club.logoUrl && (
+              {club.logoUrl ? (
                 <img
                   src={club.logoUrl}
                   alt={club.name}
                   className="h-16 w-16 rounded-lg object-cover"
                 />
+              ) : (
+                <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-bold text-2xl">
+                    {club.name[0]?.toUpperCase()}
+                  </span>
+                </div>
               )}
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">
@@ -342,7 +290,7 @@ export default function ClubDetailPage() {
               </div>
               <Button
                 onClick={() =>
-                  router.push(`/${orgSlug}/admin/categories/new?club=${clubId}`)
+                  router.push(`/${orgSlug}/admin/categories`)
                 }
               >
                 Add Category
@@ -415,134 +363,13 @@ export default function ClubDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Club</DialogTitle>
-              <DialogDescription>
-                Update the club information
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label htmlFor="edit-name">
-                  Club Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, name: e.target.value })
-                  }
-                  placeholder="e.g., Real Madrid CF"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-shortName">Short Name</Label>
-                <Input
-                  id="edit-shortName"
-                  value={editForm.shortName}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, shortName: e.target.value })
-                  }
-                  placeholder="e.g., Real Madrid"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-headquarters">Headquarters</Label>
-                <Input
-                  id="edit-headquarters"
-                  value={editForm.headquarters}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, headquarters: e.target.value })
-                  }
-                  placeholder="e.g., Madrid, Spain"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-foundedYear">Founded Year</Label>
-                <Input
-                  id="edit-foundedYear"
-                  type="number"
-                  value={editForm.foundedYear}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, foundedYear: e.target.value })
-                  }
-                  placeholder="e.g., 1902"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, email: e.target.value })
-                  }
-                  placeholder="e.g., contact@club.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-phoneNumber">Phone Number</Label>
-                <Input
-                  id="edit-phoneNumber"
-                  type="tel"
-                  value={editForm.phoneNumber}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, phoneNumber: e.target.value })
-                  }
-                  placeholder="e.g., +1 234 567 8900"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-website">Website</Label>
-                <Input
-                  id="edit-website"
-                  type="url"
-                  value={editForm.website}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, website: e.target.value })
-                  }
-                  placeholder="e.g., https://club.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-status">
-                  Status <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={editForm.status}
-                  onValueChange={(
-                    value: "affiliated" | "invited" | "suspended"
-                  ) => setEditForm({ ...editForm, status: value })}
-                >
-                  <SelectTrigger id="edit-status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="affiliated">Affiliated</SelectItem>
-                    <SelectItem value="invited">Invited</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleEdit}
-                disabled={loading || !editForm.name}
-              >
-                {loading ? "Saving..." : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Edit Dialog - Now using shared ClubForm */}
+        <ClubForm
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          leagueId={club.leagueId}
+          clubId={clubId}
+        />
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>

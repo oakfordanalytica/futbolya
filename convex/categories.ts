@@ -173,6 +173,39 @@ export const listByClubId = query({
 });
 
 /**
+ * Create a new category
+ */
+export const create = mutation({
+  args: {
+    clubId: v.id("clubs"),
+    name: v.string(),
+    ageGroup: v.string(),
+    gender: v.union(v.literal("male"), v.literal("female"), v.literal("mixed")),
+    status: v.union(v.literal("active"), v.literal("inactive")),
+  },
+  returns: v.id("categories"),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const club = await ctx.db.get(args.clubId);
+    if (!club) {
+      throw new Error("Club not found");
+    }
+
+    return await ctx.db.insert("categories", {
+      clubId: args.clubId,
+      name: args.name,
+      ageGroup: args.ageGroup,
+      gender: args.gender,
+      status: args.status,
+    });
+  },
+});
+
+/**
  * Update a category
  */
 export const update = mutation({

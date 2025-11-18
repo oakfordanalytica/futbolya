@@ -88,6 +88,50 @@ export const listByLeagueId = query({
 });
 
 /**
+ * Create a new division
+ */
+export const create = mutation({
+  args: {
+    leagueId: v.id("leagues"),
+    name: v.string(),
+    displayName: v.string(),
+    description: v.optional(v.string()),
+    level: v.number(),
+  },
+  returns: v.id("divisions"),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const league = await ctx.db.get(args.leagueId);
+    if (!league) {
+      throw new Error("League not found");
+    }
+
+    // Check for duplicate name within league
+    const existing = await ctx.db
+      .query("divisions")
+      .withIndex("by_leagueId", (q) => q.eq("leagueId", args.leagueId))
+      .filter((q) => q.eq(q.field("name"), args.name))
+      .unique();
+
+    if (existing) {
+      throw new Error("A division with this name already exists in this league");
+    }
+
+    return await ctx.db.insert("divisions", {
+      leagueId: args.leagueId,
+      name: args.name,
+      displayName: args.displayName,
+      description: args.description,
+      level: args.level,
+    });
+  },
+});
+
+/**
  * Update a division
  */
 export const update = mutation({

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -12,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { StaffForm } from "@/components/forms/StaffForm";
 import { PlusIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 
@@ -20,6 +22,8 @@ export default function StaffPage() {
   const orgSlug = params.org as string;
 
   const staff = useQuery(api.staff.listByClubSlug, { clubSlug: orgSlug });
+  
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   return (
     <Container className="py-8">
@@ -31,8 +35,8 @@ export default function StaffPage() {
               Manage technical directors and coaching staff
             </p>
           </div>
-          <Button>
-            <PlusIcon className="h-4 w-4" />
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <PlusIcon className="h-4 w-4 mr-2" />
             Add Staff Member
           </Button>
         </div>
@@ -93,6 +97,12 @@ export default function StaffPage() {
             ))}
           </div>
         )}
+
+        <StaffForm
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          clubSlug={orgSlug}
+        />
       </div>
     </Container>
   );

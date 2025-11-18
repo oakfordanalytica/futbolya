@@ -6,15 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -31,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Container } from "@/components/ui/container";
+import { CategoryForm } from "@/components/forms/CategoryForm";
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -50,29 +43,11 @@ export default function CategoryDetailPage() {
     ? useQuery(api.clubs.getById, { clubId: category.clubId })
     : undefined;
 
-  const updateCategory = useMutation(api.categories.update);
   const deleteCategory = useMutation(api.categories.deleteCategory);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [editForm, setEditForm] = useState({
-    name: "",
-    ageGroup: "",
-    gender: "male" as "male" | "female" | "mixed",
-    status: "active" as "active" | "inactive",
-  });
-
-  // Set form when category loads
-  if (category && editForm.name === "" && editForm.ageGroup === "") {
-    setEditForm({
-      name: category.name,
-      ageGroup: category.ageGroup,
-      gender: category.gender,
-      status: category.status,
-    });
-  }
 
   if (!category || !club) {
     return (
@@ -88,27 +63,6 @@ export default function CategoryDetailPage() {
       </Container>
     );
   }
-
-  const handleEdit = async () => {
-    setLoading(true);
-    try {
-      await updateCategory({
-        categoryId,
-        name: editForm.name,
-        ageGroup: editForm.ageGroup,
-        gender: editForm.gender,
-        status: editForm.status,
-      });
-      setIsEditOpen(false);
-    } catch (error) {
-      console.error(error);
-      alert(
-        error instanceof Error ? error.message : "Failed to update category"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDelete = async () => {
     setLoading(true);
@@ -382,97 +336,13 @@ export default function CategoryDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Category</DialogTitle>
-              <DialogDescription>
-                Update the category information
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label htmlFor="edit-name">
-                  Category Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, name: e.target.value })
-                  }
-                  placeholder="e.g., Sub-17"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-ageGroup">
-                  Age Group <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-ageGroup"
-                  value={editForm.ageGroup}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, ageGroup: e.target.value })
-                  }
-                  placeholder="e.g., 15-17 years"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-gender">
-                  Gender <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={editForm.gender}
-                  onValueChange={(value: "male" | "female" | "mixed") =>
-                    setEditForm({ ...editForm, gender: value })
-                  }
-                >
-                  <SelectTrigger id="edit-gender">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="mixed">Mixed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="edit-status">
-                  Status <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={editForm.status}
-                  onValueChange={(value: "active" | "inactive") =>
-                    setEditForm({ ...editForm, status: value })
-                  }
-                >
-                  <SelectTrigger id="edit-status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleEdit}
-                disabled={loading || !editForm.name || !editForm.ageGroup}
-              >
-                {loading ? "Saving..." : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Edit Dialog - Now using shared CategoryForm */}
+        <CategoryForm
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          clubId={category.clubId}
+          categoryId={categoryId}
+        />
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>

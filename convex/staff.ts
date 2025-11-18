@@ -253,3 +253,57 @@ export const getStatistics = query({
     };
   },
 });
+
+/**
+ * Add staff member to a category
+ */
+export const addToCategory = mutation({
+  args: {
+    categoryId: v.id("categories"),
+    email: v.string(),
+    role: v.union(v.literal("technical_director"), v.literal("assistant_coach")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const category = await ctx.db.get(args.categoryId);
+    if (!category) {
+      throw new Error("Category not found");
+    }
+
+    // Find existing profile by email
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+
+    if (!profile) {
+      throw new Error(
+        "User not found. Please create a user account first before assigning them as staff."
+      );
+    }
+
+    if (args.role === "technical_director") {
+      if (category.technicalDirectorId) {
+        throw new Error("Category already has a technical director");
+      }
+      await ctx.db.patch(args.categoryId, {
+        technicalDirectorId: profile._id,
+      });
+    } else {
+      const assistantCoachIds = category.assistantCoachIds || [];
+      if (assistantCoachIds.includes(profile._id)) {
+        throw new Error("Profile is already an assistant coach of this category");
+      }
+      await ctx.db.patch(args.categoryId, {
+        assistantCoachIds: [...assistantCoachIds, profile._id],
+      });
+    }
+
+    return null;
+  },
+});

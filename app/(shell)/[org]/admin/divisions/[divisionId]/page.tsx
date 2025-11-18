@@ -6,9 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -25,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Container } from "@/components/ui/container";
+import { DivisionForm } from "@/components/forms/DivisionForm";
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -42,32 +41,18 @@ export default function DivisionDetailPage() {
 
   const division = useQuery(api.divisions.getById, { divisionId });
   const statistics = useQuery(api.divisions.getStatistics, { divisionId });
-  const divisionEntries = useQuery(api.divisions.listByDivisionId, { divisionId });
+  const divisionEntries = useQuery(api.divisions.listByDivisionId, {
+    divisionId,
+  });
   const league = division
     ? useQuery(api.leagues.getById, { leagueId: division.leagueId })
     : undefined;
 
-  const updateDivision = useMutation(api.divisions.update);
   const deleteDivision = useMutation(api.divisions.deleteDivision);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [editForm, setEditForm] = useState({
-    displayName: "",
-    description: "",
-    level: "",
-  });
-
-  // Set form when division loads
-  if (division && editForm.displayName === "") {
-    setEditForm({
-      displayName: division.displayName,
-      description: division.description || "",
-      level: division.level.toString(),
-    });
-  }
 
   if (!division || !league) {
     return (
@@ -83,26 +68,6 @@ export default function DivisionDetailPage() {
       </Container>
     );
   }
-
-  const handleEdit = async () => {
-    setLoading(true);
-    try {
-      await updateDivision({
-        divisionId,
-        displayName: editForm.displayName,
-        description: editForm.description || undefined,
-        level: parseInt(editForm.level),
-      });
-      setIsEditOpen(false);
-    } catch (error) {
-      console.error(error);
-      alert(
-        error instanceof Error ? error.message : "Failed to update division"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDelete = async () => {
     setLoading(true);
@@ -131,13 +96,20 @@ export default function DivisionDetailPage() {
             >
               <ArrowLeftIcon className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {division.displayName}
-              </h1>
-              <p className="text-muted-foreground">
-                {league.name} • Level {division.level}
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary/10">
+                <span className="text-3xl font-bold text-primary">
+                  {division.name}
+                </span>
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {division.displayName}
+                </h1>
+                <p className="text-muted-foreground">
+                  {league.name} • Level {division.level}
+                </p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -145,7 +117,10 @@ export default function DivisionDetailPage() {
               <PencilIcon className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
+            <Button
+              variant="destructive"
+              onClick={() => setIsDeleteOpen(true)}
+            >
               <TrashIcon className="h-4 w-4 mr-2" />
               Delete
             </Button>
@@ -171,7 +146,9 @@ export default function DivisionDetailPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Tournaments</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Tournaments
+              </CardTitle>
               <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -245,16 +222,10 @@ export default function DivisionDetailPage() {
               <div>
                 <CardTitle>Teams in Division</CardTitle>
                 <CardDescription>
-                  {divisionEntries?.length || 0} team{divisionEntries?.length !== 1 ? "s" : ""}
+                  {divisionEntries?.length || 0} team
+                  {divisionEntries?.length !== 1 ? "s" : ""}
                 </CardDescription>
               </div>
-              <Button
-                onClick={() =>
-                  router.push(`/${orgSlug}/admin/division-entries/new?division=${divisionId}`)
-                }
-              >
-                Add Team
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -262,7 +233,7 @@ export default function DivisionDetailPage() {
               <div className="text-center py-12 text-muted-foreground">
                 <p className="text-lg font-medium">No teams yet</p>
                 <p className="text-sm mt-1">
-                  Add teams to this division to start competition
+                  Teams will appear here when registered to this division
                 </p>
               </div>
             ) : (
@@ -272,7 +243,9 @@ export default function DivisionDetailPage() {
                     <tr className="border-b bg-muted/50">
                       <th className="text-left p-4 font-medium">Club</th>
                       <th className="text-left p-4 font-medium">Category</th>
-                      <th className="text-left p-4 font-medium">Registered</th>
+                      <th className="text-left p-4 font-medium">
+                        Registered
+                      </th>
                       <th className="text-left p-4 font-medium">Actions</th>
                     </tr>
                   </thead>
@@ -284,14 +257,22 @@ export default function DivisionDetailPage() {
                       >
                         <td className="p-4">
                           <div className="flex items-center gap-2">
-                            {entry.clubLogoUrl && (
+                            {entry.clubLogoUrl ? (
                               <img
                                 src={entry.clubLogoUrl}
                                 alt={entry.clubName}
                                 className="h-6 w-6 rounded object-cover"
                               />
+                            ) : (
+                              <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
+                                <span className="text-xs font-semibold text-primary">
+                                  {entry.clubName[0]}
+                                </span>
+                              </div>
                             )}
-                            <span className="font-medium">{entry.clubName}</span>
+                            <span className="font-medium">
+                              {entry.clubName}
+                            </span>
                           </div>
                         </td>
                         <td className="p-4">{entry.categoryName}</td>
@@ -320,74 +301,13 @@ export default function DivisionDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Division</DialogTitle>
-              <DialogDescription>
-                Update the division information
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label htmlFor="edit-displayName">
-                  Display Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-displayName"
-                  value={editForm.displayName}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, displayName: e.target.value })
-                  }
-                  placeholder="e.g., Primera División"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-level">
-                  Level <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-level"
-                  type="number"
-                  min="1"
-                  value={editForm.level}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, level: e.target.value })
-                  }
-                  placeholder="e.g., 1"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-description">Description</Label>
-                <Textarea
-                  id="edit-description"
-                  value={editForm.description}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, description: e.target.value })
-                  }
-                  placeholder="e.g., The top tier of competition"
-                  rows={3}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleEdit}
-                disabled={
-                  loading || !editForm.displayName || !editForm.level
-                }
-              >
-                {loading ? "Saving..." : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Edit Dialog - Now using shared DivisionForm */}
+        <DivisionForm
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          leagueId={division.leagueId}
+          divisionId={divisionId}
+        />
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
@@ -400,8 +320,8 @@ export default function DivisionDetailPage() {
                 {divisionEntries && divisionEntries.length > 0 && (
                   <span className="block mt-2 text-destructive">
                     Warning: This division has {divisionEntries.length} team
-                    {divisionEntries.length !== 1 ? "s" : ""}. You cannot delete it
-                    until all teams are removed.
+                    {divisionEntries.length !== 1 ? "s" : ""}. You cannot
+                    delete it until all teams are removed.
                   </span>
                 )}
               </DialogDescription>
@@ -416,7 +336,9 @@ export default function DivisionDetailPage() {
               <Button
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={loading || (divisionEntries && divisionEntries.length > 0)}
+                disabled={
+                  loading || (divisionEntries && divisionEntries.length > 0)
+                }
               >
                 {loading ? "Deleting..." : "Delete Division"}
               </Button>

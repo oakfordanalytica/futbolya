@@ -107,16 +107,23 @@ export default function StaffDetailPage() {
               <ArrowLeftIcon className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-4">
-              {staffData.profile.avatarUrl && (
+              {staffData.profile.avatarUrl ? (
                 <img
                   src={staffData.profile.avatarUrl}
                   alt={staffData.profile.displayName || "Staff Member"}
                   className="h-16 w-16 rounded-full object-cover"
                 />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-bold text-2xl">
+                    {(staffData.profile.displayName ||
+                      staffData.profile.email)[0]?.toUpperCase()}
+                  </span>
+                </div>
               )}
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">
-                  {staffData.profile.displayName || "Unknown Staff Member"}
+                  {staffData.profile.displayName || staffData.profile.email}
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   {staffData.profile.email}
@@ -222,15 +229,11 @@ export default function StaffDetailPage() {
         {/* Assignments */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Role Assignments</CardTitle>
-                <CardDescription>
-                  {staffData.assignments.length} assignment
-                  {staffData.assignments.length !== 1 ? "s" : ""}
-                </CardDescription>
-              </div>
-            </div>
+            <CardTitle>Role Assignments</CardTitle>
+            <CardDescription>
+              {staffData.assignments.length} assignment
+              {staffData.assignments.length !== 1 ? "s" : ""}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {staffData.assignments.length === 0 ? (
@@ -262,7 +265,13 @@ export default function StaffDetailPage() {
                         </td>
                         <td className="p-4">{assignment.clubName}</td>
                         <td className="p-4">
-                          <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                          <span
+                            className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${
+                              assignment.role === "Technical Director"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-green-600 bg-green-50"
+                            }`}
+                          >
                             {assignment.role}
                           </span>
                         </td>
@@ -294,7 +303,7 @@ export default function StaffDetailPage() {
               <DialogTitle>Remove Assignment</DialogTitle>
               <DialogDescription>
                 Are you sure you want to remove{" "}
-                {staffData.profile.displayName || "this staff member"} as{" "}
+                {staffData.profile.displayName || staffData.profile.email} as{" "}
                 {selectedAssignment?.role} from{" "}
                 {selectedAssignment?.categoryName}?
               </DialogDescription>

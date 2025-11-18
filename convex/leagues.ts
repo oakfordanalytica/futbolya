@@ -12,38 +12,33 @@ export const listAll = query({
       _id: v.id("leagues"),
       _creationTime: v.number(),
       name: v.string(),
+      shortName: v.optional(v.string()),
       slug: v.string(),
       country: v.string(),
+      region: v.optional(v.string()),
+      foundedYear: v.optional(v.number()),
       logoUrl: v.optional(v.string()),
       status: v.union(v.literal("active"), v.literal("inactive")),
     })
   ),
   handler: async (ctx) => {
-    // TODO: Add role check for SuperAdmin
     const leagues = await ctx.db
       .query("leagues")
       .order("desc")
       .collect();
 
-    const result: Array<{
-      _id: Id<"leagues">;
-      _creationTime: number;
-      name: string;
-      slug: string;
-      country: string;
-      logoUrl: string | undefined;
-      status: "active" | "inactive";
-    }> = leagues.map((league) => ({
+    return leagues.map((league) => ({
       _id: league._id,
       _creationTime: league._creationTime,
       name: league.name,
+      shortName: league.shortName,
       slug: league.slug,
       country: league.country,
+      region: league.region,
+      foundedYear: league.foundedYear,
       logoUrl: league.logoUrl,
       status: league.status,
     }));
-
-    return result;
   },
 });
 
@@ -177,6 +172,66 @@ export const getStats = query({
       totalCategories,
       totalReferees: referees.length,
     };
+  },
+});
+
+/**
+ * Create a new league
+ */
+export const create = mutation({
+  args: {
+    name: v.string(),
+    slug: v.optional(v.string()),
+    shortName: v.optional(v.string()),
+    country: v.string(),
+    region: v.optional(v.string()),
+    foundedYear: v.optional(v.number()),
+    website: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+    address: v.optional(v.string()),
+    federationId: v.optional(v.string()),
+    status: v.union(v.literal("active"), v.literal("inactive")),
+  },
+  returns: v.id("leagues"),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    // Generate slug from name if not provided
+    const slug =
+      args.slug ||
+      args.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+
+    // Check for duplicate slug
+    const existing = await ctx.db
+      .query("leagues")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .unique();
+
+    if (existing) {
+      throw new Error("A league with this slug already exists");
+    }
+
+    return await ctx.db.insert("leagues", {
+      name: args.name,
+      slug,
+      shortName: args.shortName,
+      country: args.country,
+      region: args.region,
+      foundedYear: args.foundedYear,
+      website: args.website,
+      email: args.email,
+      phoneNumber: args.phoneNumber,
+      address: args.address,
+      federationId: args.federationId,
+      status: args.status,
+    });
   },
 });
 
