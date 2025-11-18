@@ -23,7 +23,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -37,39 +36,59 @@ export default function UsersManagementPage() {
   const params = useParams();
   const orgSlug = params.org as string;
 
-  // Query to get profiles for the current organization
-  const profiles = useQuery(api.users.listProfilesInOrg, {
-    orgSlug,
-    orgType: "club", // You'd determine this dynamically based on context
-  });
+  const league = useQuery(api.leagues.getBySlug, { slug: orgSlug });
+  const club = useQuery(api.clubs.getBySlug, { slug: orgSlug });
+  
+  const orgType = league ? ("league" as const) : club ? ("club" as const) : null;
+  const orgName = league?.name || club?.name;
+  const orgId = league?._id || club?._id;
 
-  // Get current user's role to determine permissions
-  const myRole = useQuery(api.users.getMyRoleInOrg, {
-    orgSlug,
-    orgType: "club",
-  });
+  const profiles = useQuery(
+    api.users.listProfilesInOrg,
+    orgType ? { orgSlug, orgType } : "skip"
+  );
+
+  const myRole = useQuery(
+    api.users.getMyRoleInOrg,
+    orgType ? { orgSlug, orgType } : "skip"
+  );
+
+  const myRoles = useQuery(api.users.debugMyRoles);
+
+  const createAdmin = useMutation(api.users.createAdminUser);
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Admin form state
   const [adminForm, setAdminForm] = useState({
     email: "",
     firstName: "",
     lastName: "",
     phoneNumber: "",
-    role: "ClubAdmin" as "LeagueAdmin" | "ClubAdmin" | "TechnicalDirector" | "Referee",
+    role: "ClubAdmin" as
+      | "LeagueAdmin"
+      | "ClubAdmin"
+      | "TechnicalDirector"
+      | "Referee",
   });
 
-  // Check permissions
-  if (!myRole || (myRole !== "SuperAdmin" && myRole !== "LeagueAdmin" && myRole !== "ClubAdmin")) {
+  // Fix the TypeScript error with proper null checking
+  const isSuperAdmin =
+    myRoles?.rolesFromDb?.some((r) => r.role === "SuperAdmin") ?? false;
+
+  const hasPermission =
+    isSuperAdmin ||
+    myRole === "LeagueAdmin" ||
+    myRole === "ClubAdmin";
+
+  if (!orgType || !orgName || !orgId) {
     return (
       <Container className="py-8">
         <Card>
           <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
+            <CardTitle>Organization Not Found</CardTitle>
             <CardDescription>
-              You don&apos;t have permission to manage users.
+              The organization you're looking for doesn't exist.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -77,15 +96,63 @@ export default function UsersManagementPage() {
     );
   }
 
+  if (!hasPermission) {
+    return (
+      <Container className="py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>
+              You don&apos;t have permission to manage users in this
+              organization.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </Container>
+    );
+  }
+
+  const handleInviteUser = async () => {
+    if (!orgType || !orgId) return;
+
+    setLoading(true);
+    try {
+      await createAdmin({
+        email: adminForm.email,
+        firstName: adminForm.firstName,
+        lastName: adminForm.lastName,
+        phoneNumber: adminForm.phoneNumber || undefined,
+        role: adminForm.role,
+        organizationId: orgId,
+        organizationType: orgType,
+      });
+
+      setAdminForm({
+        email: "",
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        role: "ClubAdmin",
+      });
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert(
+        error instanceof Error ? error.message : "Failed to invite user"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Container className="py-8">
       <div className="flex flex-col gap-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
             <p className="text-muted-foreground">
-              Manage users and their access to your organization
+              Manage users and their access to {orgName}
             </p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
@@ -116,7 +183,7 @@ export default function UsersManagementPage() {
                     required
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    User will receive an invitation email
+                    User will receive an invitation email from Clerk
                   </p>
                 </div>
 
@@ -176,7 +243,7 @@ export default function UsersManagementPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {myRole === "SuperAdmin" && (
+                      {(isSuperAdmin || orgType === "league") && (
                         <SelectItem value="LeagueAdmin">League Admin</SelectItem>
                       )}
                       <SelectItem value="ClubAdmin">Club Admin</SelectItem>
@@ -193,19 +260,7 @@ export default function UsersManagementPage() {
                     Cancel
                   </Button>
                   <Button
-                    onClick={async () => {
-                      setLoading(true);
-                      try {
-                        // TODO: Implement user invitation mutation
-                        alert("User invitation feature coming soon!");
-                        setOpen(false);
-                      } catch (error) {
-                        console.error(error);
-                        alert(error instanceof Error ? error.message : "Failed to invite user");
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
+                    onClick={handleInviteUser}
                     disabled={
                       loading ||
                       !adminForm.email ||
@@ -221,7 +276,6 @@ export default function UsersManagementPage() {
           </Dialog>
         </div>
 
-        {/* Users Table */}
         <Card>
           <CardHeader>
             <CardTitle>Organization Users</CardTitle>

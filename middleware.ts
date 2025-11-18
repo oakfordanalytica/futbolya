@@ -13,16 +13,13 @@ const isSignUp = createRouteMatcher(["/sign-up(.*)"]);
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
 
-  console.log("=== MIDDLEWARE DEBUG ===");
-  console.log("Pathname:", pathname);
-
+  // Block sign-up routes
   if (isSignUp(req)) {
-    console.log("Blocking sign-up route");
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
+  // Protect non-public routes
   if (!isPublic(req)) {
-    console.log("Protecting route");
     await auth.protect();
   }
 
@@ -30,34 +27,43 @@ export default clerkMiddleware(async (auth, req) => {
   const userId = authData.userId;
   const roles = getRolesFromClaims(authData);
 
-  console.log("UserId:", userId);
-  console.log("Roles from claims:", roles);
-  console.log("Session claims:", JSON.stringify(authData.sessionClaims, null, 2));
+  // Handle root path - redirect to appropriate dashboard
+  if (pathname === "/" && userId && roles) {
+    // Check if SuperAdmin
+    const isSuperAdmin = Object.values(roles).includes("SuperAdmin");
+    if (isSuperAdmin) {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+
+    // Redirect to first organization
+    const firstSlug = Object.keys(roles)[0];
+    if (firstSlug) {
+      const targetPath = getRoleBasePath(firstSlug, roles[firstSlug]);
+      return NextResponse.redirect(new URL(targetPath, req.url));
+    }
+
+    // No roles, stay on landing page
+    return NextResponse.next();
+  }
 
   // Handle SuperAdmin global /admin routes
-  if (pathname.startsWith("/admin") && pathname !== "/admin") {
-    console.log("Checking SuperAdmin access for /admin route");
-    
+  if (pathname.startsWith("/admin")) {
     if (!userId) {
-      console.log("No userId, redirecting to sign-in");
       return NextResponse.redirect(new URL("/sign-in", req.url));
     }
 
     const isSuperAdmin = roles && Object.values(roles).includes("SuperAdmin");
-    console.log("Is SuperAdmin:", isSuperAdmin);
 
     if (!isSuperAdmin) {
-      console.log("Not SuperAdmin, redirecting to first org or home");
+      // Not SuperAdmin, redirect to their first org
       if (roles && Object.keys(roles).length > 0) {
         const firstSlug = Object.keys(roles)[0];
         const targetPath = getRoleBasePath(firstSlug, roles[firstSlug]);
-        console.log("Redirecting to:", targetPath);
         return NextResponse.redirect(new URL(targetPath, req.url));
       }
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    console.log("SuperAdmin access granted");
     return NextResponse.next();
   }
 
@@ -65,23 +71,20 @@ export default clerkMiddleware(async (auth, req) => {
   const orgRouteMatch = pathname.match(/^\/([^\/]+)$/);
   if (orgRouteMatch && userId) {
     const slugInUrl = orgRouteMatch[1];
-    console.log("Matched org root:", slugInUrl);
     
-    if (slugInUrl === "onboarding" || slugInUrl === "sign-in" || slugInUrl === "admin") {
-      console.log("Special route, skipping redirect");
+    // Skip special routes
+    if (["onboarding", "sign-in", "admin"].includes(slugInUrl)) {
       return NextResponse.next();
     }
 
     const role = getRoleForOrg(authData, slugInUrl);
-    console.log("Role for org:", role);
 
     if (role) {
       const targetPath = getRoleBasePath(slugInUrl, role);
-      console.log("Redirecting to role dashboard:", targetPath);
       return NextResponse.redirect(new URL(targetPath, req.url));
     }
 
-    console.log("No role found, allowing guest access");
+    // No role, allow guest access
     return NextResponse.next();
   }
 
@@ -90,31 +93,24 @@ export default clerkMiddleware(async (auth, req) => {
   if (orgSubRouteMatch && userId) {
     const slugInUrl = orgSubRouteMatch[1];
     const section = orgSubRouteMatch[2];
-    
-    console.log("Matched org sub-route:", slugInUrl, section);
 
     const role = getRoleForOrg(authData, slugInUrl);
-    console.log("Role for org sub-route:", role);
 
     if (!role) {
-      console.log("No role found for sub-route, redirecting to home");
+      // No role for this org, redirect to home
       return NextResponse.redirect(new URL("/", req.url));
     }
 
     const expectedBasePath = getRoleBasePath(slugInUrl, role);
-    console.log("Expected base path:", expectedBasePath);
-    console.log("Current path starts with expected?", pathname.startsWith(expectedBasePath));
 
     if (!pathname.startsWith(expectedBasePath)) {
-      console.log("Path doesn't match role, redirecting to correct dashboard");
+      // User trying to access wrong section for their role
       return NextResponse.redirect(new URL(expectedBasePath, req.url));
     }
 
-    console.log("Access granted to sub-route");
     return NextResponse.next();
   }
 
-  console.log("No special handling, continuing");
   return NextResponse.next();
 });
 

@@ -7,15 +7,5 @@ export default async function SuperAdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const authData = await auth();
-  const roles = getRolesFromClaims(authData);
-
-  // Check if user has SuperAdmin role in ANY org
-  const isSuperAdmin = roles && Object.values(roles).includes("SuperAdmin");
-
-  if (!isSuperAdmin) {
-    redirect("/");
-  }
-
   return <>{children}</>;
 }

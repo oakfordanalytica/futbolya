@@ -12,6 +12,7 @@ import type * as bootstrap from "../bootstrap.js";
 import type * as categories from "../categories.js";
 import type * as clerk from "../clerk.js";
 import type * as clubs from "../clubs.js";
+import type * as dashboard from "../dashboard.js";
 import type * as divisions from "../divisions.js";
 import type * as http from "../http.js";
 import type * as leagues from "../leagues.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   clerk: typeof clerk;
   clubs: typeof clubs;
+  dashboard: typeof dashboard;
   divisions: typeof divisions;
   http: typeof http;
   leagues: typeof leagues;
