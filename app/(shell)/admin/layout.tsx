@@ -1,11 +1,29 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { getRolesFromClaims } from "@/lib/auth/auth";
+"use client";
 
-export default async function SuperAdminLayout({
+import { SidebarAppSidebar, NavbarAppSidebar } from "@/components/app-sidebar";
+import { SidebarLayout } from "@/components/layouts/sidebar-layout";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
+export default function SuperAdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  const allOrgs = useQuery(api.users.getMyOrganizations);
+
+  const navbarContent = (
+    <div className="flex items-center gap-4">
+      <NavbarAppSidebar />
+    </div>
+  );
+
+  return (
+    <SidebarLayout
+      navbar={navbarContent}
+      sidebar={<SidebarAppSidebar />}
+    >
+      <main className="flex-1">{children}</main>
+    </SidebarLayout>
+  );
 }
