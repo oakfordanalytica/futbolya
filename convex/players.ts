@@ -528,3 +528,139 @@ export const createClerkAccountForPlayer = internalMutation({
     return null;
   },
 });
+
+/**
+ * Delete a player
+ */
+export const deletePlayer = mutation({
+  args: { playerId: v.id("players") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const player = await ctx.db.get(args.playerId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    // Delete role assignments
+    const roleAssignments = await ctx.db
+      .query("roleAssignments")
+      .withIndex("by_profileId", (q) => q.eq("profileId", player.profileId))
+      .collect();
+
+    for (const assignment of roleAssignments) {
+      await ctx.db.delete(assignment._id);
+    }
+
+    // Delete player
+    await ctx.db.delete(args.playerId);
+
+    return null;
+  },
+});
+
+/**
+ * Get player statistics
+ */
+export const getStatistics = query({
+  args: { playerId: v.id("players") },
+  returns: v.object({
+    transfersCount: v.number(),
+    // Match statistics will be added later when match tables exist
+    matchesPlayed: v.number(),
+    goalsScored: v.number(),
+    assists: v.number(),
+    yellowCards: v.number(),
+    redCards: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const player = await ctx.db.get(args.playerId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    // Count transfers
+    const transfers = await ctx.db
+      .query("playerTransfers")
+      .withIndex("by_playerId", (q) => q.eq("playerId", args.playerId))
+      .collect();
+
+    // Return stored statistics from player record
+    // (Match statistics will come from match tables when implemented)
+    return {
+      transfersCount: transfers.length,
+      matchesPlayed: player.matchesPlayed || 0,
+      goalsScored: player.goals || 0,
+      assists: player.assists || 0,
+      // Cards will be tracked when match events are implemented
+      yellowCards: 0,
+      redCards: 0,
+    };
+  },
+});
+
+/**
+ * List player transfers
+ */
+export const listTransfers = query({
+  args: { playerId: v.id("players") },
+  returns: v.array(
+    v.object({
+      _id: v.id("playerTransfers"),
+      _creationTime: v.number(),
+      fromCategoryName: v.string(),
+      toCategoryName: v.string(),
+      transferDate: v.string(),
+      transferType: v.union(
+        v.literal("promotion"),
+        v.literal("transfer"),
+        v.literal("loan"),
+        v.literal("trial")
+      ),
+      fee: v.optional(v.number()),
+      notes: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const transfers = await ctx.db
+      .query("playerTransfers")
+      .withIndex("by_playerId", (q) => q.eq("playerId", args.playerId))
+      .order("desc")
+      .collect();
+
+    const enrichedTransfers: Array<{
+      _id: Id<"playerTransfers">;
+      _creationTime: number;
+      fromCategoryName: string;
+      toCategoryName: string;
+      transferDate: string;
+      transferType: "promotion" | "transfer" | "loan" | "trial";
+      fee: number | undefined;
+      notes: string | undefined;
+    }> = [];
+
+    for (const transfer of transfers) {
+      const fromCategory = transfer.fromCategoryId 
+        ? await ctx.db.get(transfer.fromCategoryId)
+        : null;
+      const toCategory = await ctx.db.get(transfer.toCategoryId);
+
+      enrichedTransfers.push({
+        _id: transfer._id,
+        _creationTime: transfer._creationTime,
+        fromCategoryName: fromCategory?.name || "Unknown",
+        toCategoryName: toCategory?.name || "Unknown",
+        transferDate: transfer.transferDate,
+        transferType: transfer.transferType,
+        fee: transfer.fee,
+        notes: transfer.notes,
+      });
+    }
+
+    return enrichedTransfers;
+  },
+});

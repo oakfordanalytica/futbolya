@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 /**
@@ -169,5 +169,106 @@ export const listByClubId = query({
     );
 
     return enrichedCategories;
+  },
+});
+
+/**
+ * Update a category
+ */
+export const update = mutation({
+  args: {
+    categoryId: v.id("categories"),
+    name: v.string(),
+    ageGroup: v.string(),
+    gender: v.union(v.literal("male"), v.literal("female"), v.literal("mixed")),
+    status: v.union(v.literal("active"), v.literal("inactive")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const category = await ctx.db.get(args.categoryId);
+    if (!category) {
+      throw new Error("Category not found");
+    }
+
+    await ctx.db.patch(args.categoryId, {
+      name: args.name,
+      ageGroup: args.ageGroup,
+      gender: args.gender,
+      status: args.status,
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Delete a category
+ */
+export const deleteCategory = mutation({
+  args: { categoryId: v.id("categories") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const category = await ctx.db.get(args.categoryId);
+    if (!category) {
+      throw new Error("Category not found");
+    }
+
+    // Check if category has players
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_currentCategoryId", (q) => 
+        q.eq("currentCategoryId", args.categoryId)
+      )
+      .collect();
+
+    if (players.length > 0) {
+      throw new Error(`Cannot delete category with ${players.length} active players`);
+    }
+
+    await ctx.db.delete(args.categoryId);
+    return null;
+  },
+});
+
+/**
+ * Assign technical director to category
+ */
+export const assignTechnicalDirector = mutation({
+  args: {
+    categoryId: v.id("categories"),
+    technicalDirectorId: v.id("profiles"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const category = await ctx.db.get(args.categoryId);
+    if (!category) {
+      throw new Error("Category not found");
+    }
+
+    const technicalDirector = await ctx.db.get(args.technicalDirectorId);
+    if (!technicalDirector) {
+      throw new Error("Technical director not found");
+    }
+
+    await ctx.db.patch(args.categoryId, {
+      technicalDirectorId: args.technicalDirectorId,
+    });
+
+    return null;
   },
 });

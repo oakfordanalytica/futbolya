@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 /**
@@ -158,6 +158,98 @@ export const getByProfileId = query({
         phoneNumber: profile.phoneNumber,
       },
       assignments,
+    };
+  },
+});
+
+/**
+ * Remove staff member from a category
+ */
+export const removeFromCategory = mutation({
+  args: {
+    categoryId: v.id("categories"),
+    profileId: v.id("profiles"),
+    role: v.union(v.literal("technical_director"), v.literal("assistant_coach")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const category = await ctx.db.get(args.categoryId);
+    if (!category) {
+      throw new Error("Category not found");
+    }
+
+    if (args.role === "technical_director") {
+      if (category.technicalDirectorId !== args.profileId) {
+        throw new Error("Profile is not the technical director of this category");
+      }
+      await ctx.db.patch(args.categoryId, {
+        technicalDirectorId: undefined,
+      });
+    } else {
+      const assistantCoachIds = category.assistantCoachIds || [];
+      const updatedIds = assistantCoachIds.filter((id) => id !== args.profileId);
+      
+      if (assistantCoachIds.length === updatedIds.length) {
+        throw new Error("Profile is not an assistant coach of this category");
+      }
+      
+      await ctx.db.patch(args.categoryId, {
+        assistantCoachIds: updatedIds,
+      });
+    }
+
+    return null;
+  },
+});
+
+/**
+ * Get staff statistics
+ */
+export const getStatistics = query({
+  args: { profileId: v.id("profiles") },
+  returns: v.object({
+    totalAssignments: v.number(),
+    technicalDirectorCount: v.number(),
+    assistantCoachCount: v.number(),
+    totalPlayers: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const allCategories = await ctx.db.query("categories").collect();
+
+    let technicalDirectorCount = 0;
+    let assistantCoachCount = 0;
+    const categoryIds: Array<Id<"categories">> = [];
+
+    for (const category of allCategories) {
+      if (category.technicalDirectorId === args.profileId) {
+        technicalDirectorCount++;
+        categoryIds.push(category._id);
+      } else if (category.assistantCoachIds?.includes(args.profileId)) {
+        assistantCoachCount++;
+        categoryIds.push(category._id);
+      }
+    }
+
+    // Count total players across all categories this staff manages
+    let totalPlayers = 0;
+    for (const categoryId of categoryIds) {
+      const players = await ctx.db
+        .query("players")
+        .withIndex("by_currentCategoryId", (q) => q.eq("currentCategoryId", categoryId))
+        .collect();
+      totalPlayers += players.length;
+    }
+
+    return {
+      totalAssignments: technicalDirectorCount + assistantCoachCount,
+      technicalDirectorCount,
+      assistantCoachCount,
+      totalPlayers,
     };
   },
 });

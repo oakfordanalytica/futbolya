@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 
 /**
  * List all clubs (SuperAdmin only)
@@ -165,6 +165,175 @@ export const getById = query({
       website: v.optional(v.string()),
       email: v.optional(v.string()),
       phoneNumber: v.optional(v.string()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.clubId);
+  },
+});
+
+/**
+ * Update a club
+ */
+export const update = mutation({
+  args: {
+    clubId: v.id("clubs"),
+    name: v.string(),
+    shortName: v.optional(v.string()),
+    headquarters: v.optional(v.string()),
+    foundedYear: v.optional(v.number()),
+    colors: v.optional(v.array(v.string())),
+    website: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+    status: v.union(
+      v.literal("affiliated"),
+      v.literal("invited"),
+      v.literal("suspended")
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const club = await ctx.db.get(args.clubId);
+    if (!club) {
+      throw new Error("Club not found");
+    }
+
+    await ctx.db.patch(args.clubId, {
+      name: args.name,
+      shortName: args.shortName,
+      headquarters: args.headquarters,
+      foundedYear: args.foundedYear,
+      colors: args.colors,
+      website: args.website,
+      email: args.email,
+      phoneNumber: args.phoneNumber,
+      status: args.status,
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Delete a club
+ */
+export const deleteClub = mutation({
+  args: { clubId: v.id("clubs") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const club = await ctx.db.get(args.clubId);
+    if (!club) {
+      throw new Error("Club not found");
+    }
+
+    // Check if club has categories
+    const categories = await ctx.db
+      .query("categories")
+      .withIndex("by_clubId", (q) => q.eq("clubId", args.clubId))
+      .collect();
+
+    if (categories.length > 0) {
+      throw new Error(
+        `Cannot delete club with ${categories.length} categories. Remove all categories first.`
+      );
+    }
+
+    await ctx.db.delete(args.clubId);
+    return null;
+  },
+});
+
+/**
+ * Get club statistics
+ */
+export const getStatistics = query({
+  args: { clubId: v.id("clubs") },
+  returns: v.object({
+    categoriesCount: v.number(),
+    playersCount: v.number(),
+    staffCount: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const club = await ctx.db.get(args.clubId);
+    if (!club) {
+      throw new Error("Club not found");
+    }
+
+    // Count categories
+    const categories = await ctx.db
+      .query("categories")
+      .withIndex("by_clubId", (q) => q.eq("clubId", args.clubId))
+      .collect();
+
+    // Count players across all categories
+    let playersCount = 0;
+    for (const category of categories) {
+      const players = await ctx.db
+        .query("players")
+        .withIndex("by_currentCategoryId", (q) =>
+          q.eq("currentCategoryId", category._id)
+        )
+        .collect();
+      playersCount += players.length;
+    }
+
+    // Count staff (users with roles in this club)
+    const staffAssignments = await ctx.db
+      .query("roleAssignments")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("organizationId"), args.clubId),
+          q.eq(q.field("organizationType"), "club")
+        )
+      )
+      .collect();
+
+    return {
+      categoriesCount: categories.length,
+      playersCount,
+      staffCount: staffAssignments.length,
+    };
+  },
+});
+
+/**
+ * Get club by ID (for SuperAdmin)
+ */
+export const getByIdAdmin = query({
+  args: { clubId: v.id("clubs") },
+  returns: v.union(
+    v.object({
+      _id: v.id("clubs"),
+      _creationTime: v.number(),
+      name: v.string(),
+      slug: v.string(),
+      shortName: v.optional(v.string()),
+      headquarters: v.optional(v.string()),
+      foundedYear: v.optional(v.number()),
+      colors: v.optional(v.array(v.string())),
+      website: v.optional(v.string()),
+      email: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      logoUrl: v.optional(v.string()),
+      taxId: v.optional(v.string()),
+      status: v.union(
+        v.literal("affiliated"),
+        v.literal("invited"),
+        v.literal("suspended")
+      ),
+      leagueId: v.id("leagues"),
     }),
     v.null()
   ),

@@ -17,10 +17,54 @@ futbolya
 │  │  │  └─ [matchId]
 │  │  │     └─ page.tsx
 │  │  ├─ not-found.tsx
+│  │  ├─ onboarding
+│  │  │  └─ page.tsx
 │  │  └─ page.tsx
 │  ├─ (shell)
+│  │  ├─ admin
+│  │  │  ├─ analytics
+│  │  │  │  └─ page.tsx
+│  │  │  ├─ clubs
+│  │  │  │  ├─ page.tsx
+│  │  │  │  └─ [clubId]
+│  │  │  │     └─ page.tsx
+│  │  │  ├─ layout.tsx
+│  │  │  ├─ leagues
+│  │  │  │  ├─ page.tsx
+│  │  │  │  └─ [leagueId]
+│  │  │  │     └─ page.tsx
+│  │  │  ├─ page.tsx
+│  │  │  └─ users
+│  │  │     └─ page.tsx
 │  │  └─ [org]
 │  │     ├─ admin
+│  │     │  ├─ categories
+│  │     │  │  ├─ page.tsx
+│  │     │  │  └─ [categoryId]
+│  │     │  │     └─ page.tsx
+│  │     │  ├─ clubs
+│  │     │  │  ├─ page.tsx
+│  │     │  │  └─ [clubId]
+│  │     │  │     └─ page.tsx
+│  │     │  ├─ divisions
+│  │     │  │  ├─ page.tsx
+│  │     │  │  └─ [divisionId]
+│  │     │  │     └─ page.tsx
+│  │     │  ├─ leagues
+│  │     │  │  ├─ page.tsx
+│  │     │  │  └─ [leagueId]
+│  │     │  │     └─ page.tsx
+│  │     │  ├─ page.tsx
+│  │     │  ├─ players
+│  │     │  │  ├─ page.tsx
+│  │     │  │  └─ [playerId]
+│  │     │  │     └─ page.tsx
+│  │     │  ├─ settings
+│  │     │  │  └─ page.tsx
+│  │     │  ├─ staff
+│  │     │  │  ├─ page.tsx
+│  │     │  │  └─ [staffId]
+│  │     │  │     └─ page.tsx
 │  │     │  └─ users
 │  │     │     └─ page.tsx
 │  │     └─ layout.tsx
@@ -47,13 +91,15 @@ futbolya
 │  │  │  ├─ scoreboard-competition.tsx
 │  │  │  ├─ scoreboard-header.tsx
 │  │  │  └─ scoreboard.tsx
-│  │  └─ match
-│  │     ├─ match-ad.tsx
-│  │     ├─ match-event-summary.tsx
-│  │     ├─ match-header.tsx
-│  │     ├─ match-lineups.tsx
-│  │     ├─ match-timeline.tsx
-│  │     └─ player-list.tsx
+│  │  ├─ match
+│  │  │  ├─ match-ad.tsx
+│  │  │  ├─ match-event-summary.tsx
+│  │  │  ├─ match-header.tsx
+│  │  │  ├─ match-lineups.tsx
+│  │  │  ├─ match-timeline.tsx
+│  │  │  └─ player-list.tsx
+│  │  └─ shell
+│  │     └─ admin-dashboard.tsx
 │  ├─ skeletons
 │  │  ├─ navbar-item-skeleton.tsx
 │  │  ├─ navbar-skeleton.tsx
@@ -100,6 +146,7 @@ futbolya
 │     ├─ select-catalyst.tsx
 │     ├─ select.tsx
 │     ├─ separator.tsx
+│     ├─ sheet.tsx
 │     ├─ sidebar.tsx
 │     ├─ skeleton.tsx
 │     ├─ switch.tsx
@@ -113,13 +160,19 @@ futbolya
 ├─ convex
 │  ├─ auth.config.ts
 │  ├─ bootstrap.ts
+│  ├─ categories.ts
 │  ├─ clerk.ts
 │  ├─ clubs.ts
+│  ├─ dashboard.ts
+│  ├─ divisions.ts
 │  ├─ http.ts
+│  ├─ leagues.ts
 │  ├─ lib
 │  │  ├─ auth.ts
 │  │  └─ auth_types.ts
+│  ├─ players.ts
 │  ├─ schema.ts
+│  ├─ staff.ts
 │  ├─ users.ts
 │  └─ _generated
 │     ├─ api.d.ts
@@ -142,7 +195,10 @@ futbolya
 │  │  └─ types.ts
 │  ├─ navigation
 │  │  ├─ config.ts
+│  │  ├─ icon-map.ts
 │  │  ├─ index.ts
+│  │  ├─ org-admin-nav.ts
+│  │  ├─ super-admin-nav.ts
 │  │  ├─ types.ts
 │  │  └─ utils.ts
 │  ├─ role-utils.ts

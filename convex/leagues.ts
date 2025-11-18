@@ -179,3 +179,125 @@ export const getStats = query({
     };
   },
 });
+
+/**
+ * Update a league
+ */
+export const update = mutation({
+  args: {
+    leagueId: v.id("leagues"),
+    name: v.string(),
+    shortName: v.optional(v.string()),
+    country: v.string(),
+    region: v.optional(v.string()),
+    foundedYear: v.optional(v.number()),
+    website: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+    address: v.optional(v.string()),
+    status: v.union(v.literal("active"), v.literal("inactive")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const league = await ctx.db.get(args.leagueId);
+    if (!league) {
+      throw new Error("League not found");
+    }
+
+    await ctx.db.patch(args.leagueId, {
+      name: args.name,
+      shortName: args.shortName,
+      country: args.country,
+      region: args.region,
+      foundedYear: args.foundedYear,
+      website: args.website,
+      email: args.email,
+      phoneNumber: args.phoneNumber,
+      address: args.address,
+      status: args.status,
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Delete a league (SuperAdmin only)
+ */
+export const deleteLeague = mutation({
+  args: { leagueId: v.id("leagues") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const league = await ctx.db.get(args.leagueId);
+    if (!league) {
+      throw new Error("League not found");
+    }
+
+    // Check if league has clubs
+    const clubs = await ctx.db
+      .query("clubs")
+      .withIndex("by_leagueId", (q) => q.eq("leagueId", args.leagueId))
+      .collect();
+
+    if (clubs.length > 0) {
+      throw new Error(
+        `Cannot delete league with ${clubs.length} clubs. Remove all clubs first.`
+      );
+    }
+
+    // Check if league has divisions
+    const divisions = await ctx.db
+      .query("divisions")
+      .withIndex("by_leagueId", (q) => q.eq("leagueId", args.leagueId))
+      .collect();
+
+    if (divisions.length > 0) {
+      throw new Error(
+        `Cannot delete league with ${divisions.length} divisions. Remove all divisions first.`
+      );
+    }
+
+    await ctx.db.delete(args.leagueId);
+    return null;
+  },
+});
+
+/**
+ * Get league by ID (for SuperAdmin)
+ */
+export const getByIdAdmin = query({
+  args: { leagueId: v.id("leagues") },
+  returns: v.union(
+    v.object({
+      _id: v.id("leagues"),
+      _creationTime: v.number(),
+      name: v.string(),
+      slug: v.string(),
+      shortName: v.optional(v.string()),
+      country: v.string(),
+      region: v.optional(v.string()),
+      foundedYear: v.optional(v.number()),
+      website: v.optional(v.string()),
+      email: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      address: v.optional(v.string()),
+      logoUrl: v.optional(v.string()),
+      federationId: v.optional(v.string()),
+      status: v.union(v.literal("active"), v.literal("inactive")),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.leagueId);
+  },
+});
