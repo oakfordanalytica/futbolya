@@ -39,18 +39,18 @@ export function getNavigationContext(
   if (role === "SuperAdmin") {
     // If SuperAdmin is inside a specific Organization, show that Org's menu + Global Back Link
     if (orgSlug && orgType) {
-      const globalLink = { 
-        label: "Global Dashboard", 
-        href: "/admin", 
-        icon: GlobeAmericasIcon 
-      };
+      // const globalLink = { 
+      //   label: "Global Dashboard", 
+      //   href: "/admin", 
+      //   icon: GlobeAmericasIcon 
+      // };
 
       if (orgType === "league") {
         return {
           role,
           basePath: basePath, 
           navItems: [
-            globalLink,
+            // globalLink,
             { label: "Dashboard", href: "", icon: HomeIcon },
             { label: "Clubs", href: "clubs", icon: BuildingOfficeIcon },
             { label: "Tournaments", href: "tournaments", icon: TrophyIcon },
@@ -66,7 +66,7 @@ export function getNavigationContext(
           role,
           basePath: basePath,
           navItems: [
-            globalLink,
+            // globalLink,
             { label: "Dashboard", href: "", icon: HomeIcon },
             { label: "Matches", href: "matches", icon: CalendarIcon },
             { label: "Players", href: "players", icon: UserGroupIcon },
