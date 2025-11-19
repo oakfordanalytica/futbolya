@@ -1,17 +1,6 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-/**
- * One-time setup: Create the first SuperAdmin and initial league.
- * Run this manually after your first user signs up via Clerk.
- * 
- * Usage in Convex Dashboard:
- * api.setup.bootstrapSystem({
- *   userEmail: "your-email@example.com",
- *   leagueName: "Liga del Valle",
- *   leagueSlug: "liga-del-valle"
- * })
- */
 export const bootstrapSystem = mutation({
   args: {
     userEmail: v.string(),
@@ -24,40 +13,17 @@ export const bootstrapSystem = mutation({
     leagueId: v.id("leagues"),
   }),
   handler: async (ctx, args) => {
-    // 1. Find the user profile
+    // 1. Find the user profile (Must sign up via Clerk first)
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_email", (q) => q.eq("email", args.userEmail))
       .unique();
 
     if (!profile) {
-      throw new Error(
-        "Profile not found. User must sign up via Clerk first, then run this script."
-      );
+      throw new Error("Profile not found. Sign up via Clerk first.");
     }
 
-    // 2. Check if user already has SuperAdmin role
-    const existingRole = await ctx.db
-      .query("roleAssignments")
-      .withIndex("by_profileId", (q) => q.eq("profileId", profile._id))
-      .filter((q) => q.eq(q.field("role"), "SuperAdmin"))
-      .first();
-
-    if (existingRole) {
-      throw new Error("User is already a SuperAdmin");
-    }
-
-    // 3. Check if league slug is available
-    const existingLeague = await ctx.db
-      .query("leagues")
-      .withIndex("by_slug", (q) => q.eq("slug", args.leagueSlug))
-      .unique();
-
-    if (existingLeague) {
-      throw new Error("League slug already exists");
-    }
-
-    // 4. Create the first league
+    // 2. Create the first league
     const leagueId = await ctx.db.insert("leagues", {
       name: args.leagueName,
       slug: args.leagueSlug,
@@ -65,18 +31,24 @@ export const bootstrapSystem = mutation({
       status: "active",
     });
 
-    // 5. Assign SuperAdmin role
-    await ctx.db.insert("roleAssignments", {
-      profileId: profile._id,
-      role: "SuperAdmin",
-      organizationId: leagueId,
-      organizationType: "league",
-      assignedAt: Date.now(),
-    });
+    // 3. Assign SuperAdmin role to SYSTEM scope
+    // We check if assignment exists to avoid duplicates
+    const existingRole = await ctx.db
+      .query("roleAssignments")
+      .withIndex("by_profileId_and_role", (q) => 
+        q.eq("profileId", profile._id).eq("role", "SuperAdmin")
+      )
+      .first();
 
-    console.log("✅ System bootstrapped successfully!");
-    console.log(`SuperAdmin: ${profile.email}`);
-    console.log(`League: ${args.leagueName} (${args.leagueSlug})`);
+    if (!existingRole) {
+      await ctx.db.insert("roleAssignments", {
+        profileId: profile._id,
+        role: "SuperAdmin",
+        organizationId: "global", // Hardcoded for system scope
+        organizationType: "system",
+        assignedAt: Date.now(),
+      });
+    }
 
     return { profileId: profile._id, leagueId };
   },

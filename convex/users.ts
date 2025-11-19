@@ -460,45 +460,36 @@ export const getClubById = internalQuery({
 
 /**
  * Sync role assignments to Clerk's public metadata.
- * This allows frontend middleware to access roles without DB queries.
  */
 export const syncRolesToClerk = internalAction({
   args: { profileId: v.id("profiles") },
   returns: v.null(),
   handler: async (ctx, { profileId }) => {
-    const profile: Doc<"profiles"> | null = await ctx.runQuery(
-      internal.users.getProfile,
-      { profileId }
-    );
+    const profile = await ctx.runQuery(internal.users.getProfile, { profileId });
+    if (!profile) return null;
 
-    if (!profile) {
-      console.error("Profile not found:", profileId);
-      return null;
-    }
-
-    const assignments: Array<Doc<"roleAssignments">> = await ctx.runQuery(
-      internal.users.getRoleAssignments,
-      { profileId }
-    );
-
+    const assignments = await ctx.runQuery(internal.users.getRoleAssignments, { profileId });
+    
     const rolesMap: Record<string, string> = {};
 
     for (const assignment of assignments) {
-      let slug: string | undefined;
-
+      // 1. Handle System/Global Roles
       if (assignment.organizationType === "system") {
-        slug = "system";
-      } else if (assignment.organizationType === "league") {
-        const league: Doc<"leagues"> | null = await ctx.runQuery(
-          internal.users.getLeagueById,
-          { leagueId: assignment.organizationId }
-        );
+        rolesMap["system"] = assignment.role;
+        continue;
+      }
+
+      // 2. Handle Org Roles
+      let slug: string | undefined;
+      if (assignment.organizationType === "league") {
+        const league = await ctx.runQuery(internal.users.getLeagueById, { 
+          leagueId: assignment.organizationId 
+        });
         slug = league?.slug;
-      } else {
-        const club: Doc<"clubs"> | null = await ctx.runQuery(
-          internal.users.getClubById,
-          { clubId: assignment.organizationId }
-        );
+      } else if (assignment.organizationType === "club") {
+        const club = await ctx.runQuery(internal.users.getClubById, { 
+          clubId: assignment.organizationId 
+        });
         slug = club?.slug;
       }
 
@@ -507,6 +498,7 @@ export const syncRolesToClerk = internalAction({
       }
     }
 
+    // Update Clerk
     await clerkClient.users.updateUserMetadata(profile.clerkId, {
       publicMetadata: {
         roles: rolesMap,
@@ -1074,5 +1066,82 @@ export const listProfilesInOrg = query({
     }
 
     return Array.from(profilesMap.values());
+  },
+});
+
+/**
+ * Delete a user (Profile + Roles + Clerk Account).
+ * Only SuperAdmins can perform this action.
+ */
+export const deleteUser = mutation({
+  args: { profileId: v.id("profiles") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // 1. Verify SuperAdmin permissions
+    const requester = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    
+    if (!requester) throw new Error("Requester not found");
+
+    const superAdminRole = await ctx.db
+      .query("roleAssignments")
+      .withIndex("by_profileId_and_role", (q) => 
+        q.eq("profileId", requester._id).eq("role", "SuperAdmin")
+      )
+      .first();
+      
+    if (!superAdminRole) throw new Error("Unauthorized: Only SuperAdmins can delete users");
+
+    // 2. Prevent self-deletion
+    if (args.profileId === requester._id) {
+      throw new Error("You cannot delete your own account");
+    }
+
+    const targetProfile = await ctx.db.get(args.profileId);
+    if (!targetProfile) throw new Error("User not found");
+
+    // 3. Delete all Role Assignments for this user
+    const assignments = await ctx.db
+      .query("roleAssignments")
+      .withIndex("by_profileId", (q) => q.eq("profileId", args.profileId))
+      .collect();
+
+    for (const assignment of assignments) {
+      await ctx.db.delete(assignment._id);
+    }
+
+    // 4. Delete the Profile
+    await ctx.db.delete(args.profileId);
+
+    // 5. Delete from Clerk (if they have a connected account)
+    if (targetProfile.clerkId) {
+      await ctx.scheduler.runAfter(0, internal.users.deleteClerkUser, {
+        clerkId: targetProfile.clerkId,
+      });
+    }
+
+    return null;
+  },
+});
+
+/**
+ * Internal action to delete user from Clerk.
+ */
+export const deleteClerkUser = internalAction({
+  args: { clerkId: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // clerkClient is imported from "./clerk"
+    try {
+      await clerkClient.users.deleteUser(args.clerkId);
+    } catch (error) {
+      console.error(`Failed to delete Clerk user ${args.clerkId}:`, error);
+    }
+    return null;
   },
 });
