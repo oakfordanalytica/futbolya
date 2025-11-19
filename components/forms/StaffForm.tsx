@@ -45,6 +45,9 @@ export function StaffForm({
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     email: "",
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
     categoryId: "",
     role: "technical_director" as "technical_director" | "assistant_coach",
   });
@@ -54,6 +57,9 @@ export function StaffForm({
     if (open) {
       setForm({
         email: "",
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
         categoryId: "",
         role: "technical_director",
       });
@@ -61,8 +67,8 @@ export function StaffForm({
   }, [open]);
 
   const handleSubmit = async () => {
-    if (!form.email || !form.categoryId) {
-      alert("Email and category are required");
+    if (!form.email || !form.firstName || !form.lastName || !form.categoryId) {
+      alert("Please fill in all required fields (Email, Name, Category)");
       return;
     }
 
@@ -78,10 +84,15 @@ export function StaffForm({
       await addToCategory({
         categoryId: form.categoryId as Id<"categories">,
         email: form.email,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        phoneNumber: form.phoneNumber || undefined,
         role: form.role,
       });
+      
       onOpenChange(false);
       onSuccess?.();
+      alert("Staff member added successfully! They can now sign in with their email.");
     } catch (error) {
       console.error(error);
       alert(
@@ -92,23 +103,46 @@ export function StaffForm({
     }
   };
 
-  const roleLabels = {
-    technical_director: "Technical Director",
-    assistant_coach: "Assistant Coach",
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Add Staff Member</DialogTitle>
           <DialogDescription>
-            Assign a staff member to a category. If the person doesn't have an
-            account, we'll create one for them.
+            Assign a staff member to a category. We will create an account for them automatically.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-4">
-          <div>
+          
+          {/* Personal Info Group */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">
+                First Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="firstName"
+                value={form.firstName}
+                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                placeholder="e.g. Carlos"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">
+                Last Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="lastName"
+                value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                placeholder="e.g. Valderrama"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="email">
               Email <span className="text-destructive">*</span>
             </Label>
@@ -117,65 +151,78 @@ export function StaffForm({
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="e.g., coach@example.com"
+              placeholder="e.g., coach@club.com"
               required
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              We'll send them an invitation to join the platform
-            </p>
           </div>
 
-          <div>
-            <Label htmlFor="categoryId">
-              Category <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={form.categoryId}
-              onValueChange={(value) =>
-                setForm({ ...form, categoryId: value })
-              }
-            >
-              <SelectTrigger id="categoryId">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories?.map((category) => (
-                  <SelectItem key={category._id} value={category._id}>
-                    {category.name} ({category.ageGroup})
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              value={form.phoneNumber}
+              onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+              placeholder="e.g., +57 300 123 4567"
+            />
+          </div>
+
+          {/* Assignment Group */}
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="categoryId">
+                Category <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={form.categoryId}
+                onValueChange={(value) =>
+                  setForm({ ...form, categoryId: value })
+                }
+              >
+                <SelectTrigger id="categoryId">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((category) => (
+                    <SelectItem key={category._id} value={category._id}>
+                      {category.name} ({category.ageGroup})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">
+                Role <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={form.role}
+                onValueChange={(
+                  value: "technical_director" | "assistant_coach"
+                ) => setForm({ ...form, role: value })}
+              >
+                <SelectTrigger id="role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technical_director">
+                    Technical Director
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  <SelectItem value="assistant_coach">
+                    Assistant Coach
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+          
+          <p className="text-xs text-muted-foreground">
+            {form.role === "technical_director"
+              ? "The Technical Director is the head coach responsible for the category."
+              : "The Assistant Coach supports the Technical Director."}
+          </p>
 
-          <div>
-            <Label htmlFor="role">
-              Role <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={form.role}
-              onValueChange={(
-                value: "technical_director" | "assistant_coach"
-              ) => setForm({ ...form, role: value })}
-            >
-              <SelectTrigger id="role">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="technical_director">
-                  Technical Director
-                </SelectItem>
-                <SelectItem value="assistant_coach">
-                  Assistant Coach
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              {form.role === "technical_director"
-                ? "Main coach responsible for the category"
-                : "Supporting coach for the category"}
-            </p>
-          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -183,9 +230,9 @@ export function StaffForm({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || !form.email || !form.categoryId}
+            disabled={loading || !form.email || !form.firstName || !form.categoryId}
           >
-            {loading ? "Adding..." : "Add Staff Member"}
+            {loading ? "Creating..." : "Create & Assign"}
           </Button>
         </DialogFooter>
       </DialogContent>

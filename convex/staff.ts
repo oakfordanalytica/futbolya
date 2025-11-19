@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 /**
  * List staff by club slug
@@ -261,6 +262,9 @@ export const addToCategory = mutation({
   args: {
     categoryId: v.id("categories"),
     email: v.string(),
+    firstName: v.string(), // Added
+    lastName: v.string(),  // Added
+    phoneNumber: v.optional(v.string()), // Added
     role: v.union(v.literal("technical_director"), v.literal("assistant_coach")),
   },
   returns: v.null(),
@@ -274,21 +278,66 @@ export const addToCategory = mutation({
     if (!category) {
       throw new Error("Category not found");
     }
+    
+    const clubId = category.clubId;
 
-    // Find existing profile by email
-    const profile = await ctx.db
+    // 1. Find or Create Profile
+    let profile = await ctx.db
       .query("profiles")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .unique();
 
     if (!profile) {
-      throw new Error(
-        "User not found. Please create a user account first before assigning them as staff."
-      );
+      // Create new profile
+      const profileId = await ctx.db.insert("profiles", {
+        clerkId: "", // Will be filled by action
+        email: args.email,
+        firstName: args.firstName,
+        lastName: args.lastName,
+        displayName: `${args.firstName} ${args.lastName}`,
+        phoneNumber: args.phoneNumber,
+      });
+      
+      profile = await ctx.db.get(profileId);
+      
+      // Trigger Clerk creation (send invite/create account)
+      await ctx.scheduler.runAfter(0, internal.users.createClerkAccount, {
+        profileId: profileId,
+        email: args.email,
+        firstName: args.firstName,
+        lastName: args.lastName,
+      });
     }
 
+    if (!profile) throw new Error("Unexpected error creating profile");
+
+    // 2. Ensure they have the Base Role in the Club
+    // Whether they are a TD or Assistant, they need "TechnicalDirector" access to the platform
+    const existingRole = await ctx.db
+      .query("roleAssignments")
+      .withIndex("by_profileId_and_organizationId", (q) =>
+        q.eq("profileId", profile!._id).eq("organizationId", clubId)
+      )
+      .first();
+
+    if (!existingRole) {
+      await ctx.db.insert("roleAssignments", {
+        profileId: profile._id,
+        role: "TechnicalDirector", // Base role for all coaching staff
+        organizationId: clubId,
+        organizationType: "club",
+        assignedAt: Date.now(),
+      });
+      
+      // Sync roles so they can login immediately
+      await ctx.scheduler.runAfter(0, internal.users.syncRolesToClerk, {
+        profileId: profile._id,
+      });
+    }
+
+    // 3. Link to Category
     if (args.role === "technical_director") {
-      if (category.technicalDirectorId) {
+      if (category.technicalDirectorId && category.technicalDirectorId !== profile._id) {
         throw new Error("Category already has a technical director");
       }
       await ctx.db.patch(args.categoryId, {
@@ -296,12 +345,12 @@ export const addToCategory = mutation({
       });
     } else {
       const assistantCoachIds = category.assistantCoachIds || [];
-      if (assistantCoachIds.includes(profile._id)) {
-        throw new Error("Profile is already an assistant coach of this category");
+      // Prevent duplicates
+      if (!assistantCoachIds.includes(profile._id)) {
+        await ctx.db.patch(args.categoryId, {
+          assistantCoachIds: [...assistantCoachIds, profile._id],
+        });
       }
-      await ctx.db.patch(args.categoryId, {
-        assistantCoachIds: [...assistantCoachIds, profile._id],
-      });
     }
 
     return null;
