@@ -193,6 +193,8 @@ export const removeRole = mutation({
 
 /**
  * Get all organizations the current user has access to.
+ * 1. Auto-links via email if Clerk ID missing (fixes "refresh needed" bug).
+ * 2. Returns ALL orgs for SuperAdmins automatically.
  */
 export const getMyOrganizations = query({
   args: {},
@@ -217,32 +219,83 @@ export const getMyOrganizations = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
 
-    const profile = await ctx.db
+    // 1. Smart Profile Lookup (Clerk ID -> Fallback to Email)
+    let profile = await ctx.db
       .query("profiles")
       .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
+    if (!profile && identity.email) {
+      // Fallback: Profile exists but webhook hasn't linked Clerk ID yet
+      profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (q) => q.eq("email", identity.email!))
+        .unique();
+    }
+
     if (!profile) return [];
 
+    // 2. Check for SuperAdmin Role
+    const superAdminRole = await ctx.db
+      .query("roleAssignments")
+      .withIndex("by_profileId_and_role", (q) => 
+        q.eq("profileId", profile._id).eq("role", "SuperAdmin")
+      )
+      .first();
+
+    const orgsMap = new Map<string, any>();
+
+    // 3. If SuperAdmin, fetch ALL Active Leagues & Clubs
+    if (superAdminRole) {
+      const allLeagues = await ctx.db
+        .query("leagues")
+        .withIndex("by_status", (q) => q.eq("status", "active"))
+        .collect();
+
+      const allClubs = await ctx.db
+        .query("clubs") // You might want to filter clubs if there are thousands
+        .collect();
+
+      // Add Leagues
+      for (const league of allLeagues) {
+        orgsMap.set(league._id, {
+          _id: league._id,
+          slug: league.slug,
+          name: league.name,
+          role: "SuperAdmin",
+          type: "league",
+          logoUrl: league.logoUrl,
+        });
+      }
+
+      // Add Clubs
+      for (const club of allClubs) {
+        // Only show affiliated/active clubs to keep list clean? 
+        // Or everything. Let's show everything for SuperAdmin visibility.
+        orgsMap.set(club._id, {
+          _id: club._id,
+          slug: club.slug,
+          name: club.name,
+          role: "SuperAdmin",
+          type: "club",
+          logoUrl: club.logoUrl,
+        });
+      }
+    }
+
+    // 4. Fetch Explicit Assignments (for normal users OR specific roles for SuperAdmin)
     const assignments = await ctx.db
       .query("roleAssignments")
       .withIndex("by_profileId", (q) => q.eq("profileId", profile._id))
       .collect();
 
-    const orgs: Array<{
-      _id: string;
-      slug: string;
-      name: string;
-      role: "SuperAdmin" | "LeagueAdmin" | "ClubAdmin" | "TechnicalDirector" | "Player" | "Referee";
-      type: "league" | "club";
-      logoUrl?: string;
-    }> = [];
-
     for (const assignment of assignments) {
+      if (orgsMap.has(assignment.organizationId)) continue; // Skip if already added via SuperAdmin logic
+
       if (assignment.organizationType === "league") {
         const league = await ctx.db.get(assignment.organizationId as Id<"leagues">);
         if (league && league.status === "active") {
-          orgs.push({
+          orgsMap.set(league._id, {
             _id: league._id,
             slug: league.slug,
             name: league.name,
@@ -251,10 +304,10 @@ export const getMyOrganizations = query({
             logoUrl: league.logoUrl,
           });
         }
-      } else {
+      } else if (assignment.organizationType === "club") {
         const club = await ctx.db.get(assignment.organizationId as Id<"clubs">);
         if (club) {
-          orgs.push({
+          orgsMap.set(club._id, {
             _id: club._id,
             slug: club.slug,
             name: club.name,
@@ -266,7 +319,11 @@ export const getMyOrganizations = query({
       }
     }
 
-    return orgs;
+    // Convert Map to Array and Sort (Leagues first, then Clubs, then alphabetical)
+    return Array.from(orgsMap.values()).sort((a, b) => {
+      if (a.type !== b.type) return a.type === "league" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
   },
 });
 
