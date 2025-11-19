@@ -36,7 +36,7 @@ import Link from "next/link";
 
 interface ClubDetailViewProps {
   clubId: Id<"clubs">;
-  backUrl: string;
+  backUrl?: string;
   showDashboardButton?: boolean;
 }
 
@@ -79,7 +79,8 @@ export function ClubDetailView({
     setLoading(true);
     try {
       await deleteClub({ clubId });
-      router.push(backUrl);
+      if (backUrl) router.push(backUrl);
+      else router.push("/");
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : "Failed to delete club");
@@ -104,13 +105,11 @@ export function ClubDetailView({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push(backUrl)}
-          >
-            <ArrowLeftIcon className="h-5 w-5" />
-          </Button>
+          {backUrl && (
+            <Button variant="ghost" size="icon" onClick={() => router.push(backUrl)}>
+              <ArrowLeftIcon className="h-5 w-5" />
+            </Button>
+          )}
           <div className="flex items-center gap-4">
             {club.logoUrl ? (
               <img
