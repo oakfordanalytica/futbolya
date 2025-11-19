@@ -43,6 +43,7 @@ export default function SuperAdminClubsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<ClubFilter>("all");
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string>("");
 
   // Filter clubs
   const filteredClubs = allClubs?.filter((club) => {
@@ -258,11 +259,11 @@ export default function SuperAdminClubsPage() {
 
         {/* Create Club Dialog */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Create Club</DialogTitle>
               <DialogDescription>
-                Add a new club to a league
+                Add a new club to a league. You will be redirected to the league's context to complete the setup.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 mt-4">
@@ -270,7 +271,10 @@ export default function SuperAdminClubsPage() {
                 <Label htmlFor="league">
                   League <span className="text-destructive">*</span>
                 </Label>
-                <Select>
+                <Select
+                  value={selectedLeagueId}
+                  onValueChange={setSelectedLeagueId}
+                >
                   <SelectTrigger id="league">
                     <SelectValue placeholder="Select a league" />
                   </SelectTrigger>
@@ -282,9 +286,6 @@ export default function SuperAdminClubsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Note: You'll be redirected to the league's club creation page
-                </p>
               </div>
             </div>
             <DialogFooter>
@@ -292,15 +293,18 @@ export default function SuperAdminClubsPage() {
                 Cancel
               </Button>
               <Button
+                disabled={!selectedLeagueId}
                 onClick={() => {
-                  // For now, just close and show message
-                  alert(
-                    "Please select a league and navigate to that league's clubs page to create a new club."
-                  );
-                  setIsCreateOpen(false);
+                  const league = leagues?.find(l => l._id === selectedLeagueId);
+                  if (league) {
+                    // Redirect to the league's club creation view
+                    // We'll send them to the list page, but ideally we could append ?action=create
+                    router.push(`/${league.slug}/admin/clubs`);
+                    setIsCreateOpen(false);
+                  }
                 }}
               >
-                Continue
+                Continue to League
               </Button>
             </DialogFooter>
           </DialogContent>
