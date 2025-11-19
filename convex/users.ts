@@ -298,9 +298,16 @@ export const getMyRoleInOrg = query({
 
     if (!profile) return null;
 
-    // Find the organization
+    const globalAssignment = await ctx.db
+      .query("roleAssignments")
+      .withIndex("by_profileId_and_role", (q) => 
+        q.eq("profileId", profile._id).eq("role", "SuperAdmin")
+      )
+      .first();
+
+    if (globalAssignment) return "SuperAdmin";
+
     let orgId: string | null = null;
-    
     if (args.orgType === "league") {
       const league = await ctx.db
         .query("leagues")
@@ -317,6 +324,7 @@ export const getMyRoleInOrg = query({
 
     if (!orgId) return null;
 
+    // 3. Check specific organization role
     const assignment = await ctx.db
       .query("roleAssignments")
       .withIndex("by_profileId_and_organizationId", (q) =>
@@ -370,7 +378,7 @@ export const getRoleAssignments = internalQuery({
         v.literal("Referee")
       ),
       organizationId: v.string(),
-      organizationType: v.union(v.literal("league"), v.literal("club")),
+      organizationType: v.union(v.literal("league"), v.literal("club"), v.literal("system")),
       assignedAt: v.optional(v.number()),
       assignedBy: v.optional(v.id("profiles")),
     })
@@ -478,7 +486,9 @@ export const syncRolesToClerk = internalAction({
     for (const assignment of assignments) {
       let slug: string | undefined;
 
-      if (assignment.organizationType === "league") {
+      if (assignment.organizationType === "system") {
+        slug = "system";
+      } else if (assignment.organizationType === "league") {
         const league: Doc<"leagues"> | null = await ctx.runQuery(
           internal.users.getLeagueById,
           { leagueId: assignment.organizationId }
@@ -624,7 +634,7 @@ export const listAllProfiles = query({
         v.object({
           role: v.string(),
           organizationId: v.string(),
-          organizationType: v.union(v.literal("league"), v.literal("club")),
+          organizationType: v.union(v.literal("league"), v.literal("club"), v.literal("system")),
         })
       ),
     })
@@ -684,13 +694,14 @@ export const createAdminUser = mutation({
     lastName: v.string(),
     phoneNumber: v.optional(v.string()),
     role: v.union(
+      v.literal("SuperAdmin"),
       v.literal("LeagueAdmin"),
       v.literal("ClubAdmin"),
       v.literal("TechnicalDirector"),
       v.literal("Referee")
     ),
-    organizationId: v.string(),
-    organizationType: v.union(v.literal("league"), v.literal("club")),
+    organizationId: v.optional(v.string()), 
+    organizationType: v.union(v.literal("league"), v.literal("club"), v.literal("system")),
   },
   returns: v.object({
     profileId: v.id("profiles"),
@@ -701,6 +712,12 @@ export const createAdminUser = mutation({
     if (!identity) throw new Error("Not authenticated");
 
     // TODO: Add authorization check - only admins can create users
+
+    // If SuperAdmin creation
+    if (args.role === "SuperAdmin") {
+       args.organizationType = "system";
+       args.organizationId = "global";
+    }
 
     // Verify organization exists
     if (args.organizationType === "league") {
@@ -723,7 +740,7 @@ export const createAdminUser = mutation({
 
     // Create profile first (without Clerk ID)
     const profileId = await ctx.db.insert("profiles", {
-      clerkId: "",
+      clerkId: "", 
       email: args.email,
       firstName: args.firstName,
       lastName: args.lastName,
@@ -735,7 +752,7 @@ export const createAdminUser = mutation({
     await ctx.db.insert("roleAssignments", {
       profileId,
       role: args.role,
-      organizationId: args.organizationId,
+      organizationId: args.organizationId || "global",
       organizationType: args.organizationType,
       assignedAt: Date.now(),
     });
@@ -887,7 +904,7 @@ export const debugMyRoles = query({
             v.literal("Referee")
           ),
           organizationId: v.string(),
-          organizationType: v.union(v.literal("league"), v.literal("club")),
+          organizationType: v.union(v.literal("league"), v.literal("club"), v.literal("system")),
           organizationSlug: v.optional(v.string()),
         })
       ),

@@ -18,6 +18,7 @@ import type * as http from "../http.js";
 import type * as leagues from "../leagues.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_auth_types from "../lib/auth_types.js";
+import type * as lib_permissions from "../lib/permissions.js";
 import type * as organizations from "../organizations.js";
 import type * as players from "../players.js";
 import type * as staff from "../staff.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   leagues: typeof leagues;
   "lib/auth": typeof lib_auth;
   "lib/auth_types": typeof lib_auth_types;
+  "lib/permissions": typeof lib_permissions;
   organizations: typeof organizations;
   players: typeof players;
   staff: typeof staff;

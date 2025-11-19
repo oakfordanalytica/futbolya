@@ -219,16 +219,24 @@ export function SidebarAppSidebar() {
 
   const isInSuperAdminView = pathname.startsWith("/admin");
 
+  const orgDetails = useQuery(
+    api.organizations.getBySlug, 
+    orgSlug ? { slug: orgSlug } : "skip"
+  );
+
   const currentRole = orgSlug
     ? useQuery(api.users.getMyRoleInOrg, {
         orgSlug,
-        orgType: "league",
+        orgType: orgDetails?.type || "league", 
       })
     : null;
 
+  const roleToUse = isInSuperAdminView ? "SuperAdmin" : currentRole || null;
+
   const { basePath, navItems } = getNavigationContext(
     orgSlug || "",
-    isInSuperAdminView ? "SuperAdmin" : currentRole || null,
+    roleToUse,
+    orgDetails?.type
   );
 
   if (orgSlug && currentRole === undefined) {

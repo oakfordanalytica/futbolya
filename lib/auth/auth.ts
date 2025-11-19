@@ -24,11 +24,19 @@ export function getRolesFromClaims(auth: Auth): Record<string, AppRole> | null {
 
 /**
  * Get role for a specific organization
+ * Updated to fallback to SuperAdmin if the specific org role doesn't exist
  */
 export function getRoleForOrg(auth: Auth, orgSlug: string): AppRole | null {
   const roles = getRolesFromClaims(auth);
   if (!roles) return null;
-  return roles[orgSlug] ?? null;
+
+  // Priority 1: Specific Role in this Org
+  if (roles[orgSlug]) return roles[orgSlug];
+
+  // Priority 2: Global SuperAdmin
+  if (roles["system"] === "SuperAdmin") return "SuperAdmin";
+
+  return null;
 }
 
 /**
@@ -67,4 +75,14 @@ export function getPrimaryOrg(
   if (!roles || Object.keys(roles).length === 0) return null;
   const firstSlug = Object.keys(roles)[0];
   return { slug: firstSlug, role: roles[firstSlug] };
+}
+
+/**
+ * Check if user is a global SuperAdmin based on claims
+ */
+export function isSuperAdmin(auth: Auth): boolean {
+  const roles = getRolesFromClaims(auth);
+  if (!roles) return false;
+  // Check for the reserved system key
+  return roles["system"] === "SuperAdmin";
 }

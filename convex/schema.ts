@@ -13,7 +13,7 @@ const officialRole = v.literal("Referee");
 const allRoles = v.union(platformRole, leagueRole, clubRole, officialRole);
 
 // === ORGANIZATION TYPES ===
-const orgType = v.union(v.literal("league"), v.literal("club"));
+const orgType = v.union(v.literal("league"), v.literal("club"), v.literal("system"));
 
 // === STATUS ENUMS ===
 const leagueStatus = v.union(v.literal("active"), v.literal("inactive"));
@@ -71,12 +71,13 @@ export default defineSchema({
   roleAssignments: defineTable({
     profileId: v.id("profiles"),
     role: allRoles,
-    organizationId: v.string(), // Polymorphic: leagues._id OR clubs._id
-    organizationType: orgType,
+    organizationId: v.string(), // "global" for SuperAdmin or specific ID
+    organizationType: orgType,  // Now includes "system"
     assignedAt: v.optional(v.number()),
     assignedBy: v.optional(v.id("profiles")),
   })
     .index("by_profileId", ["profileId"])
+    .index("by_profileId_and_role", ["profileId", "role"]) 
     .index("by_profileId_and_organizationId", ["profileId", "organizationId"])
     .index("by_organizationId", ["organizationId"]),
 
