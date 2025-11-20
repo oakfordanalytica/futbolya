@@ -41,7 +41,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 
-type UserFilter = "all" | "active" | "pending" | "no_account";
+type UserFilter = "all" | "active" | "inactive";
 type TargetRole = "SuperAdmin" | "LeagueAdmin" | "ClubAdmin" | "TechnicalDirector" | "Referee";
 
 export default function SuperAdminUsersPage() {
@@ -160,8 +160,7 @@ export default function SuperAdminUsersPage() {
     const matchesFilter =
       filter === "all" ||
       (filter === "active" && hasClerkAccount) ||
-      (filter === "pending" && !hasClerkAccount && hasEmail) ||
-      (filter === "no_account" && !hasClerkAccount && !hasEmail);
+      (filter === "inactive" && !hasClerkAccount && !hasEmail);
 
     return matchesSearch && matchesFilter;
   });
@@ -170,7 +169,7 @@ export default function SuperAdminUsersPage() {
   const stats = {
     total: allProfiles?.length || 0,
     active: allProfiles?.filter((p) => p.clerkId).length || 0,
-    pending: allProfiles?.filter((p) => !p.clerkId && p.email).length || 0,
+    inactive: allProfiles?.filter((p) => !p.clerkId && !p.email).length || 0,
   };
 
   return (
@@ -216,13 +215,13 @@ export default function SuperAdminUsersPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
+              <CardTitle className="text-sm font-medium">Inactive</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">
-                {stats.pending}
+                {stats.inactive}
               </div>
-              <p className="text-xs text-muted-foreground">Awaiting sign-in</p>
+              <p className="text-xs text-muted-foreground">Awaiting email</p>
             </CardContent>
           </Card>
         </div>
@@ -259,8 +258,7 @@ export default function SuperAdminUsersPage() {
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="no_account">No Email</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -338,7 +336,7 @@ export default function SuperAdminUsersPage() {
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 text-sm text-yellow-600 font-medium">
-                              <ClockIcon className="h-4 w-4" /> Pending
+                              <ClockIcon className="h-4 w-4" /> Inactive
                             </span>
                           )}
                         </td>
@@ -396,7 +394,7 @@ export default function SuperAdminUsersPage() {
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-xs text-yellow-600 font-medium bg-yellow-50 px-2 py-0.5 rounded-full">
-                              <ClockIcon className="h-3 w-3" /> Invite Pending
+                              <ClockIcon className="h-3 w-3" /> Invite Inactive
                             </span>
                           )}
                         </div>

@@ -339,6 +339,84 @@ export const listByClubSlug = query({
 });
 
 /**
+ * List all players in a league (across all affiliated clubs).
+ * READ-ONLY view for League Admins.
+ */
+export const listByLeagueSlug = query({
+  args: { leagueSlug: v.string() },
+  returns: v.array(
+    v.object({
+      _id: v.id("players"),
+      _creationTime: v.number(),
+      profileId: v.id("profiles"),
+      fullName: v.string(),
+      avatarUrl: v.optional(v.string()),
+      dateOfBirth: v.optional(v.string()),
+      position: v.optional(v.string()), // simplified type for brevity
+      status: v.string(), // simplified
+      clubName: v.string(),
+      clubLogoUrl: v.optional(v.string()),
+      categoryName: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const league = await ctx.db
+      .query("leagues")
+      .withIndex("by_slug", (q) => q.eq("slug", args.leagueSlug))
+      .unique();
+
+    if (!league) return [];
+
+    const clubs = await ctx.db
+      .query("clubs")
+      .withIndex("by_leagueId", (q) => q.eq("leagueId", league._id))
+      .collect();
+
+    const results = [];
+
+    // Note: In a high-scale production app, we would denormalize "leagueId" onto the player 
+    // or use a dedicated search index. For now, this iteration is acceptable.
+    for (const club of clubs) {
+      const categories = await ctx.db
+        .query("categories")
+        .withIndex("by_clubId", (q) => q.eq("clubId", club._id))
+        .collect();
+
+      for (const category of categories) {
+        const players = await ctx.db
+          .query("players")
+          .withIndex("by_currentCategoryId", (q) => q.eq("currentCategoryId", category._id))
+          .collect();
+
+        for (const player of players) {
+          const profile = await ctx.db.get(player.profileId);
+          if (profile) {
+            results.push({
+              _id: player._id,
+              _creationTime: player._creationTime,
+              profileId: player.profileId,
+              fullName: profile.displayName || profile.email || "Unknown",
+              avatarUrl: profile.avatarUrl,
+              dateOfBirth: profile.dateOfBirth,
+              position: player.position,
+              status: player.status,
+              clubName: club.name,
+              clubLogoUrl: club.logoUrl,
+              categoryName: category.name,
+            });
+          }
+        }
+      }
+    }
+
+    // Sort by Club Name then Player Name
+    return results.sort((a, b) => 
+      a.clubName.localeCompare(b.clubName) || a.fullName.localeCompare(b.fullName)
+    );
+  },
+});
+
+/**
  * Get player by ID with full details
  */
 export const getById = query({

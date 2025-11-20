@@ -9,32 +9,44 @@ export default function OrgAdminDashboard() {
   const params = useParams();
   const orgSlug = params.org as string;
 
-  // You'd need to determine orgType from the org data
-  // For now, let's check if it's a league or club
-  const league = useQuery(api.leagues.getBySlug, { slug: orgSlug });
-  const club = useQuery(api.clubs.getBySlug, { slug: orgSlug });
-
-  const orgType = league ? "league" : club ? "club" : null;
-  const orgName = league?.name || club?.name;
-
+  const organization = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const stats = useQuery(
     api.dashboard.getOrgAdminStats,
-    orgType ? { orgSlug, orgType } : "skip"
+    organization ? { orgSlug, orgType: organization.type } : "skip"
   );
 
-  if (!orgType || !orgName) {
+  if (organization === undefined) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Organization not found</h1>
+      <div className="p-8 space-y-8">
+         <div className="space-y-2">
+            <div className="h-8 w-64 bg-muted/50 rounded animate-pulse" />
+            <div className="h-4 w-96 bg-muted/50 rounded animate-pulse" />
+         </div>
+         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-32 bg-muted/50 rounded-xl animate-pulse" />
+            ))}
+         </div>
+      </div>
+    );
+  }
+
+  if (organization === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold">Organization not found</h1>
           <p className="text-muted-foreground">
-            The organization you're looking for doesn't exist.
+            The organization "{orgSlug}" does not exist or you do not have access.
           </p>
         </div>
       </div>
     );
   }
 
+  // 5. RENDER DASHBOARD
+  const orgType = organization.type;
+  const orgName = organization.name;
   const isLeague = orgType === "league";
 
   const links = isLeague
@@ -73,7 +85,7 @@ export default function OrgAdminDashboard() {
           linkText: "Manage tournaments",
         },
         {
-          title: "Users",
+          title: "Admin Users",
           description: "League administrators",
           stat: stats?.totalStaff,
           href: `/${orgSlug}/admin/users`,
@@ -103,7 +115,7 @@ export default function OrgAdminDashboard() {
           linkText: "Manage staff",
         },
         {
-          title: "Users",
+          title: "Admin Users",
           description: "Club administrators",
           href: `/${orgSlug}/admin/users`,
           linkText: "Manage users",

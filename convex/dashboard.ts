@@ -11,13 +11,35 @@ export const getSuperAdminStats = query({
     totalClubs: v.number(),
     totalUsers: v.number(),
     totalPlayers: v.number(),
+    activeLeagues: v.number(),
+    affiliatedClubs: v.number(),
   }),
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
-    // TODO: Check if user is SuperAdmin
+    // 1. Verify SuperAdmin Role
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
 
+    if (!profile) throw new Error("Profile not found");
+
+    const superAdminRole = await ctx.db
+      .query("roleAssignments")
+      .withIndex("by_profileId_and_role", (q) => 
+        q.eq("profileId", profile._id).eq("role", "SuperAdmin")
+      )
+      .first();
+
+    if (!superAdminRole) {
+      throw new Error("Unauthorized: SuperAdmin access required");
+    }
+
+    // 2. Fetch Counts
+    // Note: For large datasets, we would use a counter table. 
+    // For now, collecting is acceptable.
     const leagues = await ctx.db.query("leagues").collect();
     const clubs = await ctx.db.query("clubs").collect();
     const profiles = await ctx.db.query("profiles").collect();
@@ -25,7 +47,9 @@ export const getSuperAdminStats = query({
 
     return {
       totalLeagues: leagues.length,
+      activeLeagues: leagues.filter(l => l.status === "active").length,
       totalClubs: clubs.length,
+      affiliatedClubs: clubs.filter(c => c.status === "affiliated").length,
       totalUsers: profiles.length,
       totalPlayers: players.length,
     };
@@ -50,7 +74,7 @@ export const getOrgAdminStats = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
-    // TODO: Check if user has admin access to this org
+    // TODO: Check if user has admin access to this org (Middleware handles basic auth, but role check here is good practice)
 
     if (args.orgType === "league") {
       const league = await ctx.db
@@ -88,11 +112,20 @@ export const getOrgAdminStats = query({
         }
       }
 
+      // Calculate League Staff (LeagueAdmins)
+      const staffAssignments = await ctx.db
+        .query("roleAssignments")
+        .withIndex("by_organizationId", (q) => q.eq("organizationId", league._id))
+        .collect();
+      
+      // Filter for LeagueAdmin role only (exclude Referees if they are assigned to league org)
+      const leagueAdmins = staffAssignments.filter(a => a.role === "LeagueAdmin");
+
       return {
         totalClubs: clubs.length,
         totalCategories,
         totalPlayers,
-        totalStaff: 0, // TODO: Calculate from roleAssignments
+        totalStaff: leagueAdmins.length,
       };
     } else {
       // Club stats
@@ -121,10 +154,21 @@ export const getOrgAdminStats = query({
         totalPlayers += players.length;
       }
 
+      // Calculate Club Staff (Admins + Technical Directors)
+      const staffAssignments = await ctx.db
+        .query("roleAssignments")
+        .withIndex("by_organizationId", (q) => q.eq("organizationId", club._id))
+        .collect();
+
+      // Filter for relevant roles
+      const clubStaff = staffAssignments.filter(a => 
+        a.role === "ClubAdmin" || a.role === "TechnicalDirector"
+      );
+
       return {
         totalCategories: categories.length,
         totalPlayers,
-        totalStaff: 0, // TODO: Calculate from roleAssignments
+        totalStaff: clubStaff.length,
       };
     }
   },
