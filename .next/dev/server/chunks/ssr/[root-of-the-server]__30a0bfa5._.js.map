@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///Users/ulvenforst/Codex/Work/CPM/nisaa/app/%5Blocale%5D/%5Btenant%5D/%28auth%29/sign-in/%5B%5B...sign-in%5D%5D/page.tsx"],"sourcesContent":["import { SignIn } from \"@clerk/nextjs\";\n\ninterface PageProps {\n  params: Promise<{ tenant: string }>;\n}\n\nexport default async function TenantSignInPage({ params }: PageProps) {\n  const { tenant } = await params;\n\n  return (\n    <SignIn\n      signUpUrl={`/${tenant}/sign-up`}\n      forceRedirectUrl={`/${tenant}/applications`}\n    />\n  );\n}\n"],"names":[],"mappings":";;;;;AAAA;;;AAMe,eAAe,iBAAiB,EAAE,MAAM,EAAa;IAClE,MAAM,EAAE,MAAM,EAAE,GAAG,MAAM;IAEzB,qBACE,6WAAC,mZAAM;QACL,WAAW,CAAC,CAAC,EAAE,OAAO,QAAQ,CAAC;QAC/B,kBAAkB,CAAC,CAAC,EAAE,OAAO,aAAa,CAAC;;;;;;AAGjD"}}]
+}

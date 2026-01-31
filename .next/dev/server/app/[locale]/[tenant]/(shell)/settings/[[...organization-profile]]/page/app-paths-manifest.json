@@ -1,0 +1,3 @@
+{
+  "/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page.js"
+}

@@ -1,0 +1,12 @@
+{
+  "/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page.js",
+  "/[locale]/[tenant]/(shell)/games/[gameId]/page": "app/[locale]/[tenant]/(shell)/games/[gameId]/page.js",
+  "/[locale]/[tenant]/(shell)/games/page": "app/[locale]/[tenant]/(shell)/games/page.js",
+  "/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page.js",
+  "/[locale]/[tenant]/(shell)/settings/appearance/page": "app/[locale]/[tenant]/(shell)/settings/appearance/page.js",
+  "/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page.js",
+  "/[locale]/[tenant]/(shell)/teams/[teamId]/page": "app/[locale]/[tenant]/(shell)/teams/[teamId]/page.js",
+  "/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page.js",
+  "/[locale]/[tenant]/(shell)/teams/page": "app/[locale]/[tenant]/(shell)/teams/page.js",
+  "/_not-found/page": "app/_not-found/page.js"
+}

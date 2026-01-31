@@ -5,6 +5,7 @@ import {
 } from "@/components/sections/shell/organizations/app-sidebar";
 import { SidebarLayout } from "@/components/layouts/sidebar-layout";
 import { OrgMismatchError } from "@/components/sections/shell/organizations/org-mismatch-error";
+import { SportProvider } from "@/components/providers/sport-provider";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,12 +24,14 @@ export default async function OrgLayout({ children, params }: LayoutProps) {
   }
 
   return (
-    <SidebarLayout
-      fullWidth
-      navbar={<NavbarAppSidebar />}
-      sidebar={<SidebarAppSidebar />}
-    >
-      <main className="flex-1">{children}</main>
-    </SidebarLayout>
+    <SportProvider sportType="basketball">
+      <SidebarLayout
+        fullWidth
+        navbar={<NavbarAppSidebar />}
+        sidebar={<SidebarAppSidebar />}
+      >
+        <main className="flex-1">{children}</main>
+      </SidebarLayout>
+    </SportProvider>
   );
 }

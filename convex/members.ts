@@ -14,7 +14,6 @@ const membershipValidator = v.object({
   organizationId: v.id("organizations"),
   clerkMembershipId: v.string(),
   role: roleValidator,
-  createdAt: v.number(),
 });
 
 /**
@@ -218,7 +217,6 @@ export const upsertFromClerk = internalMutation({
         name: orgData.name,
         slug: orgData.slug ?? orgData.id,
         imageUrl: orgData.image_url ?? undefined,
-        createdAt: Date.now(),
       });
 
       organization = await ctx.db.get(orgId);
@@ -271,7 +269,6 @@ export const upsertFromClerk = internalMutation({
       organizationId: organization._id,
       clerkMembershipId,
       role,
-      createdAt: Date.now(),
     });
   },
 });

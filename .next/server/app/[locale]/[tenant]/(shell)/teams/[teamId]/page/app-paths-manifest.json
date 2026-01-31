@@ -1,0 +1,3 @@
+{
+  "/[locale]/[tenant]/(shell)/teams/[teamId]/page": "app/[locale]/[tenant]/(shell)/teams/[teamId]/page.js"
+}

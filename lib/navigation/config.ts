@@ -5,9 +5,11 @@ import {
   Cog6ToothIcon,
   ShieldCheckIcon,
   CalendarIcon,
+  UserGroupIcon,
+  RectangleStackIcon,
 } from "@heroicons/react/20/solid";
 import { Palette } from "lucide-react";
-import { ROUTES } from "@/lib/navigation/routes";
+import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
 import type {
   NavItem,
   NavConfig,
@@ -15,6 +17,8 @@ import type {
   NavIcon,
   SettingsNavItem,
   SettingsNavConfig,
+  TeamNavItem,
+  TeamNavConfig,
 } from "./types";
 
 /**
@@ -41,24 +45,19 @@ const ADMIN_ITEMS: NavItem[] = [
 ];
 
 const ORG_ITEMS: NavItem[] = [
-  // {
-  //   labelKey: "dashboard",
-  //   icon: HomeIcon,
-  //   href: (orgSlug) => ROUTES.org.root(orgSlug!),
-  //   isIndex: true,
-  // },
   {
-    labelKey: "applications",
-    icon: UsersIcon,
-    href: (orgSlug) => ROUTES.org.applications.list(orgSlug!),
+    labelKey: "teams",
+    icon: UserGroupIcon,
+    href: (orgSlug) => ROUTES.org.teams.list(orgSlug!),
     isIndex: false,
   },
-  // {
-  //   labelKey: "teams",
-  //   icon: UsersIcon,
-  //   href: (orgSlug) => ROUTES.org.teams.list(orgSlug!),
-  //   isIndex: false,
-  // },
+  {
+    labelKey: "tournaments",
+    icon: CalendarIcon,
+    href: (orgSlug) => ROUTES.org.games.list(orgSlug!),
+    isIndex: false,
+  },
+  //
   // {
   //   labelKey: "divisions",
   //   icon: TrophyIcon,
@@ -114,6 +113,43 @@ const ORG_ITEMS: NavItem[] = [
   //   isIndex: false,
   // },
 ];
+
+// =============================================================================
+// Team Navigation Configuration
+// =============================================================================
+
+const TEAM_ITEMS: TeamNavItem[] = [
+  {
+    labelKey: "roster",
+    icon: UserGroupIcon,
+    href: (orgSlug, teamSlug) => TEAM_ROUTES.roster(orgSlug, teamSlug),
+    isIndex: false,
+  },
+  {
+    labelKey: "staff",
+    icon: UsersIcon,
+    href: (orgSlug, teamSlug) => TEAM_ROUTES.staff(orgSlug, teamSlug),
+    isIndex: false,
+  },
+  {
+    labelKey: "categories",
+    icon: RectangleStackIcon,
+    href: (orgSlug, teamSlug) => TEAM_ROUTES.categories(orgSlug, teamSlug),
+    isIndex: false,
+  },
+  {
+    labelKey: "schedule",
+    icon: CalendarIcon,
+    href: (orgSlug, teamSlug) => TEAM_ROUTES.schedule(orgSlug, teamSlug),
+    isIndex: false,
+  },
+];
+
+const TEAM_NAV_CONFIG: TeamNavConfig = {
+  items: TEAM_ITEMS,
+  settingsHref: (orgSlug, teamSlug) =>
+    TEAM_ROUTES.settings.root(orgSlug, teamSlug),
+};
 
 const NAV_CONFIGS: Record<NavContext, NavConfig> = {
   admin: {
@@ -201,6 +237,10 @@ const SETTINGS_NAV_CONFIGS: Record<NavContext, SettingsNavConfig> = {
 
 export function getNavConfig(context: NavContext): NavConfig {
   return NAV_CONFIGS[context];
+}
+
+export function getTeamNavConfig(): TeamNavConfig {
+  return TEAM_NAV_CONFIG;
 }
 
 export function getSettingsNavConfig(context: NavContext): SettingsNavConfig {

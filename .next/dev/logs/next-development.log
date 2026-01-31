@@ -1,0 +1,347 @@
+[00:00:00.567] Server  LOG      ✓ Ready in 425ms
+[00:01:13.658] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[00:19:36.866] Browser LOG     Attempting reconnect in 95ms
+[00:19:37.226] Browser LOG     WebSocket reconnected at t=1108s after disconnect due to InactiveServer
+[00:19:44.234] Browser WARN    Image with src "https://precious-mandrill-571.convex.cloud/api/storage/6ca5b0dc-6345-48c7-ad33-aa3dbd60db4a" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[00:19:50.169] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:19:50.169] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:30:43.803] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:30:43.803] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:30:48.371] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[00:30:48.371] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[00:30:48.371] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[00:30:48.371] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[00:31:19.285] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:31:19.285] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:33:42.966] Browser WARN    Image with src "/background-auth.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[00:33:42.966] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[00:42:49.827] Server  LOG      ✓ Compiled in 83ms
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:42:50.418] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:42:50.418] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:13.257] Server  LOG      ✓ Compiled in 42ms
+[00:43:13.313] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:13.313] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:17.764] Server  LOG      ✓ Compiled in 45ms
+[00:43:17.826] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:17.826] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:17.826] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:17.826] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:26.951] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:26.951] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:28.754] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:28.755] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:28.755] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:28.755] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:28.755] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:28.755] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:31.304] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:31.304] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:31.304] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:31.304] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:31.304] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:31.304] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:32.193] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:32.193] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:43:32.193] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:43:32.193] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:43:44.984] Server  LOG      ✓ Compiled in 36ms
+[00:43:51.362] Server  LOG      ✓ Compiled in 38ms
+[00:44:01.335] Server  LOG      ✓ Compiled in 35ms
+[00:44:35.208] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:35.208] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:35.208] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:35.208] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:36.884] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:36.884] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:36.884] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:44:36.884] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:44:42.086] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:42.086] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:42.086] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:42.087] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:43.870] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:43.870] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:43.870] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:43.870] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:45.879] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:45.879] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:45.879] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:45.879] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:46.060] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:46.060] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:46.060] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:46.060] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:46.865] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:46.865] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:46.865] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:46.865] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:47.066] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:47.066] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:47.066] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:47.066] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.260] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.260] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.260] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.260] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.429] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.429] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.429] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.429] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.755] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.755] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.755] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.756] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.925] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.925] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.925] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:44:50.925] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:00.380] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[00:45:00.380] Browser ERROR   A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <SegmentViewNode type="page" pagePath="[locale]/[...">
+      <SegmentTrieNode>
+      <TeamSettingsPage>
+        <TeamSettingsClient preloadedTeam={{_name:"clu...", ...}} preloadedPlayers={{_name:"pla...", ...}} ...>
+          ...
+            <Tabs data-slot="tabs" className="flex flex-..." defaultValue="general">
+              <TabsProvider scope={undefined} baseId="radix-_R_1..." value="general" ...>
+                <Primitive.div dir="ltr" data-orientation="horizontal" data-slot="tabs" className="flex flex-..." ...>
+                  <div dir="ltr" data-orientation="horizontal" data-slot="tabs" className="flex flex-..." ref={null}>
+                    <TabsList>
+                    <TabsContent value="general" className="mt-6">
+                      <TabsContent data-slot="tabs-content" className="flex-1 out..." value="general">
+                        <Presence present={true}>
+                          <Primitive.div data-state="active" data-orientation="horizontal" role="tabpanel" ...>
+                            <div data-state="active" data-orientation="horizontal" role="tabpanel" ...>
+                              <TeamGeneralForm team={{...}} orgSlug="juan-s-lea...">
+                                <form
+                                  onSubmit={function handleSubmit}
+                                  className="space-y-6"
+-                                 data-np-autofill-form-type="identity"
+-                                 data-np-checked="1"
+-                                 data-np-watching="1"
+                                >
+                                  ...
+                                    <div data-slot="field-group" className={"group/fi..."}>
+                                      <Field>
+                                        <div role="group" data-slot="field" data-orientation="vertical" ...>
+                                          <Input value="Van Gogh" onChange={function onChange} required={true} ...>
+                                            <input
+                                              type={undefined}
+                                              data-slot="input"
+                                              className="file:text-foreground placeholder:text-muted-foreground select..."
+                                              value="Van Gogh"
+                                              onChange={function onChange}
+                                              required={true}
+                                              placeholder="Name"
+-                                             data-np-autofill-field-type="fullName"
+                                            >
+                                      <Field>
+                                        <div role="group" data-slot="field" data-orientation="vertical" ...>
+                                          <Input value="vans" onChange={function onChange} placeholder="Nickname" ...>
+                                            <input
+                                              type={undefined}
+                                              data-slot="input"
+                                              className="file:text-foreground placeholder:text-muted-foreground select..."
+                                              value="vans"
+                                              onChange={function onChange}
+                                              placeholder="Nickname"
+                                              pattern="[a-z0-9-]+"
+                                              title="Only lowercase letters, numbers, and hyphens allowed"
+-                                             data-np-intersection-state="visible"
+                                            >
+                                          ...
+                                  ...
+                                    <div className="flex flex-...">
+                                      <p>
+                                      <div className="flex items...">
+                                        <ColorPicker>
+                                        <Input placeholder="Color name..." value="" onChange={function onChange} ...>
+                                          <input
+                                            type={undefined}
+                                            data-slot="input"
+                                            className="file:text-foreground placeholder:text-muted-foreground selectio..."
+                                            placeholder="Color name (e.g. Navy)"
+                                            value=""
+                                            onChange={function onChange}
+                                            disabled={false}
+-                                           data-np-intersection-state="visible"
+                                          >
+                                      ...
+                                  ...
+                    ...
+
+[00:45:01.915] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:01.915] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:01.915] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:01.915] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:02.017] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:02.017] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:02.942] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:02.942] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:02.942] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:45:02.942] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:45:33.446] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:33.446] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:33.446] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:33.446] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:45:42.142] Browser WARN    Image with src "https://precious-mandrill-571.convex.cloud/api/storage/6ca5b0dc-6345-48c7-ad33-aa3dbd60db4a" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[00:46:57.532] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:46:57.532] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:46:57.532] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:46:57.532] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:46:57.532] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:46:57.532] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:46:59.002] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:46:59.002] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:46:59.002] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:46:59.002] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:47:12.273] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[00:47:14.670] Browser WARN    Image with src "https://precious-mandrill-571.convex.cloud/api/storage/6ca5b0dc-6345-48c7-ad33-aa3dbd60db4a" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[00:47:17.360] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:17.360] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:17.360] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:17.360] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:17.470] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:17.470] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:18.457] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:18.457] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:18.457] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:47:18.457] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:47:22.513] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:22.513] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:22.513] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:47:22.513] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.players.dateOfBirth` in messages for locale `en`."}
+[00:49:28.224] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:49:28.225] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:51:38.526] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:51:38.526] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:54:09.499] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:54:09.499] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:54:28.222] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:54:28.222] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:55:11.979] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:55:11.979] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:55:17.229] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:55:17.229] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:55:29.409] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:55:29.409] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:55:41.514] Browser WARN    Image with src "https://precious-mandrill-571.convex.cloud/api/storage/da911273-7313-4418-9e67-1774e7d9c9a9" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[00:56:34.410] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[00:56:34.410] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:06:26.285] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[01:06:26.285] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[01:06:26.285] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[01:06:26.285] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[01:09:27.706] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:09:27.706] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:09:54.283] Server  LOG      ✓ Compiled in 66ms
+[01:11:45.752] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[01:11:45.752] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[01:11:45.752] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[01:11:45.752] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[01:11:53.028] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:11:53.028] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:11:56.408] Server  LOG      ✓ Compiled in 81ms
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.invite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.inviteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.sendInvite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.deleteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.invite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.inviteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.sendInvite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.deleteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.invite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.inviteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.sendInvite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.deleteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.invite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.inviteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.sendInvite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.deleteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.invite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.inviteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.sendInvite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.deleteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.invite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.inviteDescription` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.sendInvite` in messages for locale `en`."}
+[01:11:56.599] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.staff.deleteDescription` in messages for locale `en`."}
+[01:14:21.839] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[01:14:21.839] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[01:14:21.839] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[01:14:21.839] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[01:16:13.014] Server  LOG      ✓ Compiled in 43ms
+[01:16:14.291] Server  ERROR    ⨯ Error: [Request ID: 3c85ad10934e90d0] Server Error
+ArgumentValidationError: Object is missing the required field `clubSlug`. Consider wrapping the field validator in `v.optional(...)` if this is expected.
+
+Object: {clubSlub: "bulls"}
+Validator: v.object({clubSlug: v.string()})
+
+
+[01:16:14.559] Browser ERROR   uncaughtError: Error: [Request ID: 3c85ad10934e90d0] Server Error
+ArgumentValidationError: Object is missing the required field `clubSlug`. Consider wrapping the field validator in `v.optional(...)` if this is expected.
+
+Object: {clubSlub: "bulls"}
+Validator: v.object({clubSlug: v.string()})
+
+
+[01:16:17.017] Server  LOG      ✓ Compiled in 55ms
+[01:16:19.449] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[01:17:52.841] Server  LOG      ✓ Compiled in 44ms
+[01:17:57.793] Server  LOG      ✓ Compiled in 42ms
+[01:18:06.042] Server  LOG      ✓ Compiled in 42ms
+[01:23:23.450] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:23:23.450] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:23:33.838] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:23:33.838] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:25:15.583] Server  LOG      ✓ Compiled in 36ms
+[01:25:21.329] Server  LOG      ✓ Compiled in 41ms
+[01:25:25.396] Server  LOG      ✓ Compiled in 39ms
+[01:25:25.776] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:25:25.776] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:25:31.356] Server  LOG      ✓ Compiled in 44ms
+[01:25:40.013] Server  LOG      ✓ Compiled in 52ms
+[01:26:38.460] Browser WARN    Image with src "https://precious-mandrill-571.convex.cloud/api/storage/da911273-7313-4418-9e67-1774e7d9c9a9" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[01:26:57.405] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:26:57.405] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:28:20.961] Browser WARN    Image with src "https://precious-mandrill-571.convex.cloud/api/storage/acef79d6-3e13-42fa-97db-118d0a85c5d1" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[01:31:59.200] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:31:59.200] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:33:18.652] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:33:18.652] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:34:23.330] Browser WARN    Image with src "https://precious-mandrill-571.convex.cloud/api/storage/cd1addc9-8c5b-48df-90e3-a3f12c36cd57" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[01:34:57.467] Browser WARN    Image with src "https://precious-mandrill-571.convex.cloud/api/storage/6ca5b0dc-6345-48c7-ad33-aa3dbd60db4a" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[01:35:56.207] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[01:35:56.207] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[01:35:56.207] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.date` in messages for locale `en`."}
+[01:35:56.207] Browser ERROR   {"code":"MISSING_MESSAGE","originalMessage":"Could not resolve `Common.games.opponent` in messages for locale `en`."}
+[01:42:59.061] Browser ERROR   [TeamStaffTable] Failed to invite staff: {}
+[01:43:07.229] Browser ERROR   [TeamStaffTable] Failed to invite staff: {}
+[01:44:39.310] Server  LOG      ✓ Compiled in 40ms
+[01:51:05.464] Server  LOG      ✓ Compiled in 41ms
+[01:51:23.287] Server  LOG      ✓ Compiled in 45ms
+[01:52:14.199] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:52:14.199] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.

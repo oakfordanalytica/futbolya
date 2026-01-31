@@ -1,0 +1,110 @@
+{
+  "node": {
+    "7fa797fa4649797cc5342056734b6b76a8f73dbf49": {
+      "workers": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "rsc"
+      },
+      "exportedName": "detectKeylessEnvDriftAction",
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+    },
+    "7f4973bdfe60231e77c7eadf7a5f623ca6b288a4cd": {
+      "workers": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "action-browser"
+      },
+      "exportedName": "invalidateCacheAction",
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+    },
+    "7f3acafbf272ba3ce2b8ba36574ed89bfc4c1d4fb4": {
+      "workers": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "rsc"
+      },
+      "exportedName": "createOrReadKeylessAction",
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+    },
+    "7f5d1dcaddd61e4e29df2ec6ff0881ba7a0093d007": {
+      "workers": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "rsc"
+      },
+      "exportedName": "formatMetadataHeaders",
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+    },
+    "7fe95f89f274765edb32820423c73146205bd9ea92": {
+      "workers": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "rsc"
+      },
+      "exportedName": "collectKeylessMetadata",
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+    },
+    "7f8b5ee84146e2fde6eb352d711324c21f623fbd3b": {
+      "workers": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "action-browser"
+      },
+      "exportedName": "syncKeylessConfigAction",
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+    },
+    "7f8edb098c6ff2526f21caa88dccc90d482d019fb8": {
+      "workers": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "action-browser"
+      },
+      "exportedName": "deleteKeylessAction",
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+    }
+  },
+  "edge": {}
+}

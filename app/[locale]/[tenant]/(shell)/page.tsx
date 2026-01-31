@@ -7,5 +7,5 @@ interface PageProps {
 
 export default async function TenantRootPage({ params }: PageProps) {
   const { tenant } = await params;
-  redirect(ROUTES.org.applications.list(tenant));
+  redirect(ROUTES.org.teams.list(tenant));
 }

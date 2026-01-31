@@ -5,9 +5,7 @@ import { WebhookEvent } from "@clerk/backend";
 import { internal } from "./_generated/api";
 import { clerkClient } from "./clerk";
 
-// Centralized webhook endpoint paths
 const CLERK_WEBHOOK_PATH = "/clerk-webhook";
-const SQUARE_WEBHOOK_PATH = "/square-webhook";
 
 const handleClerkWebhook = httpAction(async (ctx, request) => {
   const event = await validateClerkRequest(request);
@@ -17,17 +15,14 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
 
   try {
     switch (event.type) {
-      // User events
       case "user.created": {
         await ctx.runMutation(internal.users.upsertFromClerk, {
           data: event.data,
         });
 
-        // Auto-add user to organization if pendingOrganizationSlug is set
         const pendingOrgSlug = event.data.unsafe_metadata
           ?.pendingOrganizationSlug as string | undefined;
         if (pendingOrgSlug) {
-          // Find organization by slug in Clerk
           const orgsResponse =
             await clerkClient.organizations.getOrganizationList({
               query: pendingOrgSlug,
@@ -35,14 +30,12 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
           const org = orgsResponse.data.find((o) => o.slug === pendingOrgSlug);
 
           if (org) {
-            // Add user to organization with default member role
             await clerkClient.organizations.createOrganizationMembership({
               organizationId: org.id,
               userId: event.data.id,
               role: "org:member",
             });
 
-            // Clear the pending metadata
             await clerkClient.users.updateUser(event.data.id, {
               unsafeMetadata: {
                 ...event.data.unsafe_metadata,
@@ -68,7 +61,6 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         }
         break;
 
-      // Organization events
       case "organization.created":
         await ctx.runMutation(internal.organizations.createFromClerk, {
           clerkOrgId: event.data.id,
@@ -95,13 +87,53 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         }
         break;
 
-      // Organization membership events
       case "organizationMembership.created":
-      case "organizationMembership.updated":
-        await ctx.runMutation(internal.members.upsertFromClerk, {
-          data: event.data,
-        });
+      case "organizationMembership.updated": {
+        // First, upsert the organization member
+        const membershipResult = await ctx.runMutation(
+          internal.members.upsertFromClerk,
+          {
+            data: event.data,
+          },
+        );
+
+        // Check if this membership has staff metadata (from invitation)
+        // When a user accepts an invitation, publicMetadata from the invitation
+        // is transferred to the OrganizationMembership
+        const publicMetadata = event.data.public_metadata as
+          | {
+              staffRole?: string;
+              clubId?: string;
+              categoryId?: string;
+            }
+          | undefined;
+
+        if (
+          publicMetadata?.staffRole &&
+          publicMetadata?.clubId &&
+          membershipResult
+        ) {
+          // Get the user ID from the membership
+          const clerkUserId = event.data.public_user_data?.user_id;
+          if (clerkUserId) {
+            // Find the Convex user by Clerk ID
+            const user = await ctx.runQuery(internal.users.getByClerkId, {
+              clerkId: clerkUserId,
+            });
+
+            if (user) {
+              // Create the staff record
+              await ctx.runMutation(internal.staff.createFromClerkMembership, {
+                userId: user._id,
+                clubId: publicMetadata.clubId,
+                staffRole: publicMetadata.staffRole,
+                categoryId: publicMetadata.categoryId,
+              });
+            }
+          }
+        }
         break;
+      }
 
       case "organizationMembership.deleted":
         await ctx.runMutation(internal.members.deleteFromClerk, {
@@ -117,58 +149,8 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
   } catch (error) {
     const err = error as Error;
     console.error(`Webhook error: ${err.message}`);
-    // Return 200 to prevent Clerk from retrying infinitely
     return new Response(
       JSON.stringify({ success: false, error: err.message }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-  }
-});
-
-const handleSquareWebhook = httpAction(async (ctx, request) => {
-  const body = await request.text();
-  const signature = request.headers.get("x-square-hmacsha256-signature");
-
-  if (!signature) {
-    return new Response("Missing signature", { status: 401 });
-  }
-
-  const notificationUrl = process.env.CONVEX_SITE_URL + SQUARE_WEBHOOK_PATH;
-
-  try {
-    // Use Node.js action to verify signature and process webhook
-    const result = await ctx.runAction(
-      internal.square_webhook.verifyAndProcessSquareWebhook,
-      {
-        body,
-        signature,
-        notificationUrl,
-      },
-    );
-
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    const err = error as Error;
-    console.error(`Square webhook error: ${err.message}`);
-
-    // Return appropriate error status
-    if (err.message === "Invalid signature") {
-      return new Response("Invalid signature", { status: 401 });
-    }
-
-    if (err.message === "SQUARE_WEBHOOK_SIGNATURE_KEY not configured") {
-      return new Response("Webhook not configured", { status: 500 });
-    }
-
-    // Return 200 for other errors to prevent Square from retrying infinitely
-    return new Response(
-      JSON.stringify({ status: "error", message: err.message }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -183,12 +165,6 @@ http.route({
   path: CLERK_WEBHOOK_PATH,
   method: "POST",
   handler: handleClerkWebhook,
-});
-
-http.route({
-  path: SQUARE_WEBHOOK_PATH,
-  method: "POST",
-  handler: handleSquareWebhook,
 });
 
 async function validateClerkRequest(

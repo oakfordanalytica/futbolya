@@ -15,10 +15,7 @@ export function NotificationSettings() {
         {/* TODO: Add email notification toggle */}
         <div className="text-sm text-muted-foreground">Coming soon</div>
       </SettingsItem>
-      <SettingsItem
-        title={t("push.title")}
-        description={t("push.description")}
-      >
+      <SettingsItem title={t("push.title")} description={t("push.description")}>
         {/* TODO: Add push notification toggle */}
         <div className="text-sm text-muted-foreground">Coming soon</div>
       </SettingsItem>

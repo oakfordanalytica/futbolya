@@ -9,7 +9,6 @@ const organizationValidator = v.object({
   name: v.string(),
   slug: v.string(),
   imageUrl: v.optional(v.string()),
-  createdAt: v.number(),
 });
 
 /**
@@ -100,7 +99,6 @@ export const createFromClerk = internalMutation({
       name: args.name,
       slug: args.slug,
       imageUrl: args.imageUrl,
-      createdAt: Date.now(),
     });
   },
 });

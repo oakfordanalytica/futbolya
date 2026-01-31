@@ -17,6 +17,35 @@
       "title": "Organization members",
       "description": "Manage members, roles, and permissions"
     },
+    "teamConfig": {
+      "ageCategories": {
+        "title": "Age Categories",
+        "description": "Define age groups for {clubs} organization",
+        "name": "Name",
+        "namePlaceholder": "e.g. U12, Senior",
+        "minAge": "Min",
+        "maxAge": "Max",
+        "empty": "No age categories configured"
+      },
+      "enabledGenders": {
+        "title": "Enabled Genders",
+        "description": "Select which gender categories are available for {clubs}",
+        "male": "Male",
+        "female": "Female",
+        "mixed": "Mixed"
+      },
+      "horizontalDivisions": {
+        "title": "Horizontal Divisions",
+        "description": "Configure division naming system for {clubs}",
+        "enabled": "Enable horizontal divisions",
+        "type": "Division Type",
+        "types": {
+          "alphabetic": "Alphabetic (A, B, C...)",
+          "greek": "Greek (Alpha, Beta, Gamma...)",
+          "numeric": "Numeric (1, 2, 3...)"
+        }
+      }
+    },
     "appearance": {
       "title": "Appearance",
       "description": "Customize how the app looks",

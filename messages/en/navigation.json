@@ -9,6 +9,10 @@
     "payments": "Payments",
     "teams": "Teams",
     "divisions": "Divisions",
-    "tournaments": "Tournaments"
+    "tournaments": "Tournaments",
+    "roster": "Roster",
+    "staff": "Staff",
+    "categories": "Categories",
+    "schedule": "Schedule"
   }
 }

@@ -1,0 +1,1336 @@
+{
+  "node": {
+    "7fa797fa4649797cc5342056734b6b76a8f73dbf49": {
+      "workers": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 3855,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 66994,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": {
+          "moduleId": 83778,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": {
+          "moduleId": 89249,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/page": {
+          "moduleId": 86622,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/page": {
+          "moduleId": 32420,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": {
+          "moduleId": 95506,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": {
+          "moduleId": 63802,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": {
+          "moduleId": 98895,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 69448,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": {
+          "moduleId": 57162,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": {
+          "moduleId": 32721,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/page": {
+          "moduleId": 56141,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/page": {
+          "moduleId": 63813,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": {
+          "moduleId": 29729,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": {
+          "moduleId": 38554,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": {
+          "moduleId": 85602,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": {
+          "moduleId": 6409,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": {
+          "moduleId": 31994,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 98926,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": {
+          "moduleId": 17183,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/organizations/page": {
+          "moduleId": 44886,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/page": {
+          "moduleId": 38763,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/settings/appearance/page": {
+          "moduleId": 4349,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/settings/page": {
+          "moduleId": 12777,
+          "async": false,
+          "exportedName": "detectKeylessEnvDriftAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": "rsc",
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": "rsc",
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/games/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": "rsc",
+        "app/[locale]/admin/organizations/page": "rsc",
+        "app/[locale]/admin/page": "rsc",
+        "app/[locale]/admin/settings/appearance/page": "rsc",
+        "app/[locale]/admin/settings/page": "rsc"
+      },
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js",
+      "exportedName": "detectKeylessEnvDriftAction"
+    },
+    "7f4973bdfe60231e77c7eadf7a5f623ca6b288a4cd": {
+      "workers": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 3855,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 66994,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": {
+          "moduleId": 83778,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": {
+          "moduleId": 89249,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/page": {
+          "moduleId": 86622,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/page": {
+          "moduleId": 32420,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": {
+          "moduleId": 95506,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": {
+          "moduleId": 63802,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": {
+          "moduleId": 98895,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 69448,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": {
+          "moduleId": 57162,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": {
+          "moduleId": 32721,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/page": {
+          "moduleId": 56141,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/page": {
+          "moduleId": 63813,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": {
+          "moduleId": 29729,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": {
+          "moduleId": 38554,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": {
+          "moduleId": 85602,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": {
+          "moduleId": 6409,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": {
+          "moduleId": 31994,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 98926,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": {
+          "moduleId": 17183,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/admin/organizations/page": {
+          "moduleId": 44886,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/admin/page": {
+          "moduleId": 38763,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/admin/settings/appearance/page": {
+          "moduleId": 4349,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        },
+        "app/[locale]/admin/settings/page": {
+          "moduleId": 12777,
+          "async": false,
+          "exportedName": "invalidateCacheAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": "action-browser",
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": "action-browser",
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/games/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": "action-browser",
+        "app/[locale]/admin/organizations/page": "action-browser",
+        "app/[locale]/admin/page": "action-browser",
+        "app/[locale]/admin/settings/appearance/page": "action-browser",
+        "app/[locale]/admin/settings/page": "action-browser"
+      },
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/server-actions.js",
+      "exportedName": "invalidateCacheAction"
+    },
+    "7f3acafbf272ba3ce2b8ba36574ed89bfc4c1d4fb4": {
+      "workers": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 3855,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 66994,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": {
+          "moduleId": 83778,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": {
+          "moduleId": 89249,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/page": {
+          "moduleId": 86622,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/page": {
+          "moduleId": 32420,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": {
+          "moduleId": 95506,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": {
+          "moduleId": 63802,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": {
+          "moduleId": 98895,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 69448,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": {
+          "moduleId": 57162,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": {
+          "moduleId": 32721,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/page": {
+          "moduleId": 56141,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/page": {
+          "moduleId": 63813,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": {
+          "moduleId": 29729,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": {
+          "moduleId": 38554,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": {
+          "moduleId": 85602,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": {
+          "moduleId": 6409,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": {
+          "moduleId": 31994,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 98926,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": {
+          "moduleId": 17183,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/organizations/page": {
+          "moduleId": 44886,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/page": {
+          "moduleId": 38763,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/settings/appearance/page": {
+          "moduleId": 4349,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/settings/page": {
+          "moduleId": 12777,
+          "async": false,
+          "exportedName": "createOrReadKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": "rsc",
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": "rsc",
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/games/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": "rsc",
+        "app/[locale]/admin/organizations/page": "rsc",
+        "app/[locale]/admin/page": "rsc",
+        "app/[locale]/admin/settings/appearance/page": "rsc",
+        "app/[locale]/admin/settings/page": "rsc"
+      },
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js",
+      "exportedName": "createOrReadKeylessAction"
+    },
+    "7f5d1dcaddd61e4e29df2ec6ff0881ba7a0093d007": {
+      "workers": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 3855,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 66994,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": {
+          "moduleId": 83778,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": {
+          "moduleId": 89249,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/page": {
+          "moduleId": 86622,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/page": {
+          "moduleId": 32420,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": {
+          "moduleId": 95506,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": {
+          "moduleId": 63802,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": {
+          "moduleId": 98895,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 69448,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": {
+          "moduleId": 57162,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": {
+          "moduleId": 32721,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/page": {
+          "moduleId": 56141,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/page": {
+          "moduleId": 63813,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": {
+          "moduleId": 29729,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": {
+          "moduleId": 38554,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": {
+          "moduleId": 85602,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": {
+          "moduleId": 6409,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": {
+          "moduleId": 31994,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 98926,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": {
+          "moduleId": 17183,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/admin/organizations/page": {
+          "moduleId": 44886,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/admin/page": {
+          "moduleId": 38763,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/admin/settings/appearance/page": {
+          "moduleId": 4349,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/admin/settings/page": {
+          "moduleId": 12777,
+          "async": false,
+          "exportedName": "formatMetadataHeaders",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": "rsc",
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": "rsc",
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/games/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": "rsc",
+        "app/[locale]/admin/organizations/page": "rsc",
+        "app/[locale]/admin/page": "rsc",
+        "app/[locale]/admin/settings/appearance/page": "rsc",
+        "app/[locale]/admin/settings/page": "rsc"
+      },
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js",
+      "exportedName": "formatMetadataHeaders"
+    },
+    "7fe95f89f274765edb32820423c73146205bd9ea92": {
+      "workers": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 3855,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 66994,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": {
+          "moduleId": 83778,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": {
+          "moduleId": 89249,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/page": {
+          "moduleId": 86622,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/page": {
+          "moduleId": 32420,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": {
+          "moduleId": 95506,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": {
+          "moduleId": 63802,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": {
+          "moduleId": 98895,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 69448,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": {
+          "moduleId": 57162,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": {
+          "moduleId": 32721,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/page": {
+          "moduleId": 56141,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/page": {
+          "moduleId": 63813,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": {
+          "moduleId": 29729,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": {
+          "moduleId": 38554,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": {
+          "moduleId": 85602,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": {
+          "moduleId": 6409,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": {
+          "moduleId": 31994,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 98926,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": {
+          "moduleId": 17183,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/admin/organizations/page": {
+          "moduleId": 44886,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/admin/page": {
+          "moduleId": 38763,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/admin/settings/appearance/page": {
+          "moduleId": 4349,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        },
+        "app/[locale]/admin/settings/page": {
+          "moduleId": 12777,
+          "async": false,
+          "exportedName": "collectKeylessMetadata",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": "rsc",
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": "rsc",
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/games/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": "rsc",
+        "app/[locale]/[tenant]/(shell)/teams/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": "rsc",
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": "rsc",
+        "app/[locale]/admin/organizations/page": "rsc",
+        "app/[locale]/admin/page": "rsc",
+        "app/[locale]/admin/settings/appearance/page": "rsc",
+        "app/[locale]/admin/settings/page": "rsc"
+      },
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/server/keyless-custom-headers.js",
+      "exportedName": "collectKeylessMetadata"
+    },
+    "7f8b5ee84146e2fde6eb352d711324c21f623fbd3b": {
+      "workers": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 3855,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 66994,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": {
+          "moduleId": 83778,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": {
+          "moduleId": 89249,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/page": {
+          "moduleId": 86622,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/page": {
+          "moduleId": 32420,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": {
+          "moduleId": 95506,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": {
+          "moduleId": 63802,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": {
+          "moduleId": 98895,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 69448,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": {
+          "moduleId": 57162,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": {
+          "moduleId": 32721,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/page": {
+          "moduleId": 56141,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/page": {
+          "moduleId": 63813,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": {
+          "moduleId": 29729,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": {
+          "moduleId": 38554,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": {
+          "moduleId": 85602,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": {
+          "moduleId": 6409,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": {
+          "moduleId": 31994,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 98926,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": {
+          "moduleId": 17183,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/organizations/page": {
+          "moduleId": 44886,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/page": {
+          "moduleId": 38763,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/settings/appearance/page": {
+          "moduleId": 4349,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/settings/page": {
+          "moduleId": 12777,
+          "async": false,
+          "exportedName": "syncKeylessConfigAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": "action-browser",
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": "action-browser",
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/games/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": "action-browser",
+        "app/[locale]/admin/organizations/page": "action-browser",
+        "app/[locale]/admin/page": "action-browser",
+        "app/[locale]/admin/settings/appearance/page": "action-browser",
+        "app/[locale]/admin/settings/page": "action-browser"
+      },
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js",
+      "exportedName": "syncKeylessConfigAction"
+    },
+    "7f8edb098c6ff2526f21caa88dccc90d482d019fb8": {
+      "workers": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 3855,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": {
+          "moduleId": 66994,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": {
+          "moduleId": 83778,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": {
+          "moduleId": 89249,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/games/page": {
+          "moduleId": 86622,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/page": {
+          "moduleId": 32420,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": {
+          "moduleId": 95506,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": {
+          "moduleId": 63802,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": {
+          "moduleId": 98895,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 69448,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": {
+          "moduleId": 57162,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": {
+          "moduleId": 32721,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(shell)/teams/page": {
+          "moduleId": 56141,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": {
+          "moduleId": 29906,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/page": {
+          "moduleId": 63813,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": {
+          "moduleId": 29729,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": {
+          "moduleId": 38554,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": {
+          "moduleId": 85602,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": {
+          "moduleId": 6409,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": {
+          "moduleId": 31994,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": {
+          "moduleId": 98926,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": {
+          "moduleId": 17183,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/organizations/page": {
+          "moduleId": 44886,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/page": {
+          "moduleId": 38763,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/settings/appearance/page": {
+          "moduleId": 4349,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        },
+        "app/[locale]/admin/settings/page": {
+          "moduleId": 12777,
+          "async": false,
+          "exportedName": "deleteKeylessAction",
+          "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js"
+        }
+      },
+      "layer": {
+        "app/[locale]/(auth)/sign-in/[[...sign-in]]/page": "action-browser",
+        "app/[locale]/[tenant]/(auth)/sign-in/[[...sign-in]]/page": "action-browser",
+        "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/games/[gameId]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/games/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/[[...organization-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/appearance/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/billing/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/settings/user-profile/[[...user-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/[teamId]/settings/page": "action-browser",
+        "app/[locale]/[tenant]/(shell)/teams/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/categories/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/roster/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/schedule/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/[[...organization-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/appearance/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/billing/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/settings/user-profile/[[...user-profile]]/page": "action-browser",
+        "app/[locale]/[tenant]/(team)/[team]/staff/page": "action-browser",
+        "app/[locale]/admin/organizations/page": "action-browser",
+        "app/[locale]/admin/page": "action-browser",
+        "app/[locale]/admin/settings/appearance/page": "action-browser",
+        "app/[locale]/admin/settings/page": "action-browser"
+      },
+      "filename": "node_modules/.pnpm/@clerk+nextjs@6.34.1_next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0__react-dom_0d103480f32e862966742f21cdab6bf4/node_modules/@clerk/nextjs/dist/esm/app-router/keyless-actions.js",
+      "exportedName": "deleteKeylessAction"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "mCuclkqCj4R1cw8ZjVRP7MXaC3FoOx+hcEYybohH2dU="
+}

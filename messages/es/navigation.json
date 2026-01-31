@@ -9,6 +9,10 @@
     "payments": "Pagos",
     "teams": "Equipos",
     "divisions": "Divisiones",
-    "tournaments": "Torneos"
+    "tournaments": "Torneos",
+    "roster": "Plantilla",
+    "staff": "Personal",
+    "categories": "Categorías",
+    "schedule": "Calendario"
   }
 }

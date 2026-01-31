@@ -25,6 +25,27 @@ export type NavItem = {
 
 export type NavContext = "admin" | "org";
 
+/**
+ * Team navigation item configuration.
+ * Used for club/team-level navigation within an organization.
+ *
+ * @property labelKey - Translation key for the item label
+ * @property icon - Heroicon component to display
+ * @property href - Function that returns the full path (receives orgSlug and teamSlug)
+ * @property isIndex - Whether this is the index route (affects active state matching)
+ */
+export type TeamNavItem = {
+  labelKey: string;
+  icon: HeroIcon;
+  href: (orgSlug: string, teamSlug: string) => string;
+  isIndex: boolean;
+};
+
+export type TeamNavConfig = {
+  items: TeamNavItem[];
+  settingsHref: (orgSlug: string, teamSlug: string) => string;
+};
+
 export type NavConfig = {
   items: NavItem[];
   settingsHref: (orgSlug?: string) => string;

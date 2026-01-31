@@ -1,0 +1,40 @@
+{
+  "basketball": {
+    "terminology": {
+      "team": "Team",
+      "teams": "Teams",
+      "match": "Game",
+      "matches": "Games",
+      "score": "Score",
+      "division": "Division",
+      "divisions": "Divisions",
+      "club": "Club",
+      "clubs": "Clubs",
+      "tournament": "Tournament",
+      "tournaments": "Tournaments",
+      "player": "Player",
+      "players": "Players",
+      "group": "Category",
+      "groups": "Categories"
+    }
+  },
+  "soccer": {
+    "terminology": {
+      "team": "Team",
+      "teams": "Teams",
+      "match": "Match",
+      "matches": "Matches",
+      "score": "Score",
+      "division": "Division",
+      "divisions": "Divisions",
+      "club": "Club",
+      "clubs": "Clubs",
+      "tournament": "Tournament",
+      "tournaments": "Tournaments",
+      "player": "Player",
+      "players": "Players",
+      "group": "Category",
+      "groups": "Categories"
+    }
+  }
+}

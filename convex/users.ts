@@ -1,4 +1,4 @@
-import { query, internalMutation } from "./_generated/server";
+import { query, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
@@ -101,6 +101,7 @@ export const getById = query({
  * Upsert user from Clerk webhook (internal).
  * Handles both user.created and user.updated events.
  * Reads isSuperAdmin from Clerk's publicMetadata.
+ * Syncs imageUrl from Clerk's profile image.
  */
 export const upsertFromClerk = internalMutation({
   args: { data: v.any() },
@@ -115,6 +116,7 @@ export const upsertFromClerk = internalMutation({
 
     const firstName = data.first_name || "";
     const lastName = data.last_name || "";
+    const imageUrl = data.image_url || undefined;
     const isSuperAdmin = data.public_metadata?.isSuperAdmin === true;
 
     const existingUser = await ctx.db
@@ -127,6 +129,7 @@ export const upsertFromClerk = internalMutation({
         email,
         firstName,
         lastName,
+        imageUrl,
         isActive: true,
         isSuperAdmin,
       });
@@ -138,10 +141,39 @@ export const upsertFromClerk = internalMutation({
       email,
       firstName,
       lastName,
+      imageUrl,
       isActive: true,
       isSuperAdmin,
     });
     return userId;
+  },
+});
+
+/**
+ * Get user by Clerk ID (internal).
+ * Used by webhooks to find the Convex user from Clerk user ID.
+ */
+export const getByClerkId = internalQuery({
+  args: { clerkId: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.id("users"),
+      _creationTime: v.number(),
+      clerkId: v.string(),
+      firstName: v.string(),
+      lastName: v.string(),
+      email: v.string(),
+      imageUrl: v.optional(v.string()),
+      isActive: v.boolean(),
+      isSuperAdmin: v.boolean(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("byClerkId", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
   },
 });
 

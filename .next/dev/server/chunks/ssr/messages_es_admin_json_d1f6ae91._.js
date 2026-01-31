@@ -1,0 +1,7 @@
+module.exports = [
+"[project]/messages/es/admin.json (json)", ((__turbopack_context__) => {
+
+__turbopack_context__.v({"dashboard":{"title":"Panel Global","description":"Vista general de la plataforma y métricas del sistema","organizations":"Organizaciones","activeOrganizations":"Organizaciones activas","manageOrganizations":"Gestionar Organizaciones","users":"Usuarios","totalUsers":"Usuarios registrados","viewDirectory":"Ver Directorio","analytics":"Analíticas","analyticsDescription":"Reportes e insights de la plataforma","viewAnalytics":"Ver Analíticas","systemHealth":"Estado del Sistema","systemHealthDescription":"Estado operacional de la plataforma","allSystemsOperational":"Todos los Sistemas Operativos"},"organizations":{"title":"Organizaciones","description":"Gestiona todas las organizaciones de la plataforma","search":"Buscar organizaciones…","create":"Crear Organización","createTitle":"Crear Nueva Organización","empty":"No hay organizaciones","emptyDescription":"Crea tu primera organización para comenzar","members":"{count, plural, =0 {Sin miembros} =1 {1 miembro} other {# miembros}}","moreOptions":"Más opciones","status":{"active":"Activo","inactive":"Inactivo","suspended":"Suspendido"},"actions":{"view":"Ver","edit":"Editar","delete":"Eliminar"}}});}),
+];
+
+//# sourceMappingURL=messages_es_admin_json_d1f6ae91._.js.map

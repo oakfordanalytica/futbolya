@@ -1,64 +1,70 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// ============================================================================
+// SHARED VALIDATORS
+// ============================================================================
+
 const orgMemberRole = v.union(
   v.literal("superadmin"),
   v.literal("admin"),
   v.literal("member"),
 );
 
-const mode = v.union(v.literal("base"), v.literal("custom"));
-
-const status = v.union(
-  v.literal("pending"),
-  v.literal("reviewing"),
-  v.literal("pre-admitted"),
-  v.literal("admitted"),
-  v.literal("denied"),
+const clubStatus = v.union(
+  v.literal("affiliated"),
+  v.literal("invited"),
+  v.literal("suspended"),
 );
 
-const feeStatus = v.union(
-  v.literal("pending"),
-  v.literal("partially_paid"),
-  v.literal("paid"),
+const playerStatus = v.union(v.literal("active"), v.literal("inactive"));
+
+const staffRole = v.union(
+  v.literal("head_coach"),
+  v.literal("technical_director"),
+  v.literal("assistant_coach"),
 );
 
-const paymentMethod = v.union(
-  v.literal("online"),
-  v.literal("cash"),
-  v.literal("wire"),
+const categoryStatus = v.union(v.literal("active"), v.literal("inactive"));
+
+const gender = v.union(
+  v.literal("male"),
+  v.literal("female"),
+  v.literal("mixed"),
 );
 
-const transactionStatus = v.union(
-  v.literal("pending"),
+const gameStatus = v.union(
+  v.literal("scheduled"),
+  v.literal("in_progress"),
   v.literal("completed"),
-  v.literal("failed"),
+  v.literal("cancelled"),
 );
 
-const paymentLinkStatus = v.union(
-  v.literal("pending"),
-  v.literal("completed"),
-  v.literal("expired"),
+const basketballPosition = v.union(
+  v.literal("point_guard"),
+  v.literal("shooting_guard"),
+  v.literal("small_forward"),
+  v.literal("power_forward"),
+  v.literal("center"),
 );
 
-const documentStatus = v.union(
-  v.literal("pending"),
-  v.literal("approved"),
-  v.literal("rejected"),
-);
+const sportType = v.union(v.literal("basketball"), v.literal("soccer"));
 
-const documentVisibility = v.union(
-  v.literal("required"),
-  v.literal("optional"),
-  v.literal("hidden"),
-);
+// ============================================================================
+// CLERK SYNCED TABLES (from webhooks)
+// ============================================================================
 
 export default defineSchema({
+  /**
+   * Users - Synced from Clerk via webhooks.
+   * All authenticated users: superadmins, admins, delegates, coaches, players.
+   */
   users: defineTable({
     clerkId: v.string(),
     firstName: v.string(),
     lastName: v.string(),
     email: v.string(),
+    imageUrl: v.optional(v.string()),
     isActive: v.boolean(),
     isSuperAdmin: v.boolean(),
   })
@@ -66,169 +72,206 @@ export default defineSchema({
     .index("byEmail", ["email"])
     .index("activeUsers", ["isActive"]),
 
+  /**
+   * Organizations - Synced from Clerk via webhooks.
+   * Represents leagues/federations that own clubs.
+   */
   organizations: defineTable({
     clerkOrgId: v.string(),
     name: v.string(),
     slug: v.string(),
     imageUrl: v.optional(v.string()),
-    createdAt: v.number(),
   })
     .index("byClerkOrgId", ["clerkOrgId"])
     .index("bySlug", ["slug"]),
 
+  /**
+   * Organization Members - Synced from Clerk via webhooks.
+   * Links users to organizations with roles.
+   */
   organizationMembers: defineTable({
     userId: v.id("users"),
     organizationId: v.id("organizations"),
     clerkMembershipId: v.string(),
     role: orgMemberRole,
-    createdAt: v.number(),
   })
     .index("byUserId", ["userId"])
     .index("byOrganization", ["organizationId"])
     .index("byUserAndOrg", ["userId", "organizationId"])
     .index("byClerkMembershipId", ["clerkMembershipId"]),
 
-  formTemplates: defineTable({
+  // ============================================================================
+  // NISAA SPORTS TABLES
+  // ============================================================================
+
+  /**
+   * Clubs - Teams within a league (organization).
+   * delegateUserId is the user who manages this club.
+   */
+  clubs: defineTable({
     organizationId: v.id("organizations"),
-    version: v.number(),
     name: v.string(),
-    description: v.optional(v.string()),
-    mode: mode,
-    sections: v.array(
+    slug: v.string(),
+    nickname: v.optional(v.string()),
+    logoStorageId: v.optional(v.id("_storage")),
+    colors: v.optional(v.array(v.string())),
+    colorNames: v.optional(v.array(v.string())),
+    status: clubStatus,
+    delegateUserId: v.optional(v.id("users")),
+  })
+    .index("byOrganization", ["organizationId"])
+    .index("bySlug", ["slug"])
+    .index("byOrgAndSlug", ["organizationId", "slug"])
+    .index("byDelegate", ["delegateUserId"]),
+
+  /**
+   * Categories - Age/skill level groups within a club.
+   */
+  categories: defineTable({
+    clubId: v.id("clubs"),
+    name: v.string(),
+    ageGroup: v.string(),
+    gender: gender,
+    status: categoryStatus,
+  })
+    .index("byClub", ["clubId"])
+    .index("byClubAndName", ["clubId", "name"]),
+
+  /**
+   * Players - Independent player entities within clubs.
+   * userId is optional - only set if player wants to link their account.
+   */
+  players: defineTable({
+    // Core identity
+    firstName: v.string(),
+    lastName: v.string(),
+    photoStorageId: v.optional(v.id("_storage")),
+    dateOfBirth: v.optional(v.string()),
+
+    // Club relationship
+    clubId: v.id("clubs"),
+    categoryId: v.id("categories"),
+
+    // Sport-specific data
+    sportType: sportType,
+    jerseyNumber: v.optional(v.number()),
+    position: v.optional(basketballPosition),
+    height: v.optional(v.number()),
+    weight: v.optional(v.number()),
+
+    // Status
+    status: playerStatus,
+
+    // Optional link to user account (if player wants to login)
+    userId: v.optional(v.id("users")),
+  })
+    .index("byClub", ["clubId"])
+    .index("byCategory", ["categoryId"])
+    .index("byClubAndCategory", ["clubId", "categoryId"])
+    .index("byUser", ["userId"]),
+
+  /**
+   * Staff - Links users to clubs as staff members (coaches, etc.).
+   * A user can have multiple staff roles across different clubs.
+   */
+  staff: defineTable({
+    userId: v.id("users"),
+    clubId: v.id("clubs"),
+    categoryId: v.optional(v.id("categories")),
+    role: staffRole,
+  })
+    .index("byUser", ["userId"])
+    .index("byClub", ["clubId"])
+    .index("byCategory", ["categoryId"])
+    .index("byClubAndRole", ["clubId", "role"]),
+
+  /**
+   * Conferences - Groupings within a league.
+   */
+  conferences: defineTable({
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    divisions: v.optional(v.array(v.string())),
+  })
+    .index("byOrganization", ["organizationId"])
+    .index("byOrgAndName", ["organizationId", "name"]),
+
+  /**
+   * League Settings - Configuration for a league/organization.
+   */
+  leagueSettings: defineTable({
+    organizationId: v.id("organizations"),
+    sportType: sportType,
+    ageCategories: v.array(
       v.object({
-        key: v.string(),
-        label: v.string(),
-        order: v.number(),
-        fields: v.array(
-          v.object({
-            key: v.string(),
-            label: v.string(),
-            type: v.string(),
-            required: v.boolean(),
-          }),
+        id: v.string(),
+        name: v.string(),
+        minAge: v.number(),
+        maxAge: v.number(),
+      }),
+    ),
+    enabledGenders: v.array(gender),
+    horizontalDivisions: v.optional(
+      v.object({
+        enabled: v.boolean(),
+        type: v.union(
+          v.literal("alphabetic"),
+          v.literal("greek"),
+          v.literal("numeric"),
         ),
       }),
     ),
-    isPublished: v.boolean(),
   }).index("byOrganization", ["organizationId"]),
 
-  applications: defineTable({
-    userId: v.id("users"),
+  /**
+   * Games - Matches between two clubs.
+   */
+  games: defineTable({
     organizationId: v.id("organizations"),
-    formTemplateId: v.id("formTemplates"),
-    formTemplateVersion: v.number(),
-    applicationCode: v.string(),
-    status: status,
-    formData: v.record(
-      v.string(),
-      v.record(
-        v.string(),
-        v.union(
-          v.string(),
-          v.number(),
-          v.boolean(),
-          v.null(),
-          v.id("_storage"),
-        ),
-      ),
-    ),
-    reviewedBy: v.optional(v.id("users")),
-    reviewedAt: v.optional(v.number()),
+    homeClubId: v.id("clubs"),
+    awayClubId: v.id("clubs"),
+    date: v.string(),
+    startTime: v.string(),
+    category: v.string(),
+    gender: gender,
+    locationName: v.optional(v.string()),
+    locationCoordinates: v.optional(v.array(v.number())),
+    status: gameStatus,
+    homeScore: v.optional(v.number()),
+    awayScore: v.optional(v.number()),
   })
-    .index("byUserId", ["userId"])
-    .index("byOrganizationId", ["organizationId"])
-    .index("byStatus", ["status"])
-    .index("byApplicationCode", ["applicationCode"]),
-
-  fees: defineTable({
-    applicationId: v.id("applications"),
-    name: v.string(),
-    description: v.optional(v.string()),
-    totalAmount: v.number(), // In cents
-    downPaymentPercent: v.number(), // 0-100
-    isRefundable: v.boolean(),
-    isIncluded: v.boolean(),
-    isDefault: v.boolean(),
-    isRequired: v.boolean(),
-    status: feeStatus,
-    paidAmount: v.number(), // In cents
-    createdAt: v.number(),
-    paidAt: v.optional(v.number()),
-    createdBy: v.id("users"),
-  })
-    .index("byApplication", ["applicationId"])
+    .index("byOrganization", ["organizationId"])
+    .index("byHomeClub", ["homeClubId"])
+    .index("byAwayClub", ["awayClubId"])
+    .index("byDate", ["date"])
     .index("byStatus", ["status"]),
 
-  transactions: defineTable({
-    applicationId: v.id("applications"),
-    feeId: v.id("fees"),
-    amount: v.number(), // In cents
-    method: paymentMethod,
-    status: transactionStatus,
-    squarePaymentId: v.optional(v.string()),
-    squareOrderId: v.optional(v.string()),
-    receiptUrl: v.optional(v.string()),
-    reference: v.optional(v.string()),
-    registeredBy: v.optional(v.id("users")),
-    createdAt: v.number(),
-    completedAt: v.optional(v.number()),
+  /**
+   * Game Player Stats - Individual player statistics for a game.
+   */
+  gamePlayerStats: defineTable({
+    gameId: v.id("games"),
+    playerId: v.id("players"),
+    clubId: v.id("clubs"),
+    isStarter: v.boolean(),
+    minutes: v.optional(v.number()),
+    points: v.optional(v.number()),
+    fieldGoalsMade: v.optional(v.number()),
+    fieldGoalsAttempted: v.optional(v.number()),
+    threePointersMade: v.optional(v.number()),
+    threePointersAttempted: v.optional(v.number()),
+    freeThrowsMade: v.optional(v.number()),
+    freeThrowsAttempted: v.optional(v.number()),
+    offensiveRebounds: v.optional(v.number()),
+    defensiveRebounds: v.optional(v.number()),
+    assists: v.optional(v.number()),
+    steals: v.optional(v.number()),
+    blocks: v.optional(v.number()),
+    turnovers: v.optional(v.number()),
+    personalFouls: v.optional(v.number()),
+    plusMinus: v.optional(v.number()),
   })
-    .index("byApplication", ["applicationId"])
-    .index("byFee", ["feeId"])
-    .index("bySquarePaymentId", ["squarePaymentId"]),
-
-  paymentLinks: defineTable({
-    applicationId: v.id("applications"),
-    feeIds: v.array(v.id("fees")),
-    squareLinkId: v.string(),
-    squareOrderId: v.string(),
-    squareUrl: v.string(),
-    totalAmount: v.number(), // In cents
-    status: paymentLinkStatus,
-    idempotencyKey: v.string(),
-    createdAt: v.number(),
-    completedAt: v.optional(v.number()),
-  })
-    .index("byApplication", ["applicationId"])
-    .index("bySquareOrderId", ["squareOrderId"])
-    .index("byIdempotencyKey", ["idempotencyKey"]),
-
-  webhookEvents: defineTable({
-    eventId: v.string(),
-    eventType: v.string(),
-    processedAt: v.number(),
-  }).index("byEventId", ["eventId"]),
-
-  applicationDocuments: defineTable({
-    applicationId: v.id("applications"),
-    documentTypeId: v.string(),
-    name: v.string(),
-    description: v.optional(v.string()),
-    storageId: v.id("_storage"),
-    fileName: v.string(),
-    contentType: v.string(),
-    fileSize: v.number(),
-    status: documentStatus,
-    uploadedBy: v.id("users"),
-    uploadedAt: v.number(),
-    reviewedBy: v.optional(v.id("users")),
-    reviewedAt: v.optional(v.number()),
-    rejectionReason: v.optional(v.string()),
-  })
-    .index("byApplication", ["applicationId"])
-    .index("byApplicationAndType", ["applicationId", "documentTypeId"]),
-
-  applicationDocumentConfig: defineTable({
-    applicationId: v.id("applications"),
-    documentTypeId: v.string(),
-    visibility: documentVisibility,
-    updatedAt: v.number(),
-    updatedBy: v.id("users"),
-    // Optional fields for custom document types (created by admin)
-    isCustom: v.optional(v.boolean()),
-    name: v.optional(v.string()),
-    description: v.optional(v.string()),
-  })
-    .index("byApplication", ["applicationId"])
-    .index("byApplicationAndType", ["applicationId", "documentTypeId"]),
+    .index("byGame", ["gameId"])
+    .index("byPlayer", ["playerId"])
+    .index("byGameAndClub", ["gameId", "clubId"]),
 });

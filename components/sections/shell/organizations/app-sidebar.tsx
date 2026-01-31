@@ -48,7 +48,7 @@ export function SidebarAppSidebar() {
   // Build locale-aware URL for OrganizationSwitcher
   // Only include locale prefix if it's not the default locale (due to localePrefix: "as-needed")
   const localePrefix = locale === routing.defaultLocale ? "" : `/${locale}`;
-  const afterSelectOrgUrl = `${localePrefix}/:slug/applications`;
+  const afterSelectOrgUrl = `${localePrefix}/:slug/teams`;
 
   const context = getNavContext(pathname, orgSlug);
   const { items, settingsHref } = getNavConfig(context);

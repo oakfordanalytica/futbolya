@@ -109,6 +109,13 @@ export const ROUTES = {
       create: (orgSlug: string) => `/${orgSlug}/tournaments/create`,
     },
 
+    games: {
+      list: (orgSlug: string) => `/${orgSlug}/games`,
+      detail: (orgSlug: string, gameId: string) =>
+        `/${orgSlug}/games/${gameId}`,
+      create: (orgSlug: string) => `/${orgSlug}/games/create`,
+    },
+
     settings: {
       root: (orgSlug: string) => `/${orgSlug}/settings`,
       appearance: (orgSlug: string) => `/${orgSlug}/settings/appearance`,
@@ -118,4 +125,24 @@ export const ROUTES = {
   },
 } as const;
 
+/**
+ * Team-level routes (within org context)
+ * Used for club/team management pages
+ */
+export const TEAM_ROUTES = {
+  root: (orgSlug: string, teamSlug: string) => `/${orgSlug}/${teamSlug}`,
+  roster: (orgSlug: string, teamSlug: string) =>
+    `/${orgSlug}/${teamSlug}/roster`,
+  staff: (orgSlug: string, teamSlug: string) => `/${orgSlug}/${teamSlug}/staff`,
+  categories: (orgSlug: string, teamSlug: string) =>
+    `/${orgSlug}/${teamSlug}/categories`,
+  schedule: (orgSlug: string, teamSlug: string) =>
+    `/${orgSlug}/${teamSlug}/schedule`,
+  settings: {
+    root: (orgSlug: string, teamSlug: string) =>
+      `/${orgSlug}/${teamSlug}/settings`,
+  },
+} as const;
+
 export type Routes = typeof ROUTES;
+export type TeamRoutes = typeof TEAM_ROUTES;

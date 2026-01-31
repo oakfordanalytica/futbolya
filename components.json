@@ -20,6 +20,7 @@
   },
   "registries": {
     "@ncdai": "https://chanhdai.com/r/{name}.json",
-    "@reui": "https://reui.io/r/{name}.json"
+    "@reui": "https://reui.io/r/{name}.json",
+    "@shadcn-map": "http://shadcn-map.vercel.app/r/{name}.json"
   }
 }
