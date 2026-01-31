@@ -1,0 +1,14 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "applications": "Mis Solicitudes",
+    "organizations": "Organizaciones",
+    "users": "Usuarios",
+    "settings": "Configuración",
+    "profile": "Perfil",
+    "payments": "Pagos",
+    "teams": "Equipos",
+    "divisions": "Divisiones",
+    "tournaments": "Torneos"
+  }
+}
