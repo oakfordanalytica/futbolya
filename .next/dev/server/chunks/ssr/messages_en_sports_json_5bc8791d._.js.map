@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/messages/en/sports.json"],"sourcesContent":["{\"basketball\":{\"terminology\":{\"team\":\"Team\",\"teams\":\"Teams\",\"match\":\"Game\",\"matches\":\"Games\",\"score\":\"Score\",\"division\":\"Division\",\"divisions\":\"Divisions\",\"club\":\"Club\",\"clubs\":\"Clubs\",\"tournament\":\"Tournament\",\"tournaments\":\"Tournaments\",\"player\":\"Player\",\"players\":\"Players\",\"group\":\"Category\",\"groups\":\"Categories\"}},\"soccer\":{\"terminology\":{\"team\":\"Team\",\"teams\":\"Teams\",\"match\":\"Match\",\"matches\":\"Matches\",\"score\":\"Score\",\"division\":\"Division\",\"divisions\":\"Divisions\",\"club\":\"Club\",\"clubs\":\"Clubs\",\"tournament\":\"Tournament\",\"tournaments\":\"Tournaments\",\"player\":\"Player\",\"players\":\"Players\",\"group\":\"Category\",\"groups\":\"Categories\"}}}"],"names":[],"mappings":"AAAA"}},
-    {"offset": {"line": 3, "column": 664}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
-}

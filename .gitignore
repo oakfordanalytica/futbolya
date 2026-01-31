@@ -3,7 +3,7 @@
 # dependencies
 node_modules/
 .pnpm-store/
-/.pnp
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -15,15 +15,17 @@ node_modules/
 /coverage
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build/
 
 # misc
 .DS_Store
 *.pem
+.env.local
+.env*.local
 
 # debug
 npm-debug.log*
@@ -31,8 +33,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (sensitive data)
+.env
+.env.production
 
 # vercel
 .vercel
@@ -42,4 +45,4 @@ yarn-error.log*
 next-env.d.ts
 
 # clerk configuration (can include secrets)
-/.clerk/
+.clerk/

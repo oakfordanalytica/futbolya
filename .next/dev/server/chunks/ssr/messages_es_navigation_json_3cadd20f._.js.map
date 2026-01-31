@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/messages/es/navigation.json"],"sourcesContent":["{\"nav\":{\"dashboard\":\"Panel\",\"applications\":\"Mis Solicitudes\",\"organizations\":\"Organizaciones\",\"users\":\"Usuarios\",\"settings\":\"Configuración\",\"profile\":\"Perfil\",\"payments\":\"Pagos\",\"teams\":\"Equipos\",\"divisions\":\"Divisiones\",\"tournaments\":\"Torneos\",\"roster\":\"Plantilla\",\"staff\":\"Personal\",\"categories\":\"Categorías\",\"schedule\":\"Calendario\"}}"],"names":[],"mappings":"AAAA"}},
-    {"offset": {"line": 3, "column": 362}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
-}

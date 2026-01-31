@@ -1,3 +1,0 @@
-module.exports=[23375,a=>{"use strict";var b=a.i(51220),c=a.i(93592);function d({clubSlug:a}){return(0,c.useTranslations)("Common"),(0,b.jsx)("div",{className:"flex flex-col items-center justify-center py-12 text-center",children:(0,b.jsx)("p",{className:"text-muted-foreground",children:"Schedule functionality coming soon"})})}a.s(["TournamentsGrid",()=>d])}];
-
-//# sourceMappingURL=components_sections_shell_teams_tournaments-grid_tsx_f3de1ded._.js.map

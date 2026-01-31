@@ -1,3 +1,0 @@
-{
-  "/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page": "app/[locale]/[tenant]/(auth)/sign-up/[[...sign-up]]/page.js"
-}

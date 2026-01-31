@@ -1,3 +1,0 @@
-module.exports=[40660,a=>{a.n(a.i(11390))},50998,a=>{a.n(a.i(48468))},32389,a=>{a.n(a.i(97794))},15299,a=>{a.n(a.i(33170))},30419,a=>{a.n(a.i(27641))},97945,a=>{a.n(a.i(50363))},78500,(a,b,c)=>{b.exports=a.x("node:async_hooks",()=>require("node:async_hooks"))},5521,a=>{"use strict";var b=a.i(92820),c=a.i(75954),d=a.i(10842),e=(0,b.cache)(function(a,b){return(0,d.createTranslator)({...a,namespace:b})}),f=(0,b.cache)(async function(a){let b,d;return"string"==typeof a?b=a:a&&(d=a.locale,b=a.namespace),e(await (0,c.default)(d),b)});a.s(["getTranslations",()=>f],5521)}];
-
-//# sourceMappingURL=%5Broot-of-the-server%5D__49f22e4b._.js.map

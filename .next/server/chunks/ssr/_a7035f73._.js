@@ -1,3 +1,0 @@
-module.exports=[40660,a=>{a.n(a.i(11390))},50998,a=>{a.n(a.i(48468))},32389,a=>{a.n(a.i(97794))},15299,a=>{a.n(a.i(33170))},30419,a=>{a.n(a.i(27641))},96273,a=>{a.n(a.i(58913))},28750,a=>{"use strict";var b=a.i(26806),c=a.i(37920);async function d({params:a}){let{tenant:d}=await a;return(0,b.jsx)(c.SignUp,{signInUrl:`/${d}/sign-in`,forceRedirectUrl:`/${d}/applications`,unsafeMetadata:{pendingOrganizationSlug:d}})}a.s(["default",()=>d])}];
-
-//# sourceMappingURL=_a7035f73._.js.map
