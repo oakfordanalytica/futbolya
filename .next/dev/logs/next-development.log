@@ -345,3 +345,5 @@ Validator: v.object({clubSlug: v.string()})
 [01:51:23.287] Server  LOG      ✓ Compiled in 45ms
 [01:52:14.199] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 [01:52:14.199] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:53:03.155] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[01:53:03.155] Browser WARN    Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
