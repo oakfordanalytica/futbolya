@@ -52,7 +52,7 @@ const ORG_ITEMS: NavItem[] = [
     isIndex: false,
   },
   {
-    labelKey: "tournaments",
+    labelKey: "games",
     icon: CalendarIcon,
     href: (orgSlug) => ROUTES.org.games.list(orgSlug!),
     isIndex: false,
@@ -138,9 +138,9 @@ const TEAM_ITEMS: TeamNavItem[] = [
     isIndex: false,
   },
   {
-    labelKey: "schedule",
+    labelKey: "games",
     icon: CalendarIcon,
-    href: (orgSlug, teamSlug) => TEAM_ROUTES.schedule(orgSlug, teamSlug),
+    href: (orgSlug, teamSlug) => TEAM_ROUTES.games.list(orgSlug, teamSlug),
     isIndex: false,
   },
 ];

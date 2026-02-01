@@ -68,7 +68,8 @@ export function TeamPlayersTable({
 }: TeamPlayersTableProps) {
   const t = useTranslations("Common");
   const deletePlayer = useMutation(api.players.deletePlayer);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [playerToEdit, setPlayerToEdit] = useState<PlayerRow | null>(null);
   const [playerToDelete, setPlayerToDelete] = useState<PlayerRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -177,7 +178,12 @@ export function TeamPlayersTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setPlayerToEdit(row.original);
+                  setIsDialogOpen(true);
+                }}
+              >
                 <Pencil className="size-4 mr-2" />
                 {t("actions.edit")}
               </DropdownMenuItem>
@@ -195,6 +201,13 @@ export function TeamPlayersTable({
     },
   ];
 
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setTimeout(() => setPlayerToEdit(null), 150);
+    }
+  };
+
   return (
     <>
       <DataTable
@@ -203,13 +216,17 @@ export function TeamPlayersTable({
         filterColumn="search"
         filterPlaceholder={t("players.searchPlaceholder")}
         emptyMessage={t("players.emptyMessage")}
-        onCreate={() => setIsCreateOpen(true)}
+        onCreate={() => {
+          setPlayerToEdit(null);
+          setIsDialogOpen(true);
+        }}
       />
 
-      <CreatePlayerDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
+      <PlayerFormDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogClose}
         clubSlug={clubSlug}
+        player={playerToEdit}
       />
 
       <AlertDialog

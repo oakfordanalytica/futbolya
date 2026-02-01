@@ -136,8 +136,12 @@ export const TEAM_ROUTES = {
   staff: (orgSlug: string, teamSlug: string) => `/${orgSlug}/${teamSlug}/staff`,
   categories: (orgSlug: string, teamSlug: string) =>
     `/${orgSlug}/${teamSlug}/categories`,
-  schedule: (orgSlug: string, teamSlug: string) =>
-    `/${orgSlug}/${teamSlug}/schedule`,
+  games: {
+    list: (orgSlug: string, teamSlug: string) =>
+      `/${orgSlug}/${teamSlug}/games`,
+    detail: (orgSlug: string, teamSlug: string, gameId: string) =>
+      `/${orgSlug}/${teamSlug}/games/${gameId}`,
+  },
   settings: {
     root: (orgSlug: string, teamSlug: string) =>
       `/${orgSlug}/${teamSlug}/settings`,

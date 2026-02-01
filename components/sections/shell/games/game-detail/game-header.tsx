@@ -2,7 +2,8 @@
 
 import { Fragment } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/navigation/routes";
 import { useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,8 @@ interface GameHeaderProps {
     _id: string;
     homeClubId: string;
     awayClubId: string;
+    homeClubSlug: string;
+    awayClubSlug: string;
     homeTeamName: string;
     awayTeamName: string;
     homeTeamLogo?: string;
@@ -96,7 +99,7 @@ export function GameHeader({ game, orgSlug }: GameHeaderProps) {
 
         <div className="flex items-center justify-center gap-4 md:gap-8 py-4">
           <Link
-            href={`/${orgSlug}/teams/${game.homeClubId}`}
+            href={ROUTES.org.teams.detail(orgSlug, game.homeClubSlug)}
             className="flex flex-col items-center gap-2 flex-1 hover:opacity-80 transition-opacity"
           >
             {game.homeTeamLogo ? (
@@ -137,7 +140,7 @@ export function GameHeader({ game, orgSlug }: GameHeaderProps) {
           </div>
 
           <Link
-            href={`/${orgSlug}/teams/${game.awayClubId}`}
+            href={ROUTES.org.teams.detail(orgSlug, game.awayClubSlug)}
             className="flex flex-col items-center gap-2 flex-1 hover:opacity-80 transition-opacity"
           >
             {game.awayTeamLogo ? (

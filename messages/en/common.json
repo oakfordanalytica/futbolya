@@ -101,6 +101,7 @@
     "notAssigned": "Not assigned",
     "title": "Players",
     "create": "Add Player",
+    "edit": "Edit Player",
     "firstName": "First Name",
     "lastName": "Last Name",
     "dateOfBirth": "Date of Birth",
@@ -288,6 +289,8 @@
   "games": {
     "searchPlaceholder": "Search games...",
     "emptyMessage": "No games found.",
+    "date": "Date",
+    "opponent": "Opponent",
     "createTitle": "Create Game",
     "quickGame": "Quick Game",
     "quickGameDescription": "Schedule a single game between two teams",

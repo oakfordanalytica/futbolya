@@ -101,6 +101,7 @@
     "notAssigned": "Sin asignar",
     "title": "Jugadores",
     "create": "Agregar Jugador",
+    "edit": "Editar Jugador",
     "firstName": "Nombre",
     "lastName": "Apellido",
     "dateOfBirth": "Fecha de nacimiento",
@@ -288,6 +289,8 @@
   "games": {
     "searchPlaceholder": "Buscar juegos...",
     "emptyMessage": "No se encontraron juegos.",
+    "date": "Fecha",
+    "opponent": "Oponente",
     "createTitle": "Crear Juego",
     "quickGame": "Juego Rápido",
     "quickGameDescription": "Programa un juego individual entre dos equipos",

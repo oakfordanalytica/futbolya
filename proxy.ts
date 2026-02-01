@@ -52,8 +52,24 @@ function extractTenant(pathname: string): string | null {
     : null;
 }
 
+// API routes should not go through intl middleware
+const isApiRoute = createRouteMatcher(["/api(.*)"]);
+
 export default clerkMiddleware(
   async (auth, req) => {
+    // Skip intl middleware for API routes - just let them through after auth
+    if (isApiRoute(req)) {
+      const authObject = await auth();
+      const { userId } = authObject;
+
+      // API routes still need authentication (except webhooks if you have any)
+      if (!userId && !req.nextUrl.pathname.includes("/webhook")) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      return NextResponse.next();
+    }
+
     const authObject = await auth();
     const { userId, sessionClaims } = authObject;
     const isAuthenticated = !!userId;

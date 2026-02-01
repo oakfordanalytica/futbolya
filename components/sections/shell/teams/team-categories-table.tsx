@@ -29,7 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
-import { CreateCategoryDialog } from "./create-category-dialog";
+import { CategoryFormDialog } from "./category-form-dialog";
 
 interface CategoryRow {
   _id: string;
@@ -63,7 +63,10 @@ export function TeamCategoriesTable({
   orgSlug,
 }: TeamCategoriesTableProps) {
   const t = useTranslations("Common");
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState<CategoryRow | null>(
+    null,
+  );
   const [categoryToDelete, setCategoryToDelete] = useState<CategoryRow | null>(
     null,
   );
@@ -171,7 +174,12 @@ export function TeamCategoriesTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setCategoryToEdit(row.original);
+                  setIsDialogOpen(true);
+                }}
+              >
                 <Pencil className="size-4 mr-2" />
                 {t("actions.edit")}
               </DropdownMenuItem>
@@ -189,6 +197,13 @@ export function TeamCategoriesTable({
     },
   ];
 
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setTimeout(() => setCategoryToEdit(null), 150);
+    }
+  };
+
   return (
     <>
       <DataTable
@@ -197,14 +212,18 @@ export function TeamCategoriesTable({
         filterColumn="search"
         filterPlaceholder={t("categories.searchPlaceholder")}
         emptyMessage={t("categories.emptyMessage")}
-        onCreate={() => setIsCreateOpen(true)}
+        onCreate={() => {
+          setCategoryToEdit(null);
+          setIsDialogOpen(true);
+        }}
       />
 
-      <CreateCategoryDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
+      <CategoryFormDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogClose}
         clubSlug={clubSlug}
         orgSlug={orgSlug}
+        category={categoryToEdit}
       />
 
       <AlertDialog

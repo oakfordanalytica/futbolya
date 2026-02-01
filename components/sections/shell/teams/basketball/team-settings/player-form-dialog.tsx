@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -29,7 +29,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import type { FileWithPreview } from "@/hooks/use-file-upload";
@@ -41,10 +41,24 @@ type BasketballPosition =
   | "power_forward"
   | "center";
 
-interface CreatePlayerDialogProps {
+interface PlayerData {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  photoUrl?: string | null;
+  dateOfBirth?: string | null;
+  jerseyNumber?: number | null;
+  position?: string | null;
+  height?: number | null;
+  weight?: number | null;
+  categoryId?: string;
+}
+
+interface PlayerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clubSlug: string;
+  player?: PlayerData | null;
 }
 
 const POSITION_OPTIONS: { value: BasketballPosition; label: string }[] = [
@@ -55,18 +69,22 @@ const POSITION_OPTIONS: { value: BasketballPosition; label: string }[] = [
   { value: "center", label: "Center (C)" },
 ];
 
-export function CreatePlayerDialog({
+export function PlayerFormDialog({
   open,
   onOpenChange,
   clubSlug,
-}: CreatePlayerDialogProps) {
+  player,
+}: PlayerFormDialogProps) {
   const t = useTranslations("Common");
   const createPlayer = useMutation(api.players.createPlayer);
+  const updatePlayer = useMutation(api.players.updatePlayer);
   const generateUploadUrl = useMutation(api.players.generateUploadUrl);
 
   const categories = useQuery(api.categories.listByClubSlug, {
     clubSlug,
   });
+
+  const isEditMode = !!player;
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -77,7 +95,28 @@ export function CreatePlayerDialog({
   const [weight, setWeight] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [photoFile, setPhotoFile] = useState<FileWithPreview | null>(null);
+  const [currentPhotoUrl, setCurrentPhotoUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Initialize form with player data when editing
+  useEffect(() => {
+    if (player && open) {
+      setFirstName(player.firstName);
+      setLastName(player.lastName);
+      setDateOfBirth(
+        player.dateOfBirth
+          ? parse(player.dateOfBirth, "yyyy-MM-dd", new Date())
+          : undefined,
+      );
+      setJerseyNumber(player.jerseyNumber?.toString() ?? "");
+      setPosition((player.position as BasketballPosition) || "");
+      setHeight(player.height?.toString() ?? "");
+      setWeight(player.weight?.toString() ?? "");
+      setCategoryId(player.categoryId ?? "");
+      setCurrentPhotoUrl(player.photoUrl ?? null);
+      setPhotoFile(null);
+    }
+  }, [player, open]);
 
   const resetForm = () => {
     setFirstName("");
@@ -89,6 +128,7 @@ export function CreatePlayerDialog({
     setWeight("");
     setCategoryId("");
     setPhotoFile(null);
+    setCurrentPhotoUrl(null);
   };
 
   const uploadPhoto = async (): Promise<Id<"_storage"> | undefined> => {
@@ -120,25 +160,47 @@ export function CreatePlayerDialog({
     try {
       const photoStorageId = await uploadPhoto();
 
-      await createPlayer({
-        firstName,
-        lastName,
-        photoStorageId,
-        dateOfBirth: dateOfBirth
-          ? format(dateOfBirth, "yyyy-MM-dd")
-          : undefined,
-        categoryId: categoryId as Id<"categories">,
-        sportType: "basketball",
-        jerseyNumber: jerseyNumber ? parseInt(jerseyNumber, 10) : undefined,
-        position: position || undefined,
-        height: height ? parseInt(height, 10) : undefined,
-        weight: weight ? parseInt(weight, 10) : undefined,
-      });
+      if (isEditMode) {
+        // Update existing player
+        await updatePlayer({
+          playerId: player._id as Id<"players">,
+          firstName,
+          lastName,
+          ...(photoStorageId && { photoStorageId }),
+          dateOfBirth: dateOfBirth
+            ? format(dateOfBirth, "yyyy-MM-dd")
+            : undefined,
+          categoryId: categoryId as Id<"categories">,
+          jerseyNumber: jerseyNumber ? parseInt(jerseyNumber, 10) : undefined,
+          position: position || undefined,
+          height: height ? parseInt(height, 10) : undefined,
+          weight: weight ? parseInt(weight, 10) : undefined,
+        });
+      } else {
+        // Create new player
+        await createPlayer({
+          firstName,
+          lastName,
+          photoStorageId,
+          dateOfBirth: dateOfBirth
+            ? format(dateOfBirth, "yyyy-MM-dd")
+            : undefined,
+          categoryId: categoryId as Id<"categories">,
+          sportType: "basketball",
+          jerseyNumber: jerseyNumber ? parseInt(jerseyNumber, 10) : undefined,
+          position: position || undefined,
+          height: height ? parseInt(height, 10) : undefined,
+          weight: weight ? parseInt(weight, 10) : undefined,
+        });
+      }
 
       resetForm();
       onOpenChange(false);
     } catch (error) {
-      console.error("[CreatePlayerDialog] Failed to create player:", error);
+      console.error(
+        `[PlayerFormDialog] Failed to ${isEditMode ? "update" : "create"} player:`,
+        error,
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -159,12 +221,17 @@ export function CreatePlayerDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("players.create")}</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? t("players.edit") : t("players.create")}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-            <AvatarUpload onFileChange={handleFileChange} />
+            <AvatarUpload
+              onFileChange={handleFileChange}
+              defaultAvatar={currentPhotoUrl ?? undefined}
+            />
 
             <FieldGroup className="flex-1 gap-4 w-full">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -317,7 +384,11 @@ export function CreatePlayerDialog({
               {t("actions.cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting || !categoryId}>
-              {isSubmitting ? t("actions.loading") : t("actions.create")}
+              {isSubmitting
+                ? t("actions.loading")
+                : isEditMode
+                  ? t("actions.save")
+                  : t("actions.create")}
             </Button>
           </DialogFooter>
         </form>

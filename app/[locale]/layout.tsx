@@ -21,6 +21,17 @@ import { routing } from "@/i18n/routing";
 import { esES, enUS } from "@clerk/localizations";
 import { notFound } from "next/navigation";
 
+// Suppress hydration warnings caused by browser extensions
+if (typeof window !== "undefined") {
+  const originalError = console.error;
+  console.error = (...args) => {
+    if (typeof args[0] === "string" && args[0].includes("data-np-mark")) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+}
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }

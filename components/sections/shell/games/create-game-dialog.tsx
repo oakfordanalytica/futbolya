@@ -86,6 +86,7 @@ interface CreateGameDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orgSlug: string;
+  preselectedClubId?: string;
 }
 
 interface QuickGameFormState {
@@ -114,6 +115,7 @@ export function CreateGameDialog({
   open,
   onOpenChange,
   orgSlug,
+  preselectedClubId,
 }: CreateGameDialogProps) {
   const t = useTranslations("Common");
 
@@ -126,10 +128,17 @@ export function CreateGameDialog({
 
   const createGame = useMutation(api.games.create);
 
+  const initialFormState: QuickGameFormState = {
+    ...INITIAL_FORM_STATE,
+    homeTeamId: preselectedClubId || "",
+  };
+
   const [gameType, setGameType] = useState<GameType>(null);
   const [formState, setFormState] =
-    useState<QuickGameFormState>(INITIAL_FORM_STATE);
+    useState<QuickGameFormState>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const hasPreselectedClub = Boolean(preselectedClubId);
 
   const ageCategories: {
     id: string;
@@ -145,14 +154,14 @@ export function CreateGameDialog({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setGameType(null);
-      setFormState(INITIAL_FORM_STATE);
+      setFormState(initialFormState);
     }
     onOpenChange(newOpen);
   };
 
   const handleBack = () => {
     setGameType(null);
-    setFormState(INITIAL_FORM_STATE);
+    setFormState(initialFormState);
   };
 
   const updateField = <K extends keyof QuickGameFormState>(
@@ -196,7 +205,7 @@ export function CreateGameDialog({
         locationCoordinates: formState.locationCoordinates || undefined,
       });
 
-      setFormState(INITIAL_FORM_STATE);
+      setFormState(initialFormState);
       setGameType(null);
       onOpenChange(false);
     } catch (error) {
@@ -304,74 +313,100 @@ export function CreateGameDialog({
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <FieldLabel>{t("games.homeTeam")}</FieldLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className={cn(
-                                "w-full justify-between mt-2",
-                                !formState.homeTeamId &&
-                                  "text-muted-foreground",
-                              )}
-                            >
-                              {formState.homeTeamId ? (
+                        {hasPreselectedClub ? (
+                          <Button
+                            variant="outline"
+                            disabled
+                            className="w-full justify-start mt-2 cursor-not-allowed"
+                          >
+                            {(() => {
+                              const preselectedClub = (clubs || []).find(
+                                (c) => c._id === preselectedClubId,
+                              );
+                              return preselectedClub ? (
                                 <span className="flex items-center gap-2">
-                                  <TeamLogo
-                                    club={
-                                      availableHomeTeams.find(
-                                        (c) => c._id === formState.homeTeamId,
-                                      )!
-                                    }
-                                  />
-                                  {
-                                    availableHomeTeams.find(
-                                      (c) => c._id === formState.homeTeamId,
-                                    )?.name
-                                  }
+                                  <TeamLogo club={preselectedClub} />
+                                  {preselectedClub.name}
                                 </span>
                               ) : (
-                                t("games.selectTeam")
-                              )}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-[200px] p-0"
-                            align="start"
-                          >
-                            <Command>
-                              <CommandInput placeholder={t("actions.search")} />
-                              <CommandList>
-                                <CommandEmpty>
-                                  {t("table.noResults")}
-                                </CommandEmpty>
-                                <CommandGroup>
-                                  {availableHomeTeams.map((club) => (
-                                    <CommandItem
-                                      key={club._id}
-                                      value={club.name}
-                                      onSelect={() => {
-                                        updateField("homeTeamId", club._id);
-                                      }}
-                                    >
-                                      <TeamLogo club={club} />
-                                      <span className="ml-2">{club.name}</span>
-                                      <Check
-                                        className={cn(
-                                          "ml-auto h-4 w-4",
-                                          formState.homeTeamId === club._id
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                                t("actions.loading")
+                              );
+                            })()}
+                          </Button>
+                        ) : (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between mt-2",
+                                  !formState.homeTeamId &&
+                                    "text-muted-foreground",
+                                )}
+                              >
+                                {formState.homeTeamId ? (
+                                  <span className="flex items-center gap-2">
+                                    <TeamLogo
+                                      club={
+                                        availableHomeTeams.find(
+                                          (c) => c._id === formState.homeTeamId,
+                                        )!
+                                      }
+                                    />
+                                    {
+                                      availableHomeTeams.find(
+                                        (c) => c._id === formState.homeTeamId,
+                                      )?.name
+                                    }
+                                  </span>
+                                ) : (
+                                  t("games.selectTeam")
+                                )}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-[200px] p-0"
+                              align="start"
+                            >
+                              <Command>
+                                <CommandInput
+                                  placeholder={t("actions.search")}
+                                />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    {t("table.noResults")}
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {availableHomeTeams.map((club) => (
+                                      <CommandItem
+                                        key={club._id}
+                                        value={club.name}
+                                        onSelect={() => {
+                                          updateField("homeTeamId", club._id);
+                                        }}
+                                      >
+                                        <TeamLogo club={club} />
+                                        <span className="ml-2">
+                                          {club.name}
+                                        </span>
+                                        <Check
+                                          className={cn(
+                                            "ml-auto h-4 w-4",
+                                            formState.homeTeamId === club._id
+                                              ? "opacity-100"
+                                              : "opacity-0",
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        )}
                       </div>
 
                       <div>

@@ -10,14 +10,14 @@ import { getCurrentUser } from "./lib/auth";
 const gender = v.union(
   v.literal("male"),
   v.literal("female"),
-  v.literal("mixed")
+  v.literal("mixed"),
 );
 
 const gameStatus = v.union(
   v.literal("scheduled"),
   v.literal("in_progress"),
   v.literal("completed"),
-  v.literal("cancelled")
+  v.literal("cancelled"),
 );
 
 const gameValidator = v.object({
@@ -26,6 +26,8 @@ const gameValidator = v.object({
   organizationId: v.id("organizations"),
   homeClubId: v.id("clubs"),
   awayClubId: v.id("clubs"),
+  homeClubSlug: v.string(),
+  awayClubSlug: v.string(),
   homeTeamName: v.string(),
   awayTeamName: v.string(),
   homeTeamLogo: v.optional(v.string()),
@@ -138,6 +140,99 @@ export const listByLeagueSlug = query({
 });
 
 /**
+ * List games by club slug (where the club is either home or away team).
+ */
+export const listByClubSlug = query({
+  args: { clubSlug: v.string() },
+  returns: v.array(gameListItemValidator),
+  handler: async (ctx, args) => {
+    const club = await ctx.db
+      .query("clubs")
+      .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
+      .unique();
+
+    if (!club) {
+      return [];
+    }
+
+    // Get games where club is home team
+    const homeGames = await ctx.db
+      .query("games")
+      .withIndex("byHomeClub", (q) => q.eq("homeClubId", club._id))
+      .collect();
+
+    // Get games where club is away team
+    const awayGames = await ctx.db
+      .query("games")
+      .withIndex("byAwayClub", (q) => q.eq("awayClubId", club._id))
+      .collect();
+
+    // Combine and deduplicate games
+    const allGames = [...homeGames, ...awayGames];
+    const uniqueGames = Array.from(
+      new Map(allGames.map((g) => [g._id, g])).values(),
+    );
+
+    // Sort by date descending
+    uniqueGames.sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.startTime}`);
+      const dateB = new Date(`${b.date}T${b.startTime}`);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    // Batch fetch clubs
+    const clubIds = [
+      ...new Set(uniqueGames.flatMap((g) => [g.homeClubId, g.awayClubId])),
+    ];
+    const clubs = await Promise.all(clubIds.map((id) => ctx.db.get(id)));
+    const clubMap = new Map(clubs.filter(Boolean).map((c) => [c!._id, c!]));
+
+    const result: Array<{
+      _id: Id<"games">;
+      _creationTime: number;
+      homeTeamId: string;
+      homeTeamName: string;
+      awayTeamId: string;
+      awayTeamName: string;
+      date: string;
+      startTime: string;
+      category: string;
+      gender: "male" | "female" | "mixed";
+      locationName?: string;
+      locationCoordinates?: number[];
+      status: "scheduled" | "in_progress" | "completed" | "cancelled";
+      homeScore?: number;
+      awayScore?: number;
+    }> = [];
+
+    for (const game of uniqueGames) {
+      const homeClub = clubMap.get(game.homeClubId);
+      const awayClub = clubMap.get(game.awayClubId);
+
+      result.push({
+        _id: game._id,
+        _creationTime: game._creationTime,
+        homeTeamId: game.homeClubId,
+        homeTeamName: homeClub?.name ?? "Unknown",
+        awayTeamId: game.awayClubId,
+        awayTeamName: awayClub?.name ?? "Unknown",
+        date: game.date,
+        startTime: game.startTime,
+        category: game.category,
+        gender: game.gender,
+        locationName: game.locationName,
+        locationCoordinates: game.locationCoordinates,
+        status: game.status,
+        homeScore: game.homeScore,
+        awayScore: game.awayScore,
+      });
+    }
+
+    return result;
+  },
+});
+
+/**
  * Get a game by ID with team details.
  */
 export const getById = query({
@@ -157,10 +252,12 @@ export const getById = query({
     let awayTeamLogo: string | undefined;
 
     if (homeClub?.logoStorageId) {
-      homeTeamLogo = await ctx.storage.getUrl(homeClub.logoStorageId) ?? undefined;
+      homeTeamLogo =
+        (await ctx.storage.getUrl(homeClub.logoStorageId)) ?? undefined;
     }
     if (awayClub?.logoStorageId) {
-      awayTeamLogo = await ctx.storage.getUrl(awayClub.logoStorageId) ?? undefined;
+      awayTeamLogo =
+        (await ctx.storage.getUrl(awayClub.logoStorageId)) ?? undefined;
     }
 
     return {
@@ -169,6 +266,8 @@ export const getById = query({
       organizationId: game.organizationId,
       homeClubId: game.homeClubId,
       awayClubId: game.awayClubId,
+      homeClubSlug: homeClub?.slug ?? "",
+      awayClubSlug: awayClub?.slug ?? "",
       homeTeamName: homeClub?.name ?? "Unknown",
       awayTeamName: awayClub?.name ?? "Unknown",
       homeTeamLogo,

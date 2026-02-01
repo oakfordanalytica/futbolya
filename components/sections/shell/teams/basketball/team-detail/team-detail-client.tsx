@@ -74,14 +74,14 @@ export function TeamDetailClient({
             {terminology.matches}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="roster">
+        <TabsContent value="roster" className="mt-4">
           <RosterGrid clubSlug={team.slug} />
         </TabsContent>
         <TabsContent value="staff" className="mt-4">
           <TeamStaffList clubSlug={team.slug} />
         </TabsContent>
         <TabsContent value="schedule" className="mt-4">
-          <TeamGamesList clubSlug={team.slug} />
+          <TeamGamesList clubSlug={team.slug} orgSlug={orgSlug} />
         </TabsContent>
       </Tabs>
     </div>

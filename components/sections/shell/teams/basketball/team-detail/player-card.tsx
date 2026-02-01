@@ -44,11 +44,22 @@ export function PlayerCard({ player, className }: PlayerCardProps) {
   ].filter(Boolean) as { label: string; value: string | number }[];
 
   return (
-    <Card className={cn("overflow-hidden  py-4 relative ", className)}>
+    <Card className={cn("overflow-hidden  py-4 relative", className)}>
       {player.jerseyNumber !== undefined && (
         <span className="absolute top-0 right-0 p-3 text-3xl font-bold text-foreground/70 tabular-nums z-10">
           {player.jerseyNumber}
         </span>
+      )}
+
+      {player.photoUrl && (
+        <Image
+          src={player.photoUrl}
+          alt={fullName}
+          width={290}
+          height={0}
+          className="absolute bottom-0"
+          style={{ left: "40%" }}
+        />
       )}
 
       <div className="grid grid-cols-2">
@@ -92,15 +103,7 @@ export function PlayerCard({ player, className }: PlayerCardProps) {
         </div>
 
         <div className="">
-          {player.photoUrl ? (
-            <Image
-              src={player.photoUrl}
-              alt={fullName}
-              width={290}
-              height={0}
-              className="absolute bottom-0"
-            />
-          ) : (
+          {!player.photoUrl && (
             <div className="h-24 w-full flex items-center justify-center">
               <span className="text-4xl font-bold text-muted-foreground/30">
                 {`${player.firstName.charAt(0)}${player.lastName.charAt(0)}`}
