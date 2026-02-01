@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { CreatePlayerDialog } from "./create-player-dialog";
+import { PlayerFormDialog } from "./player-form-dialog";
 
 interface PlayerRow {
   _id: string;
@@ -44,6 +44,7 @@ interface PlayerRow {
   height?: number | null;
   weight?: number | null;
   categoryName?: string | null;
+  categoryId?: string;
 }
 
 interface TeamPlayersTableProps {
