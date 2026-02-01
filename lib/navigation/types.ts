@@ -23,7 +23,7 @@ export type NavItem = {
   isIndex: boolean;
 };
 
-export type NavContext = "admin" | "org";
+export type NavContext = "admin" | "org" | "team";
 
 /**
  * Team navigation item configuration.
@@ -56,13 +56,13 @@ export type NavConfig = {
  *
  * @property labelKey - Translation key for the item label (uses Settings.nav namespace)
  * @property icon - Icon component to display (Heroicon or Lucide)
- * @property href - Function that returns the full path (receives orgSlug for org context)
+ * @property href - Function that returns the full path (receives orgSlug for org context, teamSlug for team context)
  * @property isIndex - Whether this is the root settings page (affects active state matching)
  */
 export type SettingsNavItem = {
   labelKey: string;
   icon: NavIcon;
-  href: (orgSlug?: string) => string;
+  href: (orgSlug?: string, teamSlug?: string) => string;
   isIndex: boolean;
 };
 
@@ -71,5 +71,5 @@ export type SettingsNavItem = {
  */
 export type SettingsNavConfig = {
   items: SettingsNavItem[];
-  basePath: (orgSlug?: string) => string;
+  basePath: (orgSlug?: string, teamSlug?: string) => string;
 };

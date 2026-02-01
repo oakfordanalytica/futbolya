@@ -23,16 +23,19 @@ interface SettingsLayoutProps {
   children: React.ReactNode;
   context: NavContext;
   orgSlug?: string;
+  teamSlug?: string;
 }
 
 function SettingsSidebar({
   items,
   basePath,
   orgSlug,
+  teamSlug,
 }: {
   items: SettingsNavItem[];
   basePath: string;
   orgSlug?: string;
+  teamSlug?: string;
 }) {
   const pathname = usePathname();
   const t = useTranslations("Settings.nav");
@@ -43,7 +46,7 @@ function SettingsSidebar({
         <SettingsSearch basePath={basePath} />
       </div>
       {items.map((item) => {
-        const href = item.href(orgSlug);
+        const href = item.href(orgSlug, teamSlug);
         const isActive = isItemActive(pathname, href, item.isIndex);
         return (
           <Link
@@ -68,23 +71,28 @@ function SettingsSidebar({
 function SettingsNavSelect({
   items,
   orgSlug,
+  teamSlug,
 }: {
   items: SettingsNavItem[];
   orgSlug?: string;
+  teamSlug?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations("Settings.nav");
 
   const currentItem = items.find((item) => {
-    const href = item.href(orgSlug);
+    const href = item.href(orgSlug, teamSlug);
     return isItemActive(pathname, href, item.isIndex);
   });
 
   return (
     <div className="mb-6 border-b border-zinc-200 pb-4 dark:border-zinc-700">
       <Select
-        value={currentItem?.href(orgSlug) ?? items[0]?.href(orgSlug)}
+        value={
+          currentItem?.href(orgSlug, teamSlug) ??
+          items[0]?.href(orgSlug, teamSlug)
+        }
         onValueChange={(value: string) => router.push(value)}
       >
         <SelectTrigger className="w-full">
@@ -92,7 +100,7 @@ function SettingsNavSelect({
         </SelectTrigger>
         <SelectContent>
           {items.map((item) => {
-            const href = item.href(orgSlug);
+            const href = item.href(orgSlug, teamSlug);
             return (
               <SelectItem key={item.labelKey} value={href}>
                 <div className="flex items-center gap-2">
@@ -112,15 +120,20 @@ export function SettingsLayout({
   children,
   context,
   orgSlug,
+  teamSlug,
 }: SettingsLayoutProps) {
   const { items, basePath } = getSettingsNavConfig(context);
-  const resolvedBasePath = basePath(orgSlug);
+  const resolvedBasePath = basePath(orgSlug, teamSlug);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col p-4 md:p-6 ">
       {/* Mobile: Select navigation */}
       <div className="lg:hidden">
-        <SettingsNavSelect items={items} orgSlug={orgSlug} />
+        <SettingsNavSelect
+          items={items}
+          orgSlug={orgSlug}
+          teamSlug={teamSlug}
+        />
       </div>
 
       {/* Desktop: Sidebar + Content */}
@@ -131,6 +144,7 @@ export function SettingsLayout({
             items={items}
             basePath={resolvedBasePath}
             orgSlug={orgSlug}
+            teamSlug={teamSlug}
           />
         </div>
 

@@ -27,6 +27,7 @@ import type {
  */
 export type SettingsLabelKey =
   | "general"
+  | "teamConfig"
   | "appearance"
   | "profileSecurity"
   | "billing";
@@ -151,7 +152,7 @@ const TEAM_NAV_CONFIG: TeamNavConfig = {
     TEAM_ROUTES.settings.root(orgSlug, teamSlug),
 };
 
-const NAV_CONFIGS: Record<NavContext, NavConfig> = {
+const NAV_CONFIGS: Record<Exclude<NavContext, "team">, NavConfig> = {
   admin: {
     items: ADMIN_ITEMS,
     settingsHref: () => ROUTES.admin.settings.root,
@@ -172,6 +173,12 @@ const ADMIN_SETTINGS_ITEMS: SettingsNavItem[] = [
     icon: Cog6ToothIcon,
     href: () => ROUTES.admin.settings.root,
     isIndex: true,
+  },
+  {
+    labelKey: "teamConfig",
+    icon: RectangleStackIcon,
+    href: () => ROUTES.admin.settings.teamConfig,
+    isIndex: false,
   },
   {
     labelKey: "profileSecurity",
@@ -201,6 +208,12 @@ const ORG_SETTINGS_ITEMS: SettingsNavItem[] = [
     isIndex: true,
   },
   {
+    labelKey: "teamConfig",
+    icon: RectangleStackIcon,
+    href: (orgSlug) => ROUTES.org.settings.teamConfig(orgSlug!),
+    isIndex: false,
+  },
+  {
     labelKey: "profileSecurity",
     icon: ShieldCheckIcon,
     href: (orgSlug) => ROUTES.org.settings.profileSecurity(orgSlug!),
@@ -220,6 +233,29 @@ const ORG_SETTINGS_ITEMS: SettingsNavItem[] = [
   },
 ];
 
+const TEAM_SETTINGS_ITEMS: SettingsNavItem[] = [
+  {
+    labelKey: "general",
+    icon: Cog6ToothIcon,
+    href: (orgSlug, teamSlug) => TEAM_ROUTES.settings.root(orgSlug!, teamSlug!),
+    isIndex: true,
+  },
+  {
+    labelKey: "profileSecurity",
+    icon: ShieldCheckIcon,
+    href: (orgSlug, teamSlug) =>
+      TEAM_ROUTES.settings.profileSecurity(orgSlug!, teamSlug!),
+    isIndex: false,
+  },
+  {
+    labelKey: "appearance",
+    icon: Palette,
+    href: (orgSlug, teamSlug) =>
+      TEAM_ROUTES.settings.appearance(orgSlug!, teamSlug!),
+    isIndex: false,
+  },
+];
+
 const SETTINGS_NAV_CONFIGS: Record<NavContext, SettingsNavConfig> = {
   admin: {
     items: ADMIN_SETTINGS_ITEMS,
@@ -229,13 +265,18 @@ const SETTINGS_NAV_CONFIGS: Record<NavContext, SettingsNavConfig> = {
     items: ORG_SETTINGS_ITEMS,
     basePath: (orgSlug) => ROUTES.org.settings.root(orgSlug!),
   },
+  team: {
+    items: TEAM_SETTINGS_ITEMS,
+    basePath: (orgSlug, teamSlug) =>
+      TEAM_ROUTES.settings.root(orgSlug!, teamSlug!),
+  },
 };
 
 // =============================================================================
 // Exported Functions
 // =============================================================================
 
-export function getNavConfig(context: NavContext): NavConfig {
+export function getNavConfig(context: Exclude<NavContext, "team">): NavConfig {
   return NAV_CONFIGS[context];
 }
 
@@ -261,7 +302,7 @@ export function isItemActive(
 export function getNavContext(
   pathname: string,
   orgSlug: string | null,
-): NavContext {
+): Exclude<NavContext, "team"> {
   if (pathname.startsWith("/admin")) {
     return "admin";
   }

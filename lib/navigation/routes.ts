@@ -37,6 +37,7 @@ export const ROUTES = {
 
     settings: {
       root: "/admin/settings",
+      teamConfig: "/admin/settings/team-config",
       appearance: "/admin/settings/appearance",
       profileSecurity: "/admin/settings/user-profile",
       billing: "/admin/settings/billing",
@@ -118,6 +119,7 @@ export const ROUTES = {
 
     settings: {
       root: (orgSlug: string) => `/${orgSlug}/settings`,
+      teamConfig: (orgSlug: string) => `/${orgSlug}/settings/team-config`,
       appearance: (orgSlug: string) => `/${orgSlug}/settings/appearance`,
       profileSecurity: (orgSlug: string) => `/${orgSlug}/settings/user-profile`,
       billing: (orgSlug: string) => `/${orgSlug}/settings/billing`,
@@ -145,6 +147,10 @@ export const TEAM_ROUTES = {
   settings: {
     root: (orgSlug: string, teamSlug: string) =>
       `/${orgSlug}/${teamSlug}/settings`,
+    appearance: (orgSlug: string, teamSlug: string) =>
+      `/${orgSlug}/${teamSlug}/settings/appearance`,
+    profileSecurity: (orgSlug: string, teamSlug: string) =>
+      `/${orgSlug}/${teamSlug}/settings/user-profile`,
   },
 } as const;
 

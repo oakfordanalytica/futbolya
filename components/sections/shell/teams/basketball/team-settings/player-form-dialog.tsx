@@ -2,6 +2,7 @@
 
 import { FormEvent, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useOrganization } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -34,13 +35,6 @@ import { cn } from "@/lib/utils";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import type { FileWithPreview } from "@/hooks/use-file-upload";
 
-type BasketballPosition =
-  | "point_guard"
-  | "shooting_guard"
-  | "small_forward"
-  | "power_forward"
-  | "center";
-
 interface PlayerData {
   _id: string;
   firstName: string;
@@ -61,14 +55,6 @@ interface PlayerFormDialogProps {
   player?: PlayerData | null;
 }
 
-const POSITION_OPTIONS: { value: BasketballPosition; label: string }[] = [
-  { value: "point_guard", label: "Point Guard (PG)" },
-  { value: "shooting_guard", label: "Shooting Guard (SG)" },
-  { value: "small_forward", label: "Small Forward (SF)" },
-  { value: "power_forward", label: "Power Forward (PF)" },
-  { value: "center", label: "Center (C)" },
-];
-
 export function PlayerFormDialog({
   open,
   onOpenChange,
@@ -76,6 +62,7 @@ export function PlayerFormDialog({
   player,
 }: PlayerFormDialogProps) {
   const t = useTranslations("Common");
+  const { organization } = useOrganization();
   const createPlayer = useMutation(api.players.createPlayer);
   const updatePlayer = useMutation(api.players.updatePlayer);
   const generateUploadUrl = useMutation(api.players.generateUploadUrl);
@@ -84,13 +71,20 @@ export function PlayerFormDialog({
     clubSlug,
   });
 
+  const teamConfig = useQuery(
+    api.leagueSettings.getTeamConfig,
+    organization?.slug ? { leagueSlug: organization.slug } : "skip",
+  );
+
+  const positions = teamConfig?.positions ?? [];
+
   const isEditMode = !!player;
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined);
   const [jerseyNumber, setJerseyNumber] = useState("");
-  const [position, setPosition] = useState<BasketballPosition | "">("");
+  const [position, setPosition] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -109,7 +103,7 @@ export function PlayerFormDialog({
           : undefined,
       );
       setJerseyNumber(player.jerseyNumber?.toString() ?? "");
-      setPosition((player.position as BasketballPosition) || "");
+      setPosition(player.position ?? "");
       setHeight(player.height?.toString() ?? "");
       setWeight(player.weight?.toString() ?? "");
       setCategoryId(player.categoryId ?? "");
@@ -309,19 +303,14 @@ export function PlayerFormDialog({
 
               <Field>
                 <FieldLabel>{t("players.position")}</FieldLabel>
-                <Select
-                  value={position}
-                  onValueChange={(value: BasketballPosition) =>
-                    setPosition(value)
-                  }
-                >
+                <Select value={position} onValueChange={setPosition}>
                   <SelectTrigger>
                     <SelectValue placeholder={t("players.selectPosition")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {POSITION_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                    {positions.map((pos) => (
+                      <SelectItem key={pos.id} value={pos.id}>
+                        {pos.name} ({pos.abbreviation})
                       </SelectItem>
                     ))}
                   </SelectContent>

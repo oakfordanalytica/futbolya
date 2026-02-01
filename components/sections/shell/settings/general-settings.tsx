@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 import SettingsItem from "./settings-item";
 import { OrganizationProfile } from "@clerk/nextjs";
 import { useIsAdmin } from "@/hooks/use-is-admin";
-import { TeamConfigSettings } from "./team-config-settings";
 
 export function GeneralSettings() {
   const tOrganization = useTranslations("Settings.general.organization");
@@ -26,7 +25,7 @@ export function GeneralSettings() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
       <SettingsItem
         title={tOrganization("title")}
         description={tOrganization("description")}
@@ -34,18 +33,15 @@ export function GeneralSettings() {
         <OrganizationProfile appearance={organizationProfileAppearance} />
       </SettingsItem>
       {isAdmin && (
-        <>
-          <TeamConfigSettings />
-          <SettingsItem
-            title={tMembers("title")}
-            description={tMembers("description")}
-          >
-            <OrganizationProfile appearance={organizationProfileAppearance}>
-              <OrganizationProfile.Page label="members" />
-              <OrganizationProfile.Page label="general" />
-            </OrganizationProfile>
-          </SettingsItem>
-        </>
+        <SettingsItem
+          title={tMembers("title")}
+          description={tMembers("description")}
+        >
+          <OrganizationProfile appearance={organizationProfileAppearance}>
+            <OrganizationProfile.Page label="members" />
+            <OrganizationProfile.Page label="general" />
+          </OrganizationProfile>
+        </SettingsItem>
       )}
     </div>
   );

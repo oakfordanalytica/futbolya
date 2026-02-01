@@ -8,14 +8,6 @@ import { getCurrentUser } from "./lib/auth";
 
 const playerStatus = v.union(v.literal("active"), v.literal("inactive"));
 
-const basketballPosition = v.union(
-  v.literal("point_guard"),
-  v.literal("shooting_guard"),
-  v.literal("small_forward"),
-  v.literal("power_forward"),
-  v.literal("center"),
-);
-
 const basketballPlayerValidator = v.object({
   _id: v.id("players"),
   _creationTime: v.number(),
@@ -24,7 +16,7 @@ const basketballPlayerValidator = v.object({
   photoUrl: v.optional(v.string()),
   dateOfBirth: v.optional(v.string()),
   jerseyNumber: v.optional(v.number()),
-  position: v.optional(basketballPosition),
+  position: v.optional(v.string()),
   status: playerStatus,
   height: v.optional(v.number()),
   weight: v.optional(v.number()),
@@ -125,7 +117,7 @@ export const createPlayer = mutation({
     categoryId: v.id("categories"),
     sportType: v.union(v.literal("basketball"), v.literal("soccer")),
     jerseyNumber: v.optional(v.number()),
-    position: v.optional(basketballPosition),
+    position: v.optional(v.string()),
     height: v.optional(v.number()),
     weight: v.optional(v.number()),
   },
@@ -194,7 +186,7 @@ export const updatePlayer = mutation({
     photoStorageId: v.optional(v.id("_storage")),
     dateOfBirth: v.optional(v.string()),
     jerseyNumber: v.optional(v.number()),
-    position: v.optional(basketballPosition),
+    position: v.optional(v.string()),
     height: v.optional(v.number()),
     weight: v.optional(v.number()),
     status: v.optional(playerStatus),

@@ -1,6 +1,7 @@
 {
   "nav": {
     "general": "General",
+    "teamConfig": "Team Configuration",
     "appearance": "Appearance",
     "profileSecurity": "Profile and Security",
     "billing": "Billing"
@@ -26,6 +27,15 @@
         "minAge": "Min",
         "maxAge": "Max",
         "empty": "No age categories configured"
+      },
+      "positions": {
+        "title": "Player Positions",
+        "description": "Define the positions available for players in this league",
+        "name": "Name",
+        "namePlaceholder": "e.g. Point Guard",
+        "abbreviation": "Abbr.",
+        "abbreviationPlaceholder": "e.g. PG",
+        "empty": "No positions configured"
       },
       "enabledGenders": {
         "title": "Enabled Genders",

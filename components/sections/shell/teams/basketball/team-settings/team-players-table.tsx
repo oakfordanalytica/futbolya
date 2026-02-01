@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { ColumnDef } from "@tanstack/react-table";
@@ -53,14 +53,6 @@ interface TeamPlayersTableProps {
   orgSlug: string;
 }
 
-const POSITION_LABELS: Record<string, string> = {
-  point_guard: "PG",
-  shooting_guard: "SG",
-  small_forward: "SF",
-  power_forward: "PF",
-  center: "C",
-};
-
 export function TeamPlayersTable({
   players,
   clubSlug,
@@ -72,6 +64,20 @@ export function TeamPlayersTable({
   const [playerToEdit, setPlayerToEdit] = useState<PlayerRow | null>(null);
   const [playerToDelete, setPlayerToDelete] = useState<PlayerRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const teamConfig = useQuery(api.leagueSettings.getTeamConfig, {
+    leagueSlug: orgSlug,
+  });
+
+  const positionMap = useMemo(() => {
+    const map = new Map<string, { name: string; abbreviation: string }>();
+    if (teamConfig?.positions) {
+      for (const pos of teamConfig.positions) {
+        map.set(pos.id, { name: pos.name, abbreviation: pos.abbreviation });
+      }
+    }
+    return map;
+  }, [teamConfig?.positions]);
 
   const handleDelete = async () => {
     if (!playerToDelete) return;
@@ -131,8 +137,9 @@ export function TeamPlayersTable({
       accessorKey: "position",
       header: createSortableHeader(t("players.position")),
       cell: ({ row }) => {
-        const position = row.original.position;
-        const label = position ? POSITION_LABELS[position] || position : "—";
+        const positionId = row.original.position;
+        const positionData = positionId ? positionMap.get(positionId) : null;
+        const label = positionData ? positionData.abbreviation : "—";
         return <span className="text-sm text-muted-foreground">{label}</span>;
       },
     },

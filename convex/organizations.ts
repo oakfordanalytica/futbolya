@@ -154,6 +154,7 @@ export const updateFromClerk = internalMutation({
 
 /**
  * Delete organization from Clerk webhook (internal).
+ * Cascades deletion to all related entities.
  */
 export const deleteFromClerk = internalMutation({
   args: { clerkOrgId: v.string() },
@@ -164,21 +165,118 @@ export const deleteFromClerk = internalMutation({
       .withIndex("byClerkOrgId", (q) => q.eq("clerkOrgId", args.clerkOrgId))
       .unique();
 
-    if (organization) {
-      // Delete all memberships for this organization
-      const memberships = await ctx.db
-        .query("organizationMembers")
-        .withIndex("byOrganization", (q) =>
-          q.eq("organizationId", organization._id),
-        )
-        .collect();
+    if (!organization) {
+      return null;
+    }
 
-      for (const membership of memberships) {
-        await ctx.db.delete(membership._id);
+    // Get all clubs for this organization
+    const clubs = await ctx.db
+      .query("clubs")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .collect();
+
+    // Get all games for this organization
+    const games = await ctx.db
+      .query("games")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .collect();
+
+    // 1. Delete gamePlayerStats for all games
+    for (const game of games) {
+      const stats = await ctx.db
+        .query("gamePlayerStats")
+        .withIndex("byGame", (q) => q.eq("gameId", game._id))
+        .collect();
+      for (const stat of stats) {
+        await ctx.db.delete(stat._id);
+      }
+    }
+
+    // 2. Delete all games
+    for (const game of games) {
+      await ctx.db.delete(game._id);
+    }
+
+    // 3. Delete players, staff, and categories for each club
+    for (const club of clubs) {
+      // Delete players and their photos
+      const players = await ctx.db
+        .query("players")
+        .withIndex("byClub", (q) => q.eq("clubId", club._id))
+        .collect();
+      for (const player of players) {
+        if (player.photoStorageId) {
+          await ctx.storage.delete(player.photoStorageId);
+        }
+        await ctx.db.delete(player._id);
       }
 
-      await ctx.db.delete(organization._id);
+      // Delete staff
+      const staffMembers = await ctx.db
+        .query("staff")
+        .withIndex("byClub", (q) => q.eq("clubId", club._id))
+        .collect();
+      for (const staff of staffMembers) {
+        await ctx.db.delete(staff._id);
+      }
+
+      // Delete categories
+      const categories = await ctx.db
+        .query("categories")
+        .withIndex("byClub", (q) => q.eq("clubId", club._id))
+        .collect();
+      for (const category of categories) {
+        await ctx.db.delete(category._id);
+      }
     }
+
+    // 4. Delete clubs and their logos
+    for (const club of clubs) {
+      if (club.logoStorageId) {
+        await ctx.storage.delete(club.logoStorageId);
+      }
+      await ctx.db.delete(club._id);
+    }
+
+    // 5. Delete conferences
+    const conferences = await ctx.db
+      .query("conferences")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .collect();
+    for (const conference of conferences) {
+      await ctx.db.delete(conference._id);
+    }
+
+    // 6. Delete league settings
+    const leagueSettings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+    if (leagueSettings) {
+      await ctx.db.delete(leagueSettings._id);
+    }
+
+    // 7. Delete organization memberships
+    const memberships = await ctx.db
+      .query("organizationMembers")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .collect();
+    for (const membership of memberships) {
+      await ctx.db.delete(membership._id);
+    }
+
+    // 8. Finally, delete the organization
+    await ctx.db.delete(organization._id);
 
     return null;
   },

@@ -41,15 +41,13 @@ const gameStatus = v.union(
   v.literal("cancelled"),
 );
 
-const basketballPosition = v.union(
-  v.literal("point_guard"),
-  v.literal("shooting_guard"),
-  v.literal("small_forward"),
-  v.literal("power_forward"),
-  v.literal("center"),
-);
-
 const sportType = v.union(v.literal("basketball"), v.literal("soccer"));
+
+const positionValidator = v.object({
+  id: v.string(),
+  name: v.string(),
+  abbreviation: v.string(),
+});
 
 // ============================================================================
 // CLERK SYNCED TABLES (from webhooks)
@@ -156,7 +154,7 @@ export default defineSchema({
     // Sport-specific data
     sportType: sportType,
     jerseyNumber: v.optional(v.number()),
-    position: v.optional(basketballPosition),
+    position: v.optional(v.string()),
     height: v.optional(v.number()),
     weight: v.optional(v.number()),
 
@@ -211,6 +209,7 @@ export default defineSchema({
         maxAge: v.number(),
       }),
     ),
+    positions: v.optional(v.array(positionValidator)),
     enabledGenders: v.array(gender),
     horizontalDivisions: v.optional(
       v.object({

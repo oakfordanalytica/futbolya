@@ -1,16 +1,16 @@
 import { SettingsLayout } from "@/components/layouts/settings-layout";
 
-export default async function TenantSettingsLayout({
+export default async function TeamSettingsLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ tenant: string }>;
+  params: Promise<{ tenant: string; team: string }>;
 }) {
-  const { tenant } = await params;
+  const { tenant, team } = await params;
 
   return (
-    <SettingsLayout context="org" orgSlug={tenant}>
+    <SettingsLayout context="team" orgSlug={tenant} teamSlug={team}>
       {children}
     </SettingsLayout>
   );

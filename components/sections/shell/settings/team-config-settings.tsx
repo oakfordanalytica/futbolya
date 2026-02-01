@@ -30,6 +30,11 @@ interface NewCategory {
   maxAge: string;
 }
 
+interface NewPosition {
+  name: string;
+  abbreviation: string;
+}
+
 export function TeamConfigSettings() {
   const t = useTranslations("Settings.general.teamConfig");
   const tCommon = useTranslations("Common");
@@ -40,7 +45,12 @@ export function TeamConfigSettings() {
     minAge: "",
     maxAge: "",
   });
-  const [isAdding, setIsAdding] = useState(false);
+  const [newPosition, setNewPosition] = useState<NewPosition>({
+    name: "",
+    abbreviation: "",
+  });
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isAddingPosition, setIsAddingPosition] = useState(false);
 
   const teamConfig = useQuery(
     api.leagueSettings.getTeamConfig,
@@ -49,6 +59,8 @@ export function TeamConfigSettings() {
 
   const addAgeCategory = useMutation(api.leagueSettings.addAgeCategory);
   const removeAgeCategory = useMutation(api.leagueSettings.removeAgeCategory);
+  const addPosition = useMutation(api.leagueSettings.addPosition);
+  const removePosition = useMutation(api.leagueSettings.removePosition);
   const updateEnabledGenders = useMutation(
     api.leagueSettings.updateEnabledGenders,
   );
@@ -63,6 +75,7 @@ export function TeamConfigSettings() {
   const leagueSlug = organization.slug;
 
   const ageCategories = teamConfig.ageCategories;
+  const positions = teamConfig.positions ?? [];
   const enabledGenders = teamConfig.enabledGenders;
   const horizontalDivisions = teamConfig.horizontalDivisions ?? {
     enabled: false,
@@ -74,7 +87,7 @@ export function TeamConfigSettings() {
       return;
     }
 
-    setIsAdding(true);
+    setIsAddingCategory(true);
     try {
       await addAgeCategory({
         leagueSlug,
@@ -87,7 +100,7 @@ export function TeamConfigSettings() {
       });
       setNewCategory({ name: "", minAge: "", maxAge: "" });
     } finally {
-      setIsAdding(false);
+      setIsAddingCategory(false);
     }
   };
 
@@ -95,6 +108,34 @@ export function TeamConfigSettings() {
     await removeAgeCategory({
       leagueSlug,
       categoryId,
+    });
+  };
+
+  const handleAddPosition = async () => {
+    if (!newPosition.name || !newPosition.abbreviation) {
+      return;
+    }
+
+    setIsAddingPosition(true);
+    try {
+      await addPosition({
+        leagueSlug,
+        position: {
+          id: crypto.randomUUID(),
+          name: newPosition.name,
+          abbreviation: newPosition.abbreviation,
+        },
+      });
+      setNewPosition({ name: "", abbreviation: "" });
+    } finally {
+      setIsAddingPosition(false);
+    }
+  };
+
+  const handleRemovePosition = async (positionId: string) => {
+    await removePosition({
+      leagueSlug,
+      positionId,
     });
   };
 
@@ -126,7 +167,7 @@ export function TeamConfigSettings() {
   };
 
   return (
-    <>
+    <div className="flex flex-col gap-8">
       {/* Age Categories */}
       <SettingsItem
         title={t("ageCategories.title")}
@@ -217,10 +258,97 @@ export function TeamConfigSettings() {
               <Button
                 onClick={handleAddCategory}
                 disabled={
-                  isAdding ||
+                  isAddingCategory ||
                   !newCategory.name ||
                   !newCategory.minAge ||
                   !newCategory.maxAge
+                }
+                size="icon"
+              >
+                <Plus className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SettingsItem>
+
+      {/* Positions */}
+      <SettingsItem
+        title={t("positions.title")}
+        description={t("positions.description")}
+      >
+        <div className="flex flex-col gap-4">
+          {positions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("positions.empty")}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {positions.map((position) => (
+                <div
+                  key={position.id}
+                  className="flex items-center justify-between rounded-md border px-4 py-3"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="font-medium">{position.name}</span>
+                    <span className="text-sm text-muted-foreground">
+                      ({position.abbreviation})
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleRemovePosition(position.id)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {t("positions.name")}
+              </Label>
+              <Input
+                placeholder={t("positions.namePlaceholder")}
+                value={newPosition.name}
+                onChange={(e) =>
+                  setNewPosition({ ...newPosition, name: e.target.value })
+                }
+                className="w-40"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {t("positions.abbreviation")}
+              </Label>
+              <Input
+                placeholder={t("positions.abbreviationPlaceholder")}
+                value={newPosition.abbreviation}
+                onChange={(e) =>
+                  setNewPosition({
+                    ...newPosition,
+                    abbreviation: e.target.value,
+                  })
+                }
+                className="w-24"
+                maxLength={5}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground invisible">
+                &nbsp;
+              </Label>
+              <Button
+                onClick={handleAddPosition}
+                disabled={
+                  isAddingPosition ||
+                  !newPosition.name ||
+                  !newPosition.abbreviation
                 }
                 size="icon"
               >
@@ -304,6 +432,6 @@ export function TeamConfigSettings() {
           )}
         </div>
       </SettingsItem>
-    </>
+    </div>
   );
 }

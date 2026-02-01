@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
-  type BasketballPosition,
   formatHeight,
   formatWeight,
   calculateAge,
@@ -18,14 +17,19 @@ interface PlayerCardProps {
     photoUrl?: string;
     dateOfBirth?: string;
     jerseyNumber?: number;
-    position?: BasketballPosition;
+    position?: string;
     height?: number;
     weight?: number;
   };
+  positionLabel?: string;
   className?: string;
 }
 
-export function PlayerCard({ player, className }: PlayerCardProps) {
+export function PlayerCard({
+  player,
+  positionLabel,
+  className,
+}: PlayerCardProps) {
   const t = useTranslations("Common");
 
   const fullName = `${player.firstName} ${player.lastName}`;
@@ -69,9 +73,9 @@ export function PlayerCard({ player, className }: PlayerCardProps) {
               {player.firstName}
             </p>
             <h3 className=" font-bold leading-tight">{player.lastName}</h3>
-            {player.position && (
+            {positionLabel && (
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-0.5">
-                {t(`position.${player.position}`)}
+                {positionLabel}
               </p>
             )}
           </div>

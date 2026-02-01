@@ -1,6 +1,7 @@
 {
   "nav": {
     "general": "General",
+    "teamConfig": "Configuración de Equipos",
     "appearance": "Apariencia",
     "profileSecurity": "Perfil y Seguridad",
     "billing": "Facturación"
@@ -26,6 +27,15 @@
         "minAge": "Mín",
         "maxAge": "Máx",
         "empty": "No hay categorías de edad configuradas"
+      },
+      "positions": {
+        "title": "Posiciones de Jugador",
+        "description": "Define las posiciones disponibles para los jugadores en esta liga",
+        "name": "Nombre",
+        "namePlaceholder": "ej. Base",
+        "abbreviation": "Abrev.",
+        "abbreviationPlaceholder": "ej. PG",
+        "empty": "No hay posiciones configuradas"
       },
       "enabledGenders": {
         "title": "Géneros Habilitados",
