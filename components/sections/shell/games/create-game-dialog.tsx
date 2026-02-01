@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useMemo } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation } from "convex/react";
@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/sections/shell/games/location-picker";
+import { AlertCircle } from "lucide-react";
 
 import {
   Dialog,
@@ -140,6 +141,51 @@ export function CreateGameDialog({
 
   const hasPreselectedClub = Boolean(preselectedClubId);
 
+  // Get the list of club IDs to check for category
+  const clubIdsToCheck = useMemo(() => {
+    const ids: Id<"clubs">[] = [];
+    if (formState.homeTeamId) {
+      ids.push(formState.homeTeamId as Id<"clubs">);
+    }
+    if (formState.awayTeamId) {
+      ids.push(formState.awayTeamId as Id<"clubs">);
+    }
+    return ids;
+  }, [formState.homeTeamId, formState.awayTeamId]);
+
+  // Check if selected clubs have the selected category
+  const categoryCheck = useQuery(
+    api.categories.checkClubsHaveCategory,
+    clubIdsToCheck.length > 0 && formState.category && formState.gender
+      ? {
+          clubIds: clubIdsToCheck,
+          ageGroup: formState.category,
+          gender: formState.gender,
+        }
+      : "skip",
+  );
+
+  // Derive validation state from the query results
+  const categoryValidation = useMemo(() => {
+    if (
+      !formState.category ||
+      !formState.gender ||
+      clubIdsToCheck.length === 0 ||
+      !categoryCheck
+    ) {
+      return { isValid: true, missingTeams: [] as string[] };
+    }
+
+    const missingTeams = categoryCheck
+      .filter((r) => !r.hasCategory)
+      .map((r) => r.clubName);
+
+    return {
+      isValid: missingTeams.length === 0,
+      missingTeams,
+    };
+  }, [formState.category, formState.gender, clubIdsToCheck, categoryCheck]);
+
   const ageCategories: {
     id: string;
     name: string;
@@ -222,7 +268,8 @@ export function CreateGameDialog({
     formState.date &&
     formState.startTime &&
     formState.category &&
-    formState.gender;
+    formState.gender &&
+    categoryValidation.isValid;
 
   const availableAwayTeams = (clubs || []).filter(
     (club) => club._id !== formState.homeTeamId,
@@ -575,6 +622,25 @@ export function CreateGameDialog({
                         </Select>
                       </div>
                     </div>
+
+                    {!categoryValidation.isValid &&
+                      categoryValidation.missingTeams.length > 0 && (
+                        <div className="flex items-start gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
+                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium">
+                              {t("games.categoryValidationError")}
+                            </p>
+                            <p className="mt-1">
+                              {t("games.teamsMissingCategory", {
+                                teams:
+                                  categoryValidation.missingTeams.join(", "),
+                                category: formState.category,
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                     <div>
                       <FieldLabel>{t("games.location")}</FieldLabel>

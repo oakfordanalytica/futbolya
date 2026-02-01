@@ -46,7 +46,7 @@ export function TeamSettingsClient({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
           <Link href={ROUTES.org.teams.detail(orgSlug, team.slug)}>

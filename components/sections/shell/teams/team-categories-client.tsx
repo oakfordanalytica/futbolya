@@ -20,10 +20,12 @@ export function TeamCategoriesClient({
   const categories = usePreloadedQuery(preloadedCategories);
 
   return (
-    <TeamCategoriesTable
-      categories={categories}
-      clubSlug={clubSlug}
-      orgSlug={orgSlug}
-    />
+    <div className="p-4 md:p-6 ">
+      <TeamCategoriesTable
+        categories={categories}
+        clubSlug={clubSlug}
+        orgSlug={orgSlug}
+      />
+    </div>
   );
 }

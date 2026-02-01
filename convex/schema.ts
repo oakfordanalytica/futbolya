@@ -35,7 +35,8 @@ const gender = v.union(
 
 const gameStatus = v.union(
   v.literal("scheduled"),
-  v.literal("in_progress"),
+  v.literal("awaiting_stats"),
+  v.literal("pending_review"),
   v.literal("completed"),
   v.literal("cancelled"),
 );
@@ -239,6 +240,11 @@ export default defineSchema({
     status: gameStatus,
     homeScore: v.optional(v.number()),
     awayScore: v.optional(v.number()),
+    // Stats submission tracking
+    homeStatsSubmittedAt: v.optional(v.number()),
+    awayStatsSubmittedAt: v.optional(v.number()),
+    homeStatsConfirmed: v.optional(v.boolean()),
+    awayStatsConfirmed: v.optional(v.boolean()),
   })
     .index("byOrganization", ["organizationId"])
     .index("byHomeClub", ["homeClubId"])

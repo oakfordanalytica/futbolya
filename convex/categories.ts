@@ -9,7 +9,7 @@ import { getCurrentUser } from "./lib/auth";
 const gender = v.union(
   v.literal("male"),
   v.literal("female"),
-  v.literal("mixed")
+  v.literal("mixed"),
 );
 
 const categoryStatus = v.union(v.literal("active"), v.literal("inactive"));
@@ -83,7 +83,7 @@ export const listByClubSlugWithPlayerCount = query({
       .collect();
 
     const result: Array<{
-      _id: typeof categories[0]["_id"];
+      _id: (typeof categories)[0]["_id"];
       _creationTime: number;
       name: string;
       ageGroup: string;
@@ -124,6 +124,47 @@ export const getById = query({
   },
 });
 
+/**
+ * Check if clubs have a category with the specified ageGroup and gender.
+ */
+export const checkClubsHaveCategory = query({
+  args: {
+    clubIds: v.array(v.id("clubs")),
+    ageGroup: v.string(),
+    gender: gender,
+  },
+  returns: v.array(
+    v.object({
+      clubId: v.id("clubs"),
+      clubName: v.string(),
+      hasCategory: v.boolean(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const results = await Promise.all(
+      args.clubIds.map(async (clubId) => {
+        const club = await ctx.db.get(clubId);
+        if (!club) {
+          return null;
+        }
+
+        const categories = await ctx.db
+          .query("categories")
+          .withIndex("byClub", (q) => q.eq("clubId", clubId))
+          .collect();
+
+        const hasCategory = categories.some(
+          (cat) => cat.ageGroup === args.ageGroup && cat.gender === args.gender,
+        );
+
+        return { clubId, clubName: club.name, hasCategory };
+      }),
+    );
+
+    return results.filter((r) => r !== null);
+  },
+});
+
 // ============================================================================
 // MUTATIONS
 // ============================================================================
@@ -155,7 +196,7 @@ export const create = mutation({
     const existing = await ctx.db
       .query("categories")
       .withIndex("byClubAndName", (q) =>
-        q.eq("clubId", club._id).eq("name", args.name)
+        q.eq("clubId", club._id).eq("name", args.name),
       )
       .unique();
 
@@ -208,7 +249,9 @@ export const update = mutation({
       const existing = await ctx.db
         .query("categories")
         .withIndex("byClubAndName", (q) =>
-          q.eq("clubId", category.clubId).eq("name", filteredUpdates.name as string)
+          q
+            .eq("clubId", category.clubId)
+            .eq("name", filteredUpdates.name as string),
         )
         .unique();
 

@@ -15,7 +15,8 @@ const gender = v.union(
 
 const gameStatus = v.union(
   v.literal("scheduled"),
-  v.literal("in_progress"),
+  v.literal("awaiting_stats"),
+  v.literal("pending_review"),
   v.literal("completed"),
   v.literal("cancelled"),
 );
@@ -41,6 +42,10 @@ const gameValidator = v.object({
   status: gameStatus,
   homeScore: v.optional(v.number()),
   awayScore: v.optional(v.number()),
+  homeStatsSubmittedAt: v.optional(v.number()),
+  awayStatsSubmittedAt: v.optional(v.number()),
+  homeStatsConfirmed: v.optional(v.boolean()),
+  awayStatsConfirmed: v.optional(v.boolean()),
 });
 
 const gameListItemValidator = v.object({
@@ -107,7 +112,12 @@ export const listByLeagueSlug = query({
       gender: "male" | "female" | "mixed";
       locationName?: string;
       locationCoordinates?: number[];
-      status: "scheduled" | "in_progress" | "completed" | "cancelled";
+      status:
+        | "scheduled"
+        | "awaiting_stats"
+        | "pending_review"
+        | "completed"
+        | "cancelled";
       homeScore?: number;
       awayScore?: number;
     }> = [];
@@ -200,7 +210,12 @@ export const listByClubSlug = query({
       gender: "male" | "female" | "mixed";
       locationName?: string;
       locationCoordinates?: number[];
-      status: "scheduled" | "in_progress" | "completed" | "cancelled";
+      status:
+        | "scheduled"
+        | "awaiting_stats"
+        | "pending_review"
+        | "completed"
+        | "cancelled";
       homeScore?: number;
       awayScore?: number;
     }> = [];
@@ -229,6 +244,111 @@ export const listByClubSlug = query({
     }
 
     return result;
+  },
+});
+
+const playerStatsValidator = v.object({
+  _id: v.id("gamePlayerStats"),
+  playerId: v.id("players"),
+  playerName: v.string(),
+  jerseyNumber: v.optional(v.number()),
+  photoUrl: v.optional(v.string()),
+  clubId: v.id("clubs"),
+  isStarter: v.boolean(),
+  minutes: v.optional(v.number()),
+  points: v.optional(v.number()),
+  fieldGoalsMade: v.optional(v.number()),
+  fieldGoalsAttempted: v.optional(v.number()),
+  threePointersMade: v.optional(v.number()),
+  threePointersAttempted: v.optional(v.number()),
+  freeThrowsMade: v.optional(v.number()),
+  freeThrowsAttempted: v.optional(v.number()),
+  offensiveRebounds: v.optional(v.number()),
+  defensiveRebounds: v.optional(v.number()),
+  assists: v.optional(v.number()),
+  steals: v.optional(v.number()),
+  blocks: v.optional(v.number()),
+  turnovers: v.optional(v.number()),
+  personalFouls: v.optional(v.number()),
+  plusMinus: v.optional(v.number()),
+});
+
+/**
+ * Get player stats for a game.
+ */
+export const getGamePlayerStats = query({
+  args: { gameId: v.id("games") },
+  returns: v.object({
+    homeStats: v.array(playerStatsValidator),
+    awayStats: v.array(playerStatsValidator),
+  }),
+  handler: async (ctx, args) => {
+    const game = await ctx.db.get(args.gameId);
+    if (!game) {
+      return { homeStats: [], awayStats: [] };
+    }
+
+    const allStats = await ctx.db
+      .query("gamePlayerStats")
+      .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
+      .collect();
+
+    // Batch fetch players
+    const playerIds = [...new Set(allStats.map((s) => s.playerId))];
+    const players = await Promise.all(playerIds.map((id) => ctx.db.get(id)));
+    const playerMap = new Map(players.filter(Boolean).map((p) => [p!._id, p!]));
+
+    // Get photo URLs
+    const photoUrls = new Map<string, string>();
+    for (const player of players.filter(Boolean)) {
+      if (player!.photoStorageId) {
+        const url = await ctx.storage.getUrl(player!.photoStorageId);
+        if (url) {
+          photoUrls.set(player!._id, url);
+        }
+      }
+    }
+
+    const mapStats = (stats: typeof allStats) =>
+      stats.map((s) => {
+        const player = playerMap.get(s.playerId);
+        return {
+          _id: s._id,
+          playerId: s.playerId,
+          playerName: player
+            ? `${player.firstName} ${player.lastName}`
+            : "Unknown",
+          jerseyNumber: player?.jerseyNumber,
+          photoUrl: photoUrls.get(s.playerId),
+          clubId: s.clubId,
+          isStarter: s.isStarter,
+          minutes: s.minutes,
+          points: s.points,
+          fieldGoalsMade: s.fieldGoalsMade,
+          fieldGoalsAttempted: s.fieldGoalsAttempted,
+          threePointersMade: s.threePointersMade,
+          threePointersAttempted: s.threePointersAttempted,
+          freeThrowsMade: s.freeThrowsMade,
+          freeThrowsAttempted: s.freeThrowsAttempted,
+          offensiveRebounds: s.offensiveRebounds,
+          defensiveRebounds: s.defensiveRebounds,
+          assists: s.assists,
+          steals: s.steals,
+          blocks: s.blocks,
+          turnovers: s.turnovers,
+          personalFouls: s.personalFouls,
+          plusMinus: s.plusMinus,
+        };
+      });
+
+    const homeStats = mapStats(
+      allStats.filter((s) => s.clubId === game.homeClubId),
+    );
+    const awayStats = mapStats(
+      allStats.filter((s) => s.clubId === game.awayClubId),
+    );
+
+    return { homeStats, awayStats };
   },
 });
 
@@ -281,6 +401,10 @@ export const getById = query({
       status: game.status,
       homeScore: game.homeScore,
       awayScore: game.awayScore,
+      homeStatsSubmittedAt: game.homeStatsSubmittedAt,
+      awayStatsSubmittedAt: game.awayStatsSubmittedAt,
+      homeStatsConfirmed: game.homeStatsConfirmed,
+      awayStatsConfirmed: game.awayStatsConfirmed,
     };
   },
 });
@@ -416,6 +540,280 @@ export const remove = mutation({
 
     // Delete the game
     await ctx.db.delete(args.gameId);
+
+    return null;
+  },
+});
+
+// ============================================================================
+// STATS SUBMISSION
+// ============================================================================
+
+const playerStatInput = v.object({
+  playerId: v.id("players"),
+  isStarter: v.boolean(),
+  minutes: v.optional(v.number()),
+  points: v.optional(v.number()),
+  fieldGoalsMade: v.optional(v.number()),
+  fieldGoalsAttempted: v.optional(v.number()),
+  threePointersMade: v.optional(v.number()),
+  threePointersAttempted: v.optional(v.number()),
+  freeThrowsMade: v.optional(v.number()),
+  freeThrowsAttempted: v.optional(v.number()),
+  offensiveRebounds: v.optional(v.number()),
+  defensiveRebounds: v.optional(v.number()),
+  assists: v.optional(v.number()),
+  steals: v.optional(v.number()),
+  blocks: v.optional(v.number()),
+  turnovers: v.optional(v.number()),
+  personalFouls: v.optional(v.number()),
+  plusMinus: v.optional(v.number()),
+});
+
+/**
+ * Submit team stats for a game.
+ * Called by a team's staff after the game starts.
+ */
+export const submitTeamStats = mutation({
+  args: {
+    gameId: v.id("games"),
+    clubId: v.id("clubs"),
+    playerStats: v.array(playerStatInput),
+    teamScore: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
+    const game = await ctx.db.get(args.gameId);
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    // Verify the club is part of this game
+    const isHomeTeam = game.homeClubId === args.clubId;
+    const isAwayTeam = game.awayClubId === args.clubId;
+    if (!isHomeTeam && !isAwayTeam) {
+      throw new Error("Club is not part of this game");
+    }
+
+    // Check if user has permission (is staff of the club)
+    const staffMember = await ctx.db
+      .query("staff")
+      .withIndex("byClub", (q) => q.eq("clubId", args.clubId))
+      .filter((q) => q.eq(q.field("userId"), user._id))
+      .first();
+
+    if (!staffMember && !user.isSuperAdmin) {
+      throw new Error("You must be staff of this team to submit stats");
+    }
+
+    // Check game status - must be scheduled or awaiting_stats
+    if (game.status !== "scheduled" && game.status !== "awaiting_stats") {
+      throw new Error(
+        "Stats can only be submitted when game is scheduled or awaiting stats",
+      );
+    }
+
+    // Check if game time has passed (allow submission)
+    const gameDateTime = new Date(`${game.date}T${game.startTime}`);
+    if (new Date() < gameDateTime) {
+      throw new Error("Cannot submit stats before game start time");
+    }
+
+    // Check if this team already submitted
+    if (isHomeTeam && game.homeStatsSubmittedAt) {
+      throw new Error("Home team stats already submitted");
+    }
+    if (isAwayTeam && game.awayStatsSubmittedAt) {
+      throw new Error("Away team stats already submitted");
+    }
+
+    // Verify all players belong to this club
+    for (const stat of args.playerStats) {
+      const player = await ctx.db.get(stat.playerId);
+      if (!player || player.clubId !== args.clubId) {
+        throw new Error(`Player ${stat.playerId} does not belong to this club`);
+      }
+    }
+
+    // Delete any existing stats for this team in this game (shouldn't happen but safety)
+    const existingStats = await ctx.db
+      .query("gamePlayerStats")
+      .withIndex("byGameAndClub", (q) =>
+        q.eq("gameId", args.gameId).eq("clubId", args.clubId),
+      )
+      .collect();
+    for (const stat of existingStats) {
+      await ctx.db.delete(stat._id);
+    }
+
+    // Insert player stats
+    for (const stat of args.playerStats) {
+      await ctx.db.insert("gamePlayerStats", {
+        gameId: args.gameId,
+        playerId: stat.playerId,
+        clubId: args.clubId,
+        isStarter: stat.isStarter,
+        minutes: stat.minutes,
+        points: stat.points,
+        fieldGoalsMade: stat.fieldGoalsMade,
+        fieldGoalsAttempted: stat.fieldGoalsAttempted,
+        threePointersMade: stat.threePointersMade,
+        threePointersAttempted: stat.threePointersAttempted,
+        freeThrowsMade: stat.freeThrowsMade,
+        freeThrowsAttempted: stat.freeThrowsAttempted,
+        offensiveRebounds: stat.offensiveRebounds,
+        defensiveRebounds: stat.defensiveRebounds,
+        assists: stat.assists,
+        steals: stat.steals,
+        blocks: stat.blocks,
+        turnovers: stat.turnovers,
+        personalFouls: stat.personalFouls,
+        plusMinus: stat.plusMinus,
+      });
+    }
+
+    // Update game with submission timestamp and score
+    const now = Date.now();
+    const updates: Record<string, unknown> = {};
+
+    if (isHomeTeam) {
+      updates.homeStatsSubmittedAt = now;
+      updates.homeScore = args.teamScore;
+    } else {
+      updates.awayStatsSubmittedAt = now;
+      updates.awayScore = args.teamScore;
+    }
+
+    // Update status based on submissions
+    const homeSubmitted = isHomeTeam ? true : !!game.homeStatsSubmittedAt;
+    const awaySubmitted = isAwayTeam ? true : !!game.awayStatsSubmittedAt;
+
+    if (homeSubmitted && awaySubmitted) {
+      updates.status = "pending_review";
+    } else {
+      updates.status = "awaiting_stats";
+    }
+
+    await ctx.db.patch(args.gameId, updates);
+
+    return null;
+  },
+});
+
+/**
+ * Confirm the opponent's stats.
+ * Called after reviewing the other team's submitted stats.
+ */
+export const confirmOpponentStats = mutation({
+  args: {
+    gameId: v.id("games"),
+    clubId: v.id("clubs"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
+    const game = await ctx.db.get(args.gameId);
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    // Verify the club is part of this game
+    const isHomeTeam = game.homeClubId === args.clubId;
+    const isAwayTeam = game.awayClubId === args.clubId;
+    if (!isHomeTeam && !isAwayTeam) {
+      throw new Error("Club is not part of this game");
+    }
+
+    // Check if user has permission
+    const staffMember = await ctx.db
+      .query("staff")
+      .withIndex("byClub", (q) => q.eq("clubId", args.clubId))
+      .filter((q) => q.eq(q.field("userId"), user._id))
+      .first();
+
+    if (!staffMember && !user.isSuperAdmin) {
+      throw new Error("You must be staff of this team to confirm stats");
+    }
+
+    // Must be in pending_review status
+    if (game.status !== "pending_review") {
+      throw new Error("Game must be in pending review status to confirm stats");
+    }
+
+    // Update confirmation
+    const updates: Record<string, unknown> = {};
+
+    if (isHomeTeam) {
+      updates.homeStatsConfirmed = true;
+    } else {
+      updates.awayStatsConfirmed = true;
+    }
+
+    // Check if both teams have confirmed
+    const homeConfirmed = isHomeTeam ? true : !!game.homeStatsConfirmed;
+    const awayConfirmed = isAwayTeam ? true : !!game.awayStatsConfirmed;
+
+    if (homeConfirmed && awayConfirmed) {
+      updates.status = "completed";
+    }
+
+    await ctx.db.patch(args.gameId, updates);
+
+    return null;
+  },
+});
+
+/**
+ * Force complete a game (admin only).
+ */
+export const forceComplete = mutation({
+  args: {
+    gameId: v.id("games"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
+    if (!user.isSuperAdmin) {
+      // Check if user is org admin
+      const game = await ctx.db.get(args.gameId);
+      if (!game) {
+        throw new Error("Game not found");
+      }
+
+      const org = await ctx.db.get(game.organizationId);
+      if (!org) {
+        throw new Error("Organization not found");
+      }
+
+      const membership = await ctx.db
+        .query("organizationMembers")
+        .withIndex("byUserAndOrg", (q) =>
+          q.eq("userId", user._id).eq("organizationId", org._id),
+        )
+        .unique();
+
+      if (
+        !membership ||
+        (membership.role !== "admin" && membership.role !== "superadmin")
+      ) {
+        throw new Error("Admin access required");
+      }
+    }
+
+    const game = await ctx.db.get(args.gameId);
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    await ctx.db.patch(args.gameId, {
+      status: "completed",
+      homeStatsConfirmed: true,
+      awayStatsConfirmed: true,
+    });
 
     return null;
   },

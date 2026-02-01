@@ -34,14 +34,14 @@ export function GameDetailClient({
       <GameHeader game={game} orgSlug={orgSlug} />
 
       <Tabs defaultValue="boxScore" className="w-full">
-        <TabsList className="w-full justify-start rounded-none py-2.5 bg-muted/50">
+        <TabsList className="w-full justify-start rounded-none py-2.5 bg-muted/50 px-4 md:px-6 shadow-xs">
           <TabsTrigger value="boxScore">{t("games.boxScore")}</TabsTrigger>
           <TabsTrigger value="stats">{t("games.stats")}</TabsTrigger>
         </TabsList>
-        <TabsContent value="boxScore">
+        <TabsContent value="boxScore" className="mt-4 px-6">
           <GameBoxScore game={game} />
         </TabsContent>
-        <TabsContent value="stats">
+        <TabsContent value="stats" className="mt-4 px-6">
           <GameStatsTable game={game} />
         </TabsContent>
       </Tabs>

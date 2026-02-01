@@ -117,7 +117,7 @@ export function SettingsLayout({
   const resolvedBasePath = basePath(orgSlug);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col p-4 md:p-6 ">
       {/* Mobile: Select navigation */}
       <div className="lg:hidden">
         <SettingsNavSelect items={items} orgSlug={orgSlug} />

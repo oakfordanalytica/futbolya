@@ -20,5 +20,9 @@ export function TeamStaffClient({
 
   // TeamStaffTable uses useQuery internally, which will now be hydrated
   // with the preloaded data for instant display, then stay reactive
-  return <TeamStaffTable clubSlug={clubSlug} orgSlug={orgSlug} />;
+  return (
+    <div className="p-4 md:p-6 ">
+      <TeamStaffTable clubSlug={clubSlug} orgSlug={orgSlug} />
+    </div>
+  );
 }

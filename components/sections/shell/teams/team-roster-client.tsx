@@ -20,10 +20,12 @@ export function TeamRosterClient({
   const players = usePreloadedQuery(preloadedPlayers);
 
   return (
-    <TeamPlayersTable
-      players={players ?? []}
-      clubSlug={clubSlug}
-      orgSlug={orgSlug}
-    />
+    <div className="p-4 md:p-6 ">
+      <TeamPlayersTable
+        players={players ?? []}
+        clubSlug={clubSlug}
+        orgSlug={orgSlug}
+      />
+    </div>
   );
 }

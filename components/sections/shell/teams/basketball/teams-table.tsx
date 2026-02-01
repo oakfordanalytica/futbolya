@@ -38,7 +38,7 @@ export function BasketballTeamsTable({
   const teamFilterConfigs = createBasketballTeamFilterConfigs(t);
 
   return (
-    <>
+    <div className="p-4 md:p-6 ">
       <DataTable
         columns={teamColumns}
         data={data ?? []}
@@ -59,6 +59,6 @@ export function BasketballTeamsTable({
         onOpenChange={setIsCreateOpen}
         orgSlug={orgSlug}
       />
-    </>
+    </div>
   );
 }

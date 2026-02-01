@@ -33,7 +33,7 @@ export function GamesTable({ preloadedGames, orgSlug }: GamesTableProps) {
   const gameFilterConfigs = createGameFilterConfigs(t);
 
   return (
-    <>
+    <div className="p-4 md:p-6 ">
       <DataTable
         columns={gameColumns}
         data={data ?? []}
@@ -55,6 +55,6 @@ export function GamesTable({ preloadedGames, orgSlug }: GamesTableProps) {
         onOpenChange={setIsCreateOpen}
         orgSlug={orgSlug}
       />
-    </>
+    </div>
   );
 }

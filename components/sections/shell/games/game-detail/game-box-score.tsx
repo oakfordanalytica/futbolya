@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import {
   Table,
   TableBody,
@@ -12,49 +15,17 @@ import {
 } from "@/components/ui/table";
 import { Text } from "@/components/ui/text";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  transformTeamStats,
+  emptyTeamTotals,
+  formatMadeAttempted,
+  type PlayerBoxScoreRow,
+  type TeamGameTotals,
+} from "@/lib/sports/basketball/game-stats";
 
 interface Team {
   name: string;
   logoUrl?: string;
-}
-
-interface PlayerStats {
-  id: string;
-  name: string;
-  jerseyNumber: string;
-  minutes: number;
-  points: number;
-  fg: string;
-  threePt: string;
-  ft: string;
-  rebounds: number;
-  assists: number;
-  turnovers: number;
-  steals: number;
-  blocks: number;
-  offReb: number;
-  defReb: number;
-  fouls: number;
-  plusMinus: number;
-  dnpReason?: string;
-}
-
-interface TeamTotals {
-  points: number;
-  fg: string;
-  fgPct: string;
-  threePt: string;
-  threePtPct: string;
-  ft: string;
-  ftPct: string;
-  rebounds: number;
-  assists: number;
-  turnovers: number;
-  steals: number;
-  blocks: number;
-  offReb: number;
-  defReb: number;
-  fouls: number;
 }
 
 interface GameBoxScoreProps {
@@ -67,23 +38,6 @@ interface GameBoxScoreProps {
   };
 }
 
-const STAT_COLUMNS = [
-  "min",
-  "pts",
-  "fg",
-  "threePt",
-  "ft",
-  "reb",
-  "ast",
-  "to",
-  "stl",
-  "blk",
-  "oreb",
-  "dreb",
-  "pf",
-  "plusMinus",
-] as const;
-
 function TeamBoxScore({
   team,
   starters,
@@ -92,43 +46,24 @@ function TeamBoxScore({
   t,
 }: {
   team: Team;
-  starters: PlayerStats[];
-  bench: PlayerStats[];
-  totals: TeamTotals;
+  starters: PlayerBoxScoreRow[];
+  bench: PlayerBoxScoreRow[];
+  totals: TeamGameTotals;
   t: (key: string) => string;
 }) {
   const primaryColor = "#6b7280";
 
-  const renderPlayerRow = (player: PlayerStats) => {
-    if (player.dnpReason) {
-      return (
-        <TableRow key={player.id}>
-          <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10">
-            <div className="flex items-center gap-1">
-              <span className="truncate max-w-[120px]">{player.name}</span>
-              <span className="text-muted-foreground text-xs">
-                #{player.jerseyNumber}
-              </span>
-            </div>
-          </TableCell>
-          <TableCell
-            colSpan={STAT_COLUMNS.length}
-            className="text-center text-muted-foreground text-xs"
-          >
-            {player.dnpReason}
-          </TableCell>
-        </TableRow>
-      );
-    }
-
+  const renderPlayerRow = (player: PlayerBoxScoreRow) => {
     return (
       <TableRow key={player.id}>
         <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10">
           <div className="flex items-center gap-1">
             <span className="truncate max-w-[120px]">{player.name}</span>
-            <span className="text-muted-foreground text-xs">
-              #{player.jerseyNumber}
-            </span>
+            {player.jerseyNumber && (
+              <span className="text-muted-foreground text-xs">
+                #{player.jerseyNumber}
+              </span>
+            )}
           </div>
         </TableCell>
         <TableCell className="text-center tabular-nums">
@@ -176,10 +111,10 @@ function TeamBoxScore({
   return (
     <div className="rounded-md border overflow-hidden">
       <div
-        className="flex items-center gap-3 border-b"
+        className="flex items-center gap-3 border-b p-3"
         style={{
           borderLeftWidth: "4px",
-          borderLeftColor: primaryColor ?? "#6b7280",
+          borderLeftColor: primaryColor,
         }}
       >
         {team.logoUrl ? (
@@ -193,7 +128,7 @@ function TeamBoxScore({
         ) : (
           <div
             className="size-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-            style={{ backgroundColor: primaryColor ?? "#6b7280" }}
+            style={{ backgroundColor: primaryColor }}
           >
             {team.name.charAt(0)}
           </div>
@@ -255,55 +190,59 @@ function TeamBoxScore({
           <TableBody>
             {starters.map(renderPlayerRow)}
 
-            <TableRow className="bg-muted/30">
-              <TableCell className="sticky left-0 bg-muted/30 z-10 font-semibold text-xs uppercase text-muted-foreground">
-                {t("games.boxScoreLabels.bench")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.min")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.pts")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.fg")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.threePt")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.ft")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.reb")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.ast")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.to")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.stl")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.blk")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.oreb")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.dreb")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.pf")}
-              </TableCell>
-              <TableCell className="text-center text-xs text-muted-foreground">
-                {t("games.boxScoreLabels.plusMinus")}
-              </TableCell>
-            </TableRow>
+            {bench.length > 0 && (
+              <>
+                <TableRow className="bg-muted/30">
+                  <TableCell className="sticky left-0 bg-muted/30 z-10 font-semibold text-xs uppercase text-muted-foreground">
+                    {t("games.boxScoreLabels.bench")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.min")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.pts")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.fg")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.threePt")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.ft")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.reb")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.ast")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.to")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.stl")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.blk")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.oreb")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.dreb")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.pf")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {t("games.boxScoreLabels.plusMinus")}
+                  </TableCell>
+                </TableRow>
 
-            {bench.map(renderPlayerRow)}
+                {bench.map(renderPlayerRow)}
+              </>
+            )}
 
             <TableRow className="bg-muted/50 font-semibold">
               <TableCell className="sticky left-0 bg-muted/50 z-10 uppercase text-xs">
@@ -314,13 +253,22 @@ function TeamBoxScore({
                 {totals.points}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.fg}
+                {formatMadeAttempted(
+                  totals.fieldGoalsMade,
+                  totals.fieldGoalsAttempted,
+                )}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.threePt}
+                {formatMadeAttempted(
+                  totals.threePointersMade,
+                  totals.threePointersAttempted,
+                )}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.ft}
+                {formatMadeAttempted(
+                  totals.freeThrowsMade,
+                  totals.freeThrowsAttempted,
+                )}
               </TableCell>
               <TableCell className="text-center tabular-nums">
                 {totals.rebounds}
@@ -338,13 +286,13 @@ function TeamBoxScore({
                 {totals.blocks}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.offReb}
+                {totals.offensiveRebounds}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.defReb}
+                {totals.defensiveRebounds}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.fouls}
+                {totals.personalFouls}
               </TableCell>
               <TableCell className="text-center"></TableCell>
             </TableRow>
@@ -354,13 +302,13 @@ function TeamBoxScore({
               <TableCell className="text-center"></TableCell>
               <TableCell className="text-center"></TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.fgPct}
+                {totals.fieldGoalPct}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.threePtPct}
+                {totals.threePointPct}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.ftPct}
+                {totals.freeThrowPct}
               </TableCell>
               <TableCell className="text-center"></TableCell>
               <TableCell className="text-center"></TableCell>
@@ -383,68 +331,9 @@ function TeamBoxScore({
 export function GameBoxScore({ game }: GameBoxScoreProps) {
   const t = useTranslations("Common");
 
-  // Placeholder data - will be replaced with actual game data
-  const placeholderStarters: PlayerStats[] = [
-    {
-      id: "1",
-      name: "Player 1",
-      jerseyNumber: "1",
-      minutes: 0,
-      points: 0,
-      fg: "0-0",
-      threePt: "0-0",
-      ft: "0-0",
-      rebounds: 0,
-      assists: 0,
-      turnovers: 0,
-      steals: 0,
-      blocks: 0,
-      offReb: 0,
-      defReb: 0,
-      fouls: 0,
-      plusMinus: 0,
-    },
-  ];
-
-  const placeholderBench: PlayerStats[] = [
-    {
-      id: "6",
-      name: "Player 6",
-      jerseyNumber: "6",
-      minutes: 0,
-      points: 0,
-      fg: "0-0",
-      threePt: "0-0",
-      ft: "0-0",
-      rebounds: 0,
-      assists: 0,
-      turnovers: 0,
-      steals: 0,
-      blocks: 0,
-      offReb: 0,
-      defReb: 0,
-      fouls: 0,
-      plusMinus: 0,
-    },
-  ];
-
-  const placeholderTotals: TeamTotals = {
-    points: 0,
-    fg: "0-0",
-    fgPct: "0%",
-    threePt: "0-0",
-    threePtPct: "0%",
-    ft: "0-0",
-    ftPct: "0%",
-    rebounds: 0,
-    assists: 0,
-    turnovers: 0,
-    steals: 0,
-    blocks: 0,
-    offReb: 0,
-    defReb: 0,
-    fouls: 0,
-  };
+  const gameStats = useQuery(api.games.getGamePlayerStats, {
+    gameId: game._id as Id<"games">,
+  });
 
   const homeTeam: Team = {
     name: game.homeTeamName,
@@ -456,27 +345,42 @@ export function GameBoxScore({ game }: GameBoxScoreProps) {
     logoUrl: game.awayTeamLogo,
   };
 
+  // Transform stats using shared utility
+  const homeData = gameStats?.homeStats?.length
+    ? transformTeamStats(gameStats.homeStats)
+    : { starters: [], bench: [], totals: emptyTeamTotals };
+
+  const awayData = gameStats?.awayStats?.length
+    ? transformTeamStats(gameStats.awayStats)
+    : { starters: [], bench: [], totals: emptyTeamTotals };
+
+  const hasStats =
+    (gameStats?.homeStats?.length ?? 0) > 0 ||
+    (gameStats?.awayStats?.length ?? 0) > 0;
+
   return (
     <div className="pt-3 space-y-6">
       <TeamBoxScore
         team={homeTeam}
-        starters={placeholderStarters}
-        bench={placeholderBench}
-        totals={placeholderTotals}
+        starters={homeData.starters}
+        bench={homeData.bench}
+        totals={homeData.totals}
         t={t}
       />
 
       <TeamBoxScore
         team={awayTeam}
-        starters={placeholderStarters}
-        bench={placeholderBench}
-        totals={placeholderTotals}
+        starters={awayData.starters}
+        bench={awayData.bench}
+        totals={awayData.totals}
         t={t}
       />
 
-      <p className="text-center text-xs text-muted-foreground">
-        {t("games.boxScoreNote")}
-      </p>
+      {!hasStats && (
+        <p className="text-center text-xs text-muted-foreground">
+          {t("games.boxScoreNote")}
+        </p>
+      )}
     </div>
   );
 }

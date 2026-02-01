@@ -66,11 +66,9 @@ export function TeamHeader({ team, orgSlug }: TeamHeaderProps) {
       className={cn("w-full", hasColoredBg && "text-white")}
       style={{
         backgroundColor: hasColoredBg ? primaryColor : undefined,
-        borderTopLeftRadius: "8px",
-        borderTopRightRadius: "8px",
       }}
     >
-      <div className="mx-auto p-2">
+      <div className="mx-auto p-4 md:p-6 ">
         <div className="flex justify-between items-start">
           <div>
             {team.divisionName && (

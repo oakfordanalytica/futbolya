@@ -37,20 +37,20 @@ export function TeamDetailClient({
   const darkerColor = primaryColor ? darkenHex(primaryColor, 0.3) : null;
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 ">
       <TeamHeader team={team} orgSlug={orgSlug} />
 
       <Tabs defaultValue="roster" className="w-full">
         <TabsList
           className={
-            darkerColor ? "w-full justify-start rounded-none py-2.5" : ""
+            darkerColor
+              ? "w-full justify-start rounded-none py-2.5 px-4 md:px-6 shadow-xs"
+              : ""
           }
           style={
             darkerColor
               ? {
                   backgroundColor: darkerColor,
-                  borderBottomLeftRadius: "8px",
-                  borderBottomRightRadius: "8px",
                 }
               : undefined
           }
@@ -74,13 +74,13 @@ export function TeamDetailClient({
             {terminology.matches}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="roster" className="mt-4">
+        <TabsContent value="roster" className="mt-4 px-6">
           <RosterGrid clubSlug={team.slug} />
         </TabsContent>
-        <TabsContent value="staff" className="mt-4">
+        <TabsContent value="staff" className="mt-4 px-6">
           <TeamStaffList clubSlug={team.slug} />
         </TabsContent>
-        <TabsContent value="schedule" className="mt-4">
+        <TabsContent value="schedule" className="mt-4 px-6">
           <TeamGamesList clubSlug={team.slug} orgSlug={orgSlug} />
         </TabsContent>
       </Tabs>

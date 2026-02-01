@@ -28,7 +28,12 @@ interface GameHeaderProps {
     category: string;
     gender: "male" | "female" | "mixed";
     locationName?: string;
-    status: "scheduled" | "in_progress" | "completed" | "cancelled";
+    status:
+      | "scheduled"
+      | "awaiting_stats"
+      | "pending_review"
+      | "completed"
+      | "cancelled";
     homeScore?: number;
     awayScore?: number;
   };
@@ -37,8 +42,10 @@ interface GameHeaderProps {
 
 const STATUS_STYLES: Record<string, string> = {
   scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400",
-  in_progress:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400",
+  awaiting_stats:
+    "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+  pending_review:
+    "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400",
   completed:
     "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
   cancelled: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
@@ -51,7 +58,9 @@ export function GameHeader({ game, orgSlug }: GameHeaderProps) {
   const t = useTranslations("Common");
 
   const showScore =
-    game.status === "in_progress" || game.status === "completed";
+    game.status === "awaiting_stats" ||
+    game.status === "pending_review" ||
+    game.status === "completed";
   const formattedDate = format(new Date(game.date), "PPP");
 
   const homeColor = DEFAULT_HOME_COLOR;
@@ -69,8 +78,6 @@ export function GameHeader({ game, orgSlug }: GameHeaderProps) {
       className="w-full rounded-t-lg border-b text-white"
       style={{
         background: `linear-gradient(to right, ${homeColor}, ${awayColor})`,
-        borderTopLeftRadius: "8px",
-        borderTopRightRadius: "8px",
       }}
     >
       <div className="mx-auto p-4 md:p-6">

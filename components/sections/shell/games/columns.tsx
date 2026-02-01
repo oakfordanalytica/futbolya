@@ -18,7 +18,12 @@ export interface GameRow {
   gender: "male" | "female" | "mixed";
   locationName?: string;
   locationCoordinates?: number[];
-  status: "scheduled" | "in_progress" | "completed" | "cancelled";
+  status:
+    | "scheduled"
+    | "awaiting_stats"
+    | "pending_review"
+    | "completed"
+    | "cancelled";
   homeScore?: number;
   awayScore?: number;
 }
@@ -27,8 +32,10 @@ type Translator = (key: string) => string;
 
 const STATUS_STYLES: Record<string, string> = {
   scheduled: "text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
-  in_progress:
-    "text-yellow-700 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-950",
+  awaiting_stats:
+    "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950",
+  pending_review:
+    "text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950",
   completed: "text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950",
   cancelled: "text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950",
 };
@@ -142,7 +149,14 @@ export function createGameFilterConfigs(t: Translator): FilterConfig[] {
       label: t("games.status"),
       options: [
         { value: "scheduled", label: t("games.statusOptions.scheduled") },
-        { value: "in_progress", label: t("games.statusOptions.in_progress") },
+        {
+          value: "awaiting_stats",
+          label: t("games.statusOptions.awaiting_stats"),
+        },
+        {
+          value: "pending_review",
+          label: t("games.statusOptions.pending_review"),
+        },
         { value: "completed", label: t("games.statusOptions.completed") },
         { value: "cancelled", label: t("games.statusOptions.cancelled") },
       ],
