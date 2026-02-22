@@ -16,7 +16,50 @@
     },
     "members": {
       "title": "Miembros de la organización",
-      "description": "Administra miembros, roles y permisos"
+      "description": "Administra miembros, roles y permisos",
+      "invite": {
+        "title": "Invitar miembro",
+        "description": "Envía invitaciones con redirección correcta al tenant.",
+        "emailPlaceholder": "correo@ejemplo.com",
+        "roleCoach": "Entrenador",
+        "roleAdmin": "Administrador",
+        "submit": "Enviar invitación",
+        "submitting": "Enviando...",
+        "success": "Invitación enviada correctamente.",
+        "error": "No se pudo enviar la invitación.",
+        "emailRequired": "El correo es obligatorio."
+      },
+      "table": {
+        "searchPlaceholder": "Buscar por nombre, correo o rol...",
+        "emptyMessage": "No hay usuarios para mostrar.",
+        "summary": "Total de miembros: {count}",
+        "columns": {
+          "createdAt": "Creado",
+          "user": "Usuario",
+          "role": "Rol",
+          "actions": "Acciones"
+        },
+        "roles": {
+          "coach": "Entrenador",
+          "admin": "Administrador",
+          "superadmin": "Superadmin"
+        },
+        "actions": {
+          "delete": "Eliminar usuario",
+          "deleting": "Eliminando..."
+        },
+        "deleteDialog": {
+          "title": "Eliminar usuario",
+          "description": "¿Estás seguro de que deseas eliminar a {email}? Esta acción no se puede deshacer."
+        },
+        "toasts": {
+          "cannotDelete": "No puedes eliminar este usuario.",
+          "roleUpdated": "Rol actualizado correctamente.",
+          "roleUpdateError": "No se pudo actualizar el rol.",
+          "userDeleted": "Usuario eliminado correctamente.",
+          "userDeleteError": "No se pudo eliminar el usuario."
+        }
+      }
     },
     "teamConfig": {
       "ageCategories": {

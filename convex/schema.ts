@@ -8,6 +8,7 @@ import { v } from "convex/values";
 const orgMemberRole = v.union(
   v.literal("superadmin"),
   v.literal("admin"),
+  v.literal("coach"),
   v.literal("member"),
 );
 

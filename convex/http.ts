@@ -4,8 +4,153 @@ import { Webhook } from "svix";
 import { WebhookEvent } from "@clerk/backend";
 import { internal } from "./_generated/api";
 import { clerkClient } from "./clerk";
+import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "./lib/tenancy";
 
 const CLERK_WEBHOOK_PATH = "/clerk-webhook";
+const SINGLE_TENANT_MODE = isSingleTenantMode();
+
+type SingleTenantResolvedRole = "superadmin" | "admin" | "coach";
+
+type PendingStaffInvite = {
+  staffRole: string;
+  clubId: string;
+  categoryId?: string;
+};
+
+function normalizeSingleTenantMetadataRole(
+  role: unknown,
+): "admin" | "coach" | null {
+  if (role === "admin" || role === "coach") {
+    return role;
+  }
+  if (role === "org:admin" || role === "org:superadmin") {
+    return "admin";
+  }
+  if (role === "member" || role === "org:member") {
+    return "coach";
+  }
+  return null;
+}
+
+function metadataRoleFromResolvedRole(
+  role: SingleTenantResolvedRole,
+): "admin" | "coach" {
+  return role === "superadmin" || role === "admin" ? "admin" : "coach";
+}
+
+async function ensureSingleTenantMetadataRole(
+  data: {
+    id: string;
+    public_metadata?: {
+      role?: unknown;
+      isSuperAdmin?: unknown;
+      [key: string]: unknown;
+    };
+  },
+  resolvedRole: SingleTenantResolvedRole,
+) {
+  const normalizedCurrentRole = normalizeSingleTenantMetadataRole(
+    data.public_metadata?.role,
+  );
+  const desiredRole =
+    normalizedCurrentRole ?? metadataRoleFromResolvedRole(resolvedRole);
+  const hasCanonicalRole = data.public_metadata?.role === desiredRole;
+
+  if (hasCanonicalRole) {
+    return;
+  }
+
+  await clerkClient.users.updateUserMetadata(data.id, {
+    publicMetadata: {
+      ...(data.public_metadata ?? {}),
+      role: desiredRole,
+    },
+  });
+}
+
+function resolveSingleTenantRole(data: {
+  public_metadata?: {
+    role?: unknown;
+    isSuperAdmin?: unknown;
+  };
+}): SingleTenantResolvedRole {
+  if (data.public_metadata?.isSuperAdmin === true) {
+    return "superadmin";
+  }
+
+  const role = data.public_metadata?.role;
+  if (role === "superadmin" || role === "org:superadmin") {
+    return "superadmin";
+  }
+  if (role === "admin" || role === "org:admin") {
+    return "admin";
+  }
+  if (role === "coach" || role === "member" || role === "org:member") {
+    return "coach";
+  }
+  return "coach";
+}
+
+function getPendingStaffInvite(
+  publicMetadata: unknown,
+): PendingStaffInvite | null {
+  if (!publicMetadata || typeof publicMetadata !== "object") {
+    return null;
+  }
+
+  const pendingStaff = (publicMetadata as { pendingStaff?: unknown })
+    .pendingStaff;
+  if (!pendingStaff || typeof pendingStaff !== "object") {
+    return null;
+  }
+
+  const staffRole = (pendingStaff as { staffRole?: unknown }).staffRole;
+  const clubId = (pendingStaff as { clubId?: unknown }).clubId;
+  const categoryId = (pendingStaff as { categoryId?: unknown }).categoryId;
+
+  if (typeof staffRole !== "string" || typeof clubId !== "string") {
+    return null;
+  }
+
+  return {
+    staffRole,
+    clubId,
+    ...(typeof categoryId === "string" ? { categoryId } : {}),
+  };
+}
+
+async function processPendingStaffInvite(args: {
+  ctx: any;
+  clerkUserId: string;
+  publicMetadata: unknown;
+}) {
+  const pendingStaff = getPendingStaffInvite(args.publicMetadata);
+  if (!pendingStaff) {
+    return;
+  }
+
+  const user = await args.ctx.runQuery(internal.users.getByClerkId, {
+    clerkId: args.clerkUserId,
+  });
+
+  if (!user) {
+    return;
+  }
+
+  await args.ctx.runMutation(internal.staff.createFromClerkMembership, {
+    userId: user._id,
+    clubId: pendingStaff.clubId,
+    staffRole: pendingStaff.staffRole,
+    ...(pendingStaff.categoryId ? { categoryId: pendingStaff.categoryId } : {}),
+  });
+
+  await clerkClient.users.updateUserMetadata(args.clerkUserId, {
+    publicMetadata: {
+      ...(args.publicMetadata as Record<string, unknown>),
+      pendingStaff: undefined,
+    },
+  });
+}
 
 const handleClerkWebhook = httpAction(async (ctx, request) => {
   const event = await validateClerkRequest(request);
@@ -16,22 +161,40 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
   try {
     switch (event.type) {
       case "user.created": {
+        const resolvedRole = resolveSingleTenantRole(event.data);
         await ctx.runMutation(internal.users.upsertFromClerk, {
           data: event.data,
         });
 
+        if (SINGLE_TENANT_MODE) {
+          await ensureSingleTenantMetadataRole(event.data, resolvedRole);
+          await ctx.runMutation(internal.members.upsertFromSingleTenant, {
+            clerkUserId: event.data.id,
+            organizationSlug: DEFAULT_TENANT_SLUG,
+            role: resolvedRole,
+          });
+          await processPendingStaffInvite({
+            ctx,
+            clerkUserId: event.data.id,
+            publicMetadata: event.data.public_metadata,
+          });
+          break;
+        }
+
         const pendingOrgSlug = event.data.unsafe_metadata
           ?.pendingOrganizationSlug as string | undefined;
         if (pendingOrgSlug) {
-          const orgsResponse =
+          const organizations =
             await clerkClient.organizations.getOrganizationList({
               query: pendingOrgSlug,
             });
-          const org = orgsResponse.data.find((o) => o.slug === pendingOrgSlug);
+          const organization = organizations.data.find(
+            (item) => item.slug === pendingOrgSlug,
+          );
 
-          if (org) {
+          if (organization) {
             await clerkClient.organizations.createOrganizationMembership({
-              organizationId: org.id,
+              organizationId: organization.id,
               userId: event.data.id,
               role: "org:member",
             });
@@ -47,11 +210,27 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         break;
       }
 
-      case "user.updated":
+      case "user.updated": {
+        const resolvedRole = resolveSingleTenantRole(event.data);
         await ctx.runMutation(internal.users.upsertFromClerk, {
           data: event.data,
         });
+
+        if (SINGLE_TENANT_MODE) {
+          await ensureSingleTenantMetadataRole(event.data, resolvedRole);
+          await ctx.runMutation(internal.members.upsertFromSingleTenant, {
+            clerkUserId: event.data.id,
+            organizationSlug: DEFAULT_TENANT_SLUG,
+            role: resolvedRole,
+          });
+          await processPendingStaffInvite({
+            ctx,
+            clerkUserId: event.data.id,
+            publicMetadata: event.data.public_metadata,
+          });
+        }
         break;
+      }
 
       case "user.deleted":
         if (event.data?.id) {
@@ -62,6 +241,9 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         break;
 
       case "organization.created":
+        if (SINGLE_TENANT_MODE) {
+          break;
+        }
         await ctx.runMutation(internal.organizations.createFromClerk, {
           clerkOrgId: event.data.id,
           name: event.data.name,
@@ -71,6 +253,9 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         break;
 
       case "organization.updated":
+        if (SINGLE_TENANT_MODE) {
+          break;
+        }
         await ctx.runMutation(internal.organizations.updateFromClerk, {
           clerkOrgId: event.data.id,
           name: event.data.name,
@@ -80,6 +265,9 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         break;
 
       case "organization.deleted":
+        if (SINGLE_TENANT_MODE) {
+          break;
+        }
         if (event.data.id) {
           await ctx.runMutation(internal.organizations.deleteFromClerk, {
             clerkOrgId: event.data.id,
@@ -89,7 +277,10 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
 
       case "organizationMembership.created":
       case "organizationMembership.updated": {
-        // First, upsert the organization member
+        if (SINGLE_TENANT_MODE) {
+          break;
+        }
+
         const membershipResult = await ctx.runMutation(
           internal.members.upsertFromClerk,
           {
@@ -97,9 +288,6 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
           },
         );
 
-        // Check if this membership has staff metadata (from invitation)
-        // When a user accepts an invitation, publicMetadata from the invitation
-        // is transferred to the OrganizationMembership
         const publicMetadata = event.data.public_metadata as
           | {
               staffRole?: string;
@@ -113,16 +301,13 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
           publicMetadata?.clubId &&
           membershipResult
         ) {
-          // Get the user ID from the membership
           const clerkUserId = event.data.public_user_data?.user_id;
           if (clerkUserId) {
-            // Find the Convex user by Clerk ID
             const user = await ctx.runQuery(internal.users.getByClerkId, {
               clerkId: clerkUserId,
             });
 
             if (user) {
-              // Create the staff record
               await ctx.runMutation(internal.staff.createFromClerkMembership, {
                 userId: user._id,
                 clubId: publicMetadata.clubId,
@@ -136,6 +321,9 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
       }
 
       case "organizationMembership.deleted":
+        if (SINGLE_TENANT_MODE) {
+          break;
+        }
         await ctx.runMutation(internal.members.deleteFromClerk, {
           data: event.data,
         });
@@ -185,8 +373,7 @@ async function validateClerkRequest(
 
   const wh = new Webhook(webhookSecret);
   try {
-    const event = wh.verify(payload, svixHeaders) as WebhookEvent;
-    return event;
+    return wh.verify(payload, svixHeaders) as WebhookEvent;
   } catch (err) {
     const error = err as Error;
     console.error(`Webhook verification failed: ${error.message}`);

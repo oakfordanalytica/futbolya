@@ -2,6 +2,7 @@ import { GameDetailClient } from "@/components/sections/shell/games/game-detail/
 import { preloadQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { getAuthToken } from "@/lib/auth/auth";
 
 interface GameDetailPageProps {
   params: Promise<{
@@ -12,9 +13,15 @@ interface GameDetailPageProps {
 
 export default async function GameDetailPage({ params }: GameDetailPageProps) {
   const { tenant, gameId } = await params;
-  const preloadedGame = await preloadQuery(api.games.getById, {
-    gameId: gameId as Id<"games">,
-  });
+  const token = await getAuthToken();
+
+  const preloadedGame = await preloadQuery(
+    api.games.getById,
+    {
+      gameId: gameId as Id<"games">,
+    },
+    { token },
+  );
 
   return <GameDetailClient preloadedGame={preloadedGame} orgSlug={tenant} />;
 }

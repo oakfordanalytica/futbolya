@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { getCurrentUser } from "./lib/auth";
+import { requireClubAccess, requireClubAccessBySlug } from "./lib/permissions";
 
 // ============================================================================
 // VALIDATORS
@@ -45,14 +45,7 @@ export const listByClubSlug = query({
   args: { clubSlug: v.string() },
   returns: v.array(categoryValidator),
   handler: async (ctx, args) => {
-    const club = await ctx.db
-      .query("clubs")
-      .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
-      .unique();
-
-    if (!club) {
-      return [];
-    }
+    const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
 
     return await ctx.db
       .query("categories")
@@ -68,14 +61,7 @@ export const listByClubSlugWithPlayerCount = query({
   args: { clubSlug: v.string() },
   returns: v.array(categoryWithPlayerCountValidator),
   handler: async (ctx, args) => {
-    const club = await ctx.db
-      .query("clubs")
-      .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
-      .unique();
-
-    if (!club) {
-      return [];
-    }
+    const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
 
     const categories = await ctx.db
       .query("categories")
@@ -120,7 +106,13 @@ export const getById = query({
   args: { categoryId: v.id("categories") },
   returns: v.union(categoryValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.categoryId);
+    const category = await ctx.db.get(args.categoryId);
+    if (!category) {
+      return null;
+    }
+
+    await requireClubAccess(ctx, category.clubId);
+    return category;
   },
 });
 
@@ -181,16 +173,7 @@ export const create = mutation({
   },
   returns: v.id("categories"),
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
-
-    const club = await ctx.db
-      .query("clubs")
-      .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
-      .unique();
-
-    if (!club) {
-      throw new Error("Club not found");
-    }
+    const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
 
     // Check for duplicate name within club
     const existing = await ctx.db
@@ -227,12 +210,12 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
-
     const category = await ctx.db.get(args.categoryId);
     if (!category) {
       throw new Error("Category not found");
     }
+
+    await requireClubAccess(ctx, category.clubId);
 
     const { categoryId, ...updates } = args;
 
@@ -276,12 +259,12 @@ export const remove = mutation({
   args: { categoryId: v.id("categories") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
-
     const category = await ctx.db.get(args.categoryId);
     if (!category) {
       throw new Error("Category not found");
     }
+
+    await requireClubAccess(ctx, category.clubId);
 
     // Delete all players in this category
     const players = await ctx.db

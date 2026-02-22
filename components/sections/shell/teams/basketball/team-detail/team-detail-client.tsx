@@ -11,15 +11,18 @@ import { RosterGrid } from "./roster-grid";
 import { TeamHeader } from "./team-header";
 import { TeamStaffList } from "./team-staff-list";
 import { TeamGamesList } from "./team-games-list";
+import type { TeamRouteScope } from "./types";
 
 interface TeamDetailClientProps {
   preloadedTeam: Preloaded<typeof api.clubs.getBySlug>;
   orgSlug: string;
+  routeScope: TeamRouteScope;
 }
 
 export function TeamDetailClient({
   preloadedTeam,
   orgSlug,
+  routeScope,
 }: TeamDetailClientProps) {
   const terminology = useSportTerminology();
   const t = useTranslations("Common");
@@ -38,7 +41,7 @@ export function TeamDetailClient({
 
   return (
     <div className="space-y-0 ">
-      <TeamHeader team={team} orgSlug={orgSlug} />
+      <TeamHeader team={team} orgSlug={orgSlug} routeScope={routeScope} />
 
       <Tabs defaultValue="roster" className="w-full">
         <TabsList
@@ -81,7 +84,11 @@ export function TeamDetailClient({
           <TeamStaffList clubSlug={team.slug} />
         </TabsContent>
         <TabsContent value="schedule" className="mt-4 px-6">
-          <TeamGamesList clubSlug={team.slug} orgSlug={orgSlug} />
+          <TeamGamesList
+            clubSlug={team.slug}
+            orgSlug={orgSlug}
+            routeScope={routeScope}
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -2,6 +2,11 @@ import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
+import {
+  hasOrgAdminAccess,
+  requireClubAccess,
+  requireClubAccessBySlug,
+} from "./lib/permissions";
 
 // ============================================================================
 // VALIDATORS
@@ -37,14 +42,7 @@ export const listAllByClubSlug = query({
     staff: v.array(staffMemberValidator),
   }),
   handler: async (ctx, args) => {
-    const club = await ctx.db
-      .query("clubs")
-      .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
-      .unique();
-
-    if (!club) {
-      return { staff: [] };
-    }
+    const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
 
     const staffMembers = await ctx.db
       .query("staff")
@@ -101,6 +99,56 @@ export const listAllByClubSlug = query({
     }
 
     return { staff: result };
+  },
+});
+
+/**
+ * List team slugs the current user can access for a given organization.
+ * Coaches receive assigned teams; admins/superadmins receive all teams in the org.
+ */
+export const listMyClubSlugsByOrganization = query({
+  args: { organizationSlug: v.string() },
+  returns: v.array(v.string()),
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
+    const organization = await ctx.db
+      .query("organizations")
+      .withIndex("bySlug", (q) => q.eq("slug", args.organizationSlug))
+      .unique();
+    if (!organization) {
+      return [];
+    }
+
+    const isOrgAdmin = await hasOrgAdminAccess(ctx, user._id, organization._id);
+    if (isOrgAdmin) {
+      const clubs = await ctx.db
+        .query("clubs")
+        .withIndex("byOrganization", (q) =>
+          q.eq("organizationId", organization._id),
+        )
+        .collect();
+      return [...new Set(clubs.map((club) => club.slug))].sort();
+    }
+
+    const staffAssignments = await ctx.db
+      .query("staff")
+      .withIndex("byUser", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const clubIds = [...new Set(staffAssignments.map((item) => item.clubId))];
+    const clubs = await Promise.all(
+      clubIds.map((clubId) => ctx.db.get(clubId)),
+    );
+
+    return [
+      ...new Set(
+        clubs
+          .filter(Boolean)
+          .filter((club) => club!.organizationId === organization._id)
+          .map((club) => club!.slug),
+      ),
+    ].sort();
   },
 });
 
@@ -199,12 +247,12 @@ export const removeStaff = mutation({
   args: { staffId: v.id("staff") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
-
     const staff = await ctx.db.get(args.staffId);
     if (!staff) {
       throw new Error("Staff member not found");
     }
+
+    await requireClubAccess(ctx, staff.clubId);
 
     await ctx.db.delete(args.staffId);
 

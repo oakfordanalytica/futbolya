@@ -1,9 +1,12 @@
 import { v } from "convex/values";
 import { query, internalMutation } from "./_generated/server";
+import { getCurrentUser } from "./lib/auth";
+import { hasOrgAdminAccess } from "./lib/permissions";
 
 const roleValidator = v.union(
   v.literal("superadmin"),
   v.literal("admin"),
+  v.literal("coach"),
   v.literal("member"),
 );
 
@@ -14,7 +17,16 @@ const membershipValidator = v.object({
   organizationId: v.id("organizations"),
   clerkMembershipId: v.string(),
   role: roleValidator,
+  createdAt: v.optional(v.number()),
 });
+
+function formatOrganizationNameFromSlug(slug: string) {
+  return slug
+    .split("-")
+    .filter((segment) => segment.length > 0)
+    .map((segment) => segment[0].toUpperCase() + segment.slice(1))
+    .join(" ");
+}
 
 /**
  * Get membership by user and organization.
@@ -45,13 +57,27 @@ export const listByOrganization = query({
       membership: membershipValidator,
       user: v.object({
         _id: v.id("users"),
+        clerkId: v.string(),
         firstName: v.string(),
         lastName: v.string(),
         email: v.string(),
+        imageUrl: v.optional(v.string()),
+        isSuperAdmin: v.boolean(),
       }),
     }),
   ),
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
+    const isAdmin = await hasOrgAdminAccess(
+      ctx,
+      currentUser._id,
+      args.organizationId,
+    );
+
+    if (!isAdmin) {
+      return [];
+    }
+
     const memberships = await ctx.db
       .query("organizationMembers")
       .withIndex("byOrganization", (q) =>
@@ -59,29 +85,30 @@ export const listByOrganization = query({
       )
       .collect();
 
-    // Batch fetch all users at once to avoid N+1
-    const userIds = [...new Set(memberships.map((m) => m.userId))];
+    const userIds = [...new Set(memberships.map((membership) => membership.userId))];
     const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
-    const userMap = new Map(users.filter(Boolean).map((u) => [u!._id, u!]));
+    const userMap = new Map(users.filter(Boolean).map((user) => [user!._id, user!]));
 
-    return memberships.map((membership) => {
+    return memberships.flatMap((membership) => {
       const user = userMap.get(membership.userId);
-      return {
-        membership,
-        user: user
-          ? {
-              _id: user._id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              email: user.email,
-            }
-          : {
-              _id: membership.userId,
-              firstName: "",
-              lastName: "",
-              email: "",
-            },
-      };
+      if (!user || !user.isActive) {
+        return [];
+      }
+
+      return [
+        {
+          membership,
+          user: {
+            _id: user._id,
+            clerkId: user.clerkId,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            ...(user.imageUrl ? { imageUrl: user.imageUrl } : {}),
+            isSuperAdmin: user.isSuperAdmin,
+          },
+        },
+      ];
     });
   },
 });
@@ -107,20 +134,25 @@ export const listByUser = query({
       .withIndex("byUserId", (q) => q.eq("userId", args.userId))
       .collect();
 
-    // Batch fetch all organizations at once to avoid N+1
-    const orgIds = [...new Set(memberships.map((m) => m.organizationId))];
-    const orgs = await Promise.all(orgIds.map((id) => ctx.db.get(id)));
-    const orgMap = new Map(orgs.filter(Boolean).map((o) => [o!._id, o!]));
+    const organizationIds = [
+      ...new Set(memberships.map((membership) => membership.organizationId)),
+    ];
+    const organizations = await Promise.all(
+      organizationIds.map((id) => ctx.db.get(id)),
+    );
+    const organizationMap = new Map(
+      organizations.filter(Boolean).map((organization) => [organization!._id, organization!]),
+    );
 
     return memberships.map((membership) => {
-      const org = orgMap.get(membership.organizationId);
+      const organization = organizationMap.get(membership.organizationId);
       return {
         membership,
-        organization: org
+        organization: organization
           ? {
-              _id: org._id,
-              name: org.name,
-              slug: org.slug,
+              _id: organization._id,
+              name: organization.name,
+              slug: organization.slug,
             }
           : {
               _id: membership.organizationId,
@@ -135,7 +167,9 @@ export const listByUser = query({
 /**
  * Convert Clerk role string to our role type.
  */
-function clerkRoleToRole(clerkRole: string): "superadmin" | "admin" | "member" {
+function clerkRoleToRole(
+  clerkRole: string,
+): "superadmin" | "admin" | "coach" {
   switch (clerkRole) {
     case "org:superadmin":
       return "superadmin";
@@ -143,7 +177,7 @@ function clerkRoleToRole(clerkRole: string): "superadmin" | "admin" | "member" {
       return "admin";
     case "org:member":
     default:
-      return "member";
+      return "coach";
   }
 }
 
@@ -164,14 +198,12 @@ export const upsertFromClerk = internalMutation({
       return null;
     }
 
-    // Find or create user
     let user = await ctx.db
       .query("users")
       .withIndex("byClerkId", (q) => q.eq("clerkId", clerkUserId))
       .unique();
 
     if (!user) {
-      // User webhook hasn't arrived yet - create user from membership data
       const userData = data.public_user_data;
       if (!userData) {
         console.error(
@@ -185,6 +217,7 @@ export const upsertFromClerk = internalMutation({
         email: userData.identifier ?? "",
         firstName: userData.first_name ?? "",
         lastName: userData.last_name ?? "",
+        imageUrl: userData.image_url ?? undefined,
         isActive: true,
         isSuperAdmin: false,
       });
@@ -196,30 +229,28 @@ export const upsertFromClerk = internalMutation({
       }
     }
 
-    // Find or create organization
     let organization = await ctx.db
       .query("organizations")
       .withIndex("byClerkOrgId", (q) => q.eq("clerkOrgId", clerkOrgId))
       .unique();
 
     if (!organization) {
-      // Organization webhook hasn't arrived yet - create org from membership data
-      const orgData = data.organization;
-      if (!orgData) {
+      const organizationData = data.organization;
+      if (!organizationData) {
         console.error(
           `Organization data missing in membership webhook for clerkOrgId: ${clerkOrgId}`,
         );
         return null;
       }
 
-      const orgId = await ctx.db.insert("organizations", {
-        clerkOrgId: orgData.id,
-        name: orgData.name,
-        slug: orgData.slug ?? orgData.id,
-        imageUrl: orgData.image_url ?? undefined,
+      const organizationId = await ctx.db.insert("organizations", {
+        clerkOrgId: organizationData.id,
+        name: organizationData.name,
+        slug: organizationData.slug ?? organizationData.id,
+        imageUrl: organizationData.image_url ?? undefined,
       });
 
-      organization = await ctx.db.get(orgId);
+      organization = await ctx.db.get(organizationId);
       if (!organization) {
         console.error(
           `Failed to create organization for clerkOrgId: ${clerkOrgId}`,
@@ -230,7 +261,6 @@ export const upsertFromClerk = internalMutation({
 
     const role = clerkRoleToRole(clerkRole);
 
-    // Check if membership already exists
     const existing = await ctx.db
       .query("organizationMembers")
       .withIndex("byClerkMembershipId", (q) =>
@@ -239,14 +269,12 @@ export const upsertFromClerk = internalMutation({
       .unique();
 
     if (existing) {
-      // Update role if changed
       if (existing.role !== role) {
         await ctx.db.patch(existing._id, { role });
       }
       return existing._id;
     }
 
-    // Also check by user and org to prevent duplicates
     const existingByUserOrg = await ctx.db
       .query("organizationMembers")
       .withIndex("byUserAndOrg", (q) =>
@@ -255,7 +283,6 @@ export const upsertFromClerk = internalMutation({
       .unique();
 
     if (existingByUserOrg) {
-      // Update with clerk membership id and role
       await ctx.db.patch(existingByUserOrg._id, {
         clerkMembershipId,
         role,
@@ -263,7 +290,6 @@ export const upsertFromClerk = internalMutation({
       return existingByUserOrg._id;
     }
 
-    // Create new membership
     return await ctx.db.insert("organizationMembers", {
       userId: user._id,
       organizationId: organization._id,
@@ -294,5 +320,83 @@ export const deleteFromClerk = internalMutation({
     }
 
     return null;
+  },
+});
+
+/**
+ * Upsert a user's membership for single-tenant mode based on user metadata.
+ */
+export const upsertFromSingleTenant = internalMutation({
+  args: {
+    clerkUserId: v.string(),
+    organizationSlug: v.string(),
+    role: roleValidator,
+  },
+  returns: v.union(v.id("organizationMembers"), v.null()),
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("byClerkId", (q) => q.eq("clerkId", args.clerkUserId))
+      .unique();
+    if (!user) {
+      return null;
+    }
+
+    const role = args.role === "member" ? "coach" : args.role;
+    const resolvedRole = user.isSuperAdmin ? "superadmin" : role;
+
+    let organization = await ctx.db
+      .query("organizations")
+      .withIndex("bySlug", (q) => q.eq("slug", args.organizationSlug))
+      .unique();
+
+    if (!organization) {
+      const organizationId = await ctx.db.insert("organizations", {
+        clerkOrgId: `single:${args.organizationSlug}`,
+        name: formatOrganizationNameFromSlug(args.organizationSlug),
+        slug: args.organizationSlug,
+      });
+      organization = await ctx.db.get(organizationId);
+      if (!organization) {
+        return null;
+      }
+    }
+
+    const syntheticMembershipId = `single:${args.clerkUserId}:${organization._id}`;
+    const existingBySyntheticId = await ctx.db
+      .query("organizationMembers")
+      .withIndex("byClerkMembershipId", (q) =>
+        q.eq("clerkMembershipId", syntheticMembershipId),
+      )
+      .unique();
+
+    if (existingBySyntheticId) {
+      if (existingBySyntheticId.role !== resolvedRole) {
+        await ctx.db.patch(existingBySyntheticId._id, { role: resolvedRole });
+      }
+      return existingBySyntheticId._id;
+    }
+
+    const existingByUserOrg = await ctx.db
+      .query("organizationMembers")
+      .withIndex("byUserAndOrg", (q) =>
+        q.eq("userId", user._id).eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (existingByUserOrg) {
+      await ctx.db.patch(existingByUserOrg._id, {
+        role: resolvedRole,
+        clerkMembershipId: syntheticMembershipId,
+      });
+      return existingByUserOrg._id;
+    }
+
+    return await ctx.db.insert("organizationMembers", {
+      userId: user._id,
+      organizationId: organization._id,
+      clerkMembershipId: syntheticMembershipId,
+      role: resolvedRole,
+    });
   },
 });

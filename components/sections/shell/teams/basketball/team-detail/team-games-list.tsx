@@ -10,19 +10,30 @@ import {
   createGameFilterConfigs,
   type GameRow,
 } from "@/components/sections/shell/games/columns";
-import { TEAM_ROUTES } from "@/lib/navigation/routes";
+import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
+import type { TeamRouteScope } from "./types";
 
 interface TeamGamesListProps {
   clubSlug: string;
   orgSlug: string;
+  routeScope: TeamRouteScope;
 }
 
-export function TeamGamesList({ clubSlug, orgSlug }: TeamGamesListProps) {
+export function TeamGamesList({
+  clubSlug,
+  orgSlug,
+  routeScope,
+}: TeamGamesListProps) {
   const router = useRouter();
   const t = useTranslations("Common");
   const games = useQuery(api.games.listByClubSlug, { clubSlug });
 
   const handleRowClick = (game: GameRow) => {
+    if (routeScope === "org") {
+      router.push(ROUTES.org.games.detail(orgSlug, game._id));
+      return;
+    }
+
     router.push(TEAM_ROUTES.games.detail(orgSlug, clubSlug, game._id));
   };
 

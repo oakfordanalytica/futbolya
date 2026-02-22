@@ -1,16 +1,19 @@
 import { SignIn } from "@clerk/nextjs";
+import { ROUTES } from "@/lib/navigation/routes";
+import { routing } from "@/i18n/routing";
 
 interface PageProps {
-  params: Promise<{ tenant: string }>;
+  params: Promise<{ locale: string; tenant: string }>;
 }
 
 export default async function TenantSignInPage({ params }: PageProps) {
-  const { tenant } = await params;
+  const { locale, tenant } = await params;
+  const localePrefix = locale === routing.defaultLocale ? "" : `/${locale}`;
 
   return (
     <SignIn
-      signUpUrl={`/${tenant}/sign-up`}
-      forceRedirectUrl={`/${tenant}/applications`}
+      signUpUrl={`${localePrefix}${ROUTES.tenant.auth.signUp(tenant)}`}
+      forceRedirectUrl={`${localePrefix}${ROUTES.org.teams.list(tenant)}`}
     />
   );
 }

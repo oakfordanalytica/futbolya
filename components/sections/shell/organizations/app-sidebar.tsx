@@ -20,17 +20,41 @@ import { getNavConfig, getNavContext, isItemActive } from "@/lib/navigation";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/navigation/routes";
 import { routing } from "@/i18n/routing";
+import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
+
+const SINGLE_TENANT_MODE = isSingleTenantMode();
+
+function getLocalePrefix(locale: string): string {
+  return locale === routing.defaultLocale ? "" : `/${locale}`;
+}
+
+function withLocalePrefix(locale: string, path: string): string {
+  return `${getLocalePrefix(locale)}${path}`;
+}
+
+function getTenantSignInUrl(locale: string, orgSlug: string | null): string {
+  if (orgSlug) {
+    return withLocalePrefix(locale, ROUTES.tenant.auth.signIn(orgSlug));
+  }
+  return withLocalePrefix(locale, ROUTES.auth.signIn);
+}
 
 export function NavbarAppSidebar() {
   const params = useParams();
+  const locale = useLocale();
   const orgSlug = (params.tenant as string) || null;
+  const userProfileUrl = orgSlug
+    ? withLocalePrefix(locale, ROUTES.org.settings.profileSecurity(orgSlug))
+    : withLocalePrefix(locale, ROUTES.auth.organizations);
+  const afterSignOutUrl = getTenantSignInUrl(locale, orgSlug);
 
   return (
     <Navbar>
       <NavbarSpacer />
       <NavbarSection>
         <UserButton
-          userProfileUrl={ROUTES.org.settings.profileSecurity(orgSlug!)}
+          userProfileUrl={userProfileUrl}
+          afterSignOutUrl={afterSignOutUrl}
         />
       </NavbarSection>
     </Navbar>
@@ -45,10 +69,16 @@ export function SidebarAppSidebar() {
 
   const orgSlug = (params.tenant as string) || null;
 
-  // Build locale-aware URL for OrganizationSwitcher
-  // Only include locale prefix if it's not the default locale (due to localePrefix: "as-needed")
-  const localePrefix = locale === routing.defaultLocale ? "" : `/${locale}`;
+  const localePrefix = getLocalePrefix(locale);
   const afterSelectOrgUrl = `${localePrefix}/:slug/teams`;
+  const organizationsUrl = withLocalePrefix(locale, ROUTES.auth.organizations);
+  const afterSignOutUrl = getTenantSignInUrl(locale, orgSlug);
+  const organizationProfileUrl = orgSlug
+    ? withLocalePrefix(locale, ROUTES.org.settings.root(orgSlug))
+    : organizationsUrl;
+  const userProfileUrl = orgSlug
+    ? withLocalePrefix(locale, ROUTES.org.settings.profileSecurity(orgSlug))
+    : organizationsUrl;
 
   const context = getNavContext(pathname, orgSlug);
   const { items, settingsHref } = getNavConfig(context);
@@ -56,27 +86,35 @@ export function SidebarAppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <OrganizationSwitcher
-          organizationProfileUrl={ROUTES.org.settings.root(orgSlug!)}
-          afterLeaveOrganizationUrl={ROUTES.admin.organizations.list}
-          afterSelectOrganizationUrl={afterSelectOrgUrl}
-          appearance={{
-            elements: {
-              rootBox: "w-full",
-              organizationSwitcherTrigger: "w-full justify-between text-left",
-              organizationPreviewMainIdentifier:
-                "text-sidebar-foreground text-lg font-semibold",
-              organizationPreviewSecondaryIdentifier:
-                "text-sidebar-foreground/70",
-              organizationSwitcherTriggerIcon: "text-sidebar-foreground",
-              organizationSwitcherPopoverCard: "bg-popover",
-              organizationSwitcherPopoverActionButton: "hover:bg-accent",
-              organizationSwitcherPopoverActionButtonText: "text-foreground",
-              avatarBox: "size-12",
-              organizationPreviewAvatarBox: "size-12",
-            },
-          }}
-        />
+        {SINGLE_TENANT_MODE ? (
+          <div className="w-full rounded-md px-3 py-2 text-left">
+            <p className="text-lg font-serif font-semibold text-sidebar-foreground">
+              {orgSlug ?? DEFAULT_TENANT_SLUG}
+            </p>
+          </div>
+        ) : (
+          <OrganizationSwitcher
+            organizationProfileUrl={organizationProfileUrl}
+            afterLeaveOrganizationUrl={organizationsUrl}
+            afterSelectOrganizationUrl={afterSelectOrgUrl}
+            appearance={{
+              elements: {
+                rootBox: "w-full",
+                organizationSwitcherTrigger: "w-full justify-between text-left",
+                organizationPreviewMainIdentifier:
+                  "text-sidebar-foreground text-lg font-semibold",
+                organizationPreviewSecondaryIdentifier:
+                  "text-sidebar-foreground/70",
+                organizationSwitcherTriggerIcon: "text-sidebar-foreground",
+                organizationSwitcherPopoverCard: "bg-popover",
+                organizationSwitcherPopoverActionButton: "hover:bg-accent",
+                organizationSwitcherPopoverActionButtonText: "text-foreground",
+                avatarBox: "size-12",
+                organizationPreviewAvatarBox: "size-12",
+              },
+            }}
+          />
+        )}
       </SidebarHeader>
 
       <SidebarBody>
@@ -113,7 +151,8 @@ export function SidebarAppSidebar() {
 
       <SidebarFooter className="max-lg:hidden">
         <UserButton
-          userProfileUrl={ROUTES.org.settings.profileSecurity(orgSlug!)}
+          userProfileUrl={userProfileUrl}
+          afterSignOutUrl={afterSignOutUrl}
           appearance={{
             elements: {
               userButtonBox: {

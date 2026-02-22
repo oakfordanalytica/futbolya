@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useOrganization } from "@clerk/nextjs";
+import { useParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import SettingsItem from "./settings-item";
 import { useSportTerminology } from "@/components/providers/sport-provider";
+import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 
 type Gender = "male" | "female" | "mixed";
 type DivisionType = "alphabetic" | "greek" | "numeric";
@@ -39,7 +41,13 @@ export function TeamConfigSettings() {
   const t = useTranslations("Settings.general.teamConfig");
   const tCommon = useTranslations("Common");
   const { organization } = useOrganization();
+  const params = useParams<{ tenant?: string }>();
   const { clubs } = useSportTerminology();
+  const tenant = typeof params.tenant === "string" ? params.tenant : null;
+  const singleTenantMode = isSingleTenantMode();
+  const leagueSlug = singleTenantMode
+    ? (tenant ?? DEFAULT_TENANT_SLUG)
+    : (organization?.slug ?? null);
   const [newCategory, setNewCategory] = useState<NewCategory>({
     name: "",
     minAge: "",
@@ -54,7 +62,7 @@ export function TeamConfigSettings() {
 
   const teamConfig = useQuery(
     api.leagueSettings.getTeamConfig,
-    organization?.slug ? { leagueSlug: organization.slug } : "skip",
+    leagueSlug ? { leagueSlug } : "skip",
   );
 
   const addAgeCategory = useMutation(api.leagueSettings.addAgeCategory);
@@ -68,11 +76,25 @@ export function TeamConfigSettings() {
     api.leagueSettings.updateHorizontalDivisions,
   );
 
-  if (!organization?.slug || !teamConfig) {
+  if (!leagueSlug) {
     return null;
   }
 
-  const leagueSlug = organization.slug;
+  if (teamConfig === undefined) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        {tCommon("actions.loading")}
+      </div>
+    );
+  }
+
+  if (teamConfig === null) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        Team configuration is not available for this organization yet.
+      </div>
+    );
+  }
 
   const ageCategories = teamConfig.ageCategories;
   const positions = teamConfig.positions ?? [];

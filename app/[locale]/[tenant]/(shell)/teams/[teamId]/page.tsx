@@ -1,6 +1,7 @@
 import { TeamDetailClient } from "@/components/sections/shell/teams/basketball/team-detail/team-detail-client";
 import { preloadQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
+import { getAuthToken } from "@/lib/auth/auth";
 
 interface TeamDetailPageProps {
   params: Promise<{
@@ -11,9 +12,21 @@ interface TeamDetailPageProps {
 
 export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
   const { tenant, teamId } = await params;
-  const preloadedTeam = await preloadQuery(api.clubs.getBySlug, {
-    slug: teamId,
-  });
+  const token = await getAuthToken();
 
-  return <TeamDetailClient preloadedTeam={preloadedTeam} orgSlug={tenant} />;
+  const preloadedTeam = await preloadQuery(
+    api.clubs.getBySlug,
+    {
+      slug: teamId,
+    },
+    { token },
+  );
+
+  return (
+    <TeamDetailClient
+      preloadedTeam={preloadedTeam}
+      orgSlug={tenant}
+      routeScope="org"
+    />
+  );
 }

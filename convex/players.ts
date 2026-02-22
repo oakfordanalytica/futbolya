@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
+import { requireClubAccess, requireClubAccessBySlug } from "./lib/permissions";
 
 // ============================================================================
 // VALIDATORS
@@ -36,14 +37,7 @@ export const listBasketballPlayersByClubSlug = query({
   args: { clubSlug: v.string() },
   returns: v.array(basketballPlayerValidator),
   handler: async (ctx, args) => {
-    const club = await ctx.db
-      .query("clubs")
-      .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
-      .unique();
-
-    if (!club) {
-      return [];
-    }
+    const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
 
     const players = await ctx.db
       .query("players")
@@ -131,6 +125,8 @@ export const createPlayer = mutation({
       throw new Error("Category not found");
     }
 
+    await requireClubAccess(ctx, category.clubId);
+
     const playerId = await ctx.db.insert("players", {
       firstName: args.firstName,
       lastName: args.lastName,
@@ -163,6 +159,8 @@ export const deletePlayer = mutation({
     if (!player) {
       throw new Error("Player not found");
     }
+
+    await requireClubAccess(ctx, player.clubId);
 
     // Delete photo from storage if exists
     if (player.photoStorageId) {
@@ -201,6 +199,8 @@ export const updatePlayer = mutation({
       throw new Error("Player not found");
     }
 
+    await requireClubAccess(ctx, player.clubId);
+
     const { playerId, ...updates } = args;
 
     // Filter out undefined values
@@ -209,6 +209,16 @@ export const updatePlayer = mutation({
       if (value !== undefined) {
         filteredUpdates[key] = value;
       }
+    }
+
+    if (args.categoryId) {
+      const targetCategory = await ctx.db.get(args.categoryId);
+      if (!targetCategory) {
+        throw new Error("Category not found");
+      }
+
+      await requireClubAccess(ctx, targetCategory.clubId);
+      filteredUpdates.clubId = targetCategory.clubId;
     }
 
     // If updating photo, delete old one

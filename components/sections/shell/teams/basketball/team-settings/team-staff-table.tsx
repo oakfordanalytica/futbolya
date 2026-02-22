@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -83,6 +83,7 @@ const ROLE_STYLES: Record<StaffRole, string> = {
 
 export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
   const t = useTranslations("Common");
+  const locale = useLocale();
   const staffData = useQuery(api.staff.listAllByClubSlug, { clubSlug });
   const clubData = useQuery(api.clubs.getBySlug, { slug: clubSlug });
   const removeStaff = useMutation(api.staff.removeStaff);
@@ -121,6 +122,8 @@ export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
           emailAddress: email.trim(),
           staffRole: role,
           clubId: clubData._id,
+          locale,
+          tenant: orgSlug,
         }),
       });
 

@@ -1,7 +1,20 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import {
+  query,
+  mutation,
+  type QueryCtx,
+  type MutationCtx,
+} from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
+import {
+  hasClubStaffAccess,
+  hasOrgAdminAccess,
+  requireOrgAdmin,
+  requireClubAccessBySlug,
+} from "./lib/permissions";
+
+type PermissionCtx = QueryCtx | MutationCtx;
 
 // ============================================================================
 // VALIDATORS
@@ -33,6 +46,8 @@ const gameValidator = v.object({
   awayTeamName: v.string(),
   homeTeamLogo: v.optional(v.string()),
   awayTeamLogo: v.optional(v.string()),
+  homeTeamColor: v.optional(v.string()),
+  awayTeamColor: v.optional(v.string()),
   date: v.string(),
   startTime: v.string(),
   category: v.string(),
@@ -66,6 +81,57 @@ const gameListItemValidator = v.object({
   awayScore: v.optional(v.number()),
 });
 
+async function requireGameAccess(
+  ctx: PermissionCtx,
+  game: {
+    organizationId: Id<"organizations">;
+    homeClubId: Id<"clubs">;
+    awayClubId: Id<"clubs">;
+  },
+) {
+  const user = await getCurrentUser(ctx);
+  if (user.isSuperAdmin) {
+    return user;
+  }
+
+  const isOrgAdmin = await hasOrgAdminAccess(
+    ctx,
+    user._id,
+    game.organizationId,
+  );
+  if (isOrgAdmin) {
+    return user;
+  }
+
+  const [homeAccess, awayAccess] = await Promise.all([
+    hasClubStaffAccess(ctx, user._id, game.homeClubId),
+    hasClubStaffAccess(ctx, user._id, game.awayClubId),
+  ]);
+
+  if (!homeAccess && !awayAccess) {
+    throw new Error("You do not have access to this game");
+  }
+
+  return user;
+}
+
+async function requireGameAdminAccess(
+  ctx: PermissionCtx,
+  organizationId: Id<"organizations">,
+) {
+  const user = await getCurrentUser(ctx);
+  if (user.isSuperAdmin) {
+    return user;
+  }
+
+  const isOrgAdmin = await hasOrgAdminAccess(ctx, user._id, organizationId);
+  if (!isOrgAdmin) {
+    throw new Error("Admin access required");
+  }
+
+  return user;
+}
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -84,6 +150,12 @@ export const listByLeagueSlug = query({
 
     if (!org) {
       return [];
+    }
+
+    const user = await getCurrentUser(ctx);
+    const isOrgAdmin = await hasOrgAdminAccess(ctx, user._id, org._id);
+    if (!isOrgAdmin) {
+      throw new Error("Admin access required");
     }
 
     const games = await ctx.db
@@ -156,14 +228,7 @@ export const listByClubSlug = query({
   args: { clubSlug: v.string() },
   returns: v.array(gameListItemValidator),
   handler: async (ctx, args) => {
-    const club = await ctx.db
-      .query("clubs")
-      .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
-      .unique();
-
-    if (!club) {
-      return [];
-    }
+    const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
 
     // Get games where club is home team
     const homeGames = await ctx.db
@@ -288,6 +353,8 @@ export const getGamePlayerStats = query({
       return { homeStats: [], awayStats: [] };
     }
 
+    await requireGameAccess(ctx, game);
+
     const allStats = await ctx.db
       .query("gamePlayerStats")
       .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
@@ -365,6 +432,8 @@ export const getById = query({
       return null;
     }
 
+    await requireGameAccess(ctx, game);
+
     const homeClub = await ctx.db.get(game.homeClubId);
     const awayClub = await ctx.db.get(game.awayClubId);
 
@@ -392,6 +461,8 @@ export const getById = query({
       awayTeamName: awayClub?.name ?? "Unknown",
       homeTeamLogo,
       awayTeamLogo,
+      homeTeamColor: homeClub?.colors?.[0] ?? undefined,
+      awayTeamColor: awayClub?.colors?.[0] ?? undefined,
       date: game.date,
       startTime: game.startTime,
       category: game.category,
@@ -430,25 +501,16 @@ export const create = mutation({
   },
   returns: v.id("games"),
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
-
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("bySlug", (q) => q.eq("slug", args.orgSlug))
-      .unique();
-
-    if (!org) {
-      throw new Error("Organization not found");
-    }
+    const { organization } = await requireOrgAdmin(ctx, args.orgSlug);
 
     // Validate clubs exist and belong to org
     const homeClub = await ctx.db.get(args.homeClubId);
     const awayClub = await ctx.db.get(args.awayClubId);
 
-    if (!homeClub || homeClub.organizationId !== org._id) {
+    if (!homeClub || homeClub.organizationId !== organization._id) {
       throw new Error("Home club not found or doesn't belong to this league");
     }
-    if (!awayClub || awayClub.organizationId !== org._id) {
+    if (!awayClub || awayClub.organizationId !== organization._id) {
       throw new Error("Away club not found or doesn't belong to this league");
     }
 
@@ -457,7 +519,7 @@ export const create = mutation({
     }
 
     return await ctx.db.insert("games", {
-      organizationId: org._id,
+      organizationId: organization._id,
       homeClubId: args.homeClubId,
       awayClubId: args.awayClubId,
       date: args.date,
@@ -489,12 +551,12 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
-
     const game = await ctx.db.get(args.gameId);
     if (!game) {
       throw new Error("Game not found");
     }
+
+    await requireGameAdminAccess(ctx, game.organizationId);
 
     const { gameId, ...updates } = args;
 
@@ -521,12 +583,12 @@ export const remove = mutation({
   args: { gameId: v.id("games") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
-
     const game = await ctx.db.get(args.gameId);
     if (!game) {
       throw new Error("Game not found");
     }
+
+    await requireGameAdminAccess(ctx, game.organizationId);
 
     // Delete game player stats
     const stats = await ctx.db
@@ -775,39 +837,12 @@ export const forceComplete = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-
-    if (!user.isSuperAdmin) {
-      // Check if user is org admin
-      const game = await ctx.db.get(args.gameId);
-      if (!game) {
-        throw new Error("Game not found");
-      }
-
-      const org = await ctx.db.get(game.organizationId);
-      if (!org) {
-        throw new Error("Organization not found");
-      }
-
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("byUserAndOrg", (q) =>
-          q.eq("userId", user._id).eq("organizationId", org._id),
-        )
-        .unique();
-
-      if (
-        !membership ||
-        (membership.role !== "admin" && membership.role !== "superadmin")
-      ) {
-        throw new Error("Admin access required");
-      }
-    }
-
     const game = await ctx.db.get(args.gameId);
     if (!game) {
       throw new Error("Game not found");
     }
+
+    await requireGameAdminAccess(ctx, game.organizationId);
 
     await ctx.db.patch(args.gameId, {
       status: "completed",

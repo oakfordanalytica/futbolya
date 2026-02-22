@@ -16,6 +16,7 @@ export const ROUTES = {
   auth: {
     signIn: "/sign-in",
     signUp: "/sign-up",
+    organizations: "/organizations",
   },
 
   tenant: {

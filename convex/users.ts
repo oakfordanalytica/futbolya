@@ -1,5 +1,24 @@
-import { query, internalMutation, internalQuery } from "./_generated/server";
+import {
+  action,
+  query,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { v } from "convex/values";
+import { clerkClient } from "./clerk";
+import { api, internal } from "./_generated/api";
+import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "./lib/tenancy";
+
+type SingleTenantAppRole = "admin" | "coach";
+
+type CurrentUserWithMemberships = {
+  clerkId: string;
+  isSuperAdmin: boolean;
+  memberships: Array<{
+    organizationSlug: string;
+    role: "superadmin" | "admin" | "coach" | "member";
+  }>;
+};
 
 /**
  * Get the current authenticated user's profile with their organization memberships.
@@ -14,6 +33,7 @@ export const me = query({
       firstName: v.string(),
       lastName: v.string(),
       email: v.string(),
+      imageUrl: v.optional(v.string()),
       isActive: v.boolean(),
       isSuperAdmin: v.boolean(),
       memberships: v.array(
@@ -24,6 +44,7 @@ export const me = query({
           role: v.union(
             v.literal("superadmin"),
             v.literal("admin"),
+            v.literal("coach"),
             v.literal("member"),
           ),
         }),
@@ -46,24 +67,28 @@ export const me = query({
       return null;
     }
 
-    // Get all memberships for this user
     const memberships = await ctx.db
       .query("organizationMembers")
       .withIndex("byUserId", (q) => q.eq("userId", user._id))
       .collect();
 
-    // Batch fetch all organizations at once to avoid N+1
-    const orgIds = [...new Set(memberships.map((m) => m.organizationId))];
-    const orgs = await Promise.all(orgIds.map((id) => ctx.db.get(id)));
-    const orgMap = new Map(orgs.filter(Boolean).map((o) => [o!._id, o!]));
+    const organizationIds = [
+      ...new Set(memberships.map((membership) => membership.organizationId)),
+    ];
+    const organizations = await Promise.all(
+      organizationIds.map((id) => ctx.db.get(id)),
+    );
+    const organizationMap = new Map(
+      organizations.filter(Boolean).map((organization) => [organization!._id, organization!]),
+    );
 
-    const enrichedMemberships = memberships.map((m) => {
-      const org = orgMap.get(m.organizationId);
+    const enrichedMemberships = memberships.map((membership) => {
+      const organization = organizationMap.get(membership.organizationId);
       return {
-        organizationId: m.organizationId,
-        organizationSlug: org?.slug ?? "",
-        organizationName: org?.name ?? "",
-        role: m.role,
+        organizationId: membership.organizationId,
+        organizationSlug: organization?.slug ?? "",
+        organizationName: organization?.name ?? "",
+        role: membership.role,
       };
     });
 
@@ -87,21 +112,61 @@ export const getById = query({
       firstName: v.string(),
       lastName: v.string(),
       email: v.string(),
+      imageUrl: v.optional(v.string()),
       isActive: v.boolean(),
       isSuperAdmin: v.boolean(),
     }),
     v.null(),
   ),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.userId);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!currentUser) {
+      return null;
+    }
+
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      return null;
+    }
+
+    if (currentUser._id === targetUser._id || currentUser.isSuperAdmin) {
+      return targetUser;
+    }
+
+    const [currentMemberships, targetMemberships] = await Promise.all([
+      ctx.db
+        .query("organizationMembers")
+        .withIndex("byUserId", (q) => q.eq("userId", currentUser._id))
+        .collect(),
+      ctx.db
+        .query("organizationMembers")
+        .withIndex("byUserId", (q) => q.eq("userId", targetUser._id))
+        .collect(),
+    ]);
+
+    const currentOrganizationIds = new Set(
+      currentMemberships.map((membership) => membership.organizationId),
+    );
+    const sharesOrganization = targetMemberships.some((membership) =>
+      currentOrganizationIds.has(membership.organizationId),
+    );
+
+    return sharesOrganization ? targetUser : null;
   },
 });
 
 /**
  * Upsert user from Clerk webhook (internal).
  * Handles both user.created and user.updated events.
- * Reads isSuperAdmin from Clerk's publicMetadata.
- * Syncs imageUrl from Clerk's profile image.
+ * Reads isSuperAdmin from Clerk publicMetadata.
  */
 export const upsertFromClerk = internalMutation({
   args: { data: v.any() },
@@ -116,7 +181,7 @@ export const upsertFromClerk = internalMutation({
 
     const firstName = data.first_name || "";
     const lastName = data.last_name || "";
-    const imageUrl = data.image_url || undefined;
+    const imageUrl = data.image_url || data.profile_image_url || undefined;
     const isSuperAdmin = data.public_metadata?.isSuperAdmin === true;
 
     const existingUser = await ctx.db
@@ -151,7 +216,6 @@ export const upsertFromClerk = internalMutation({
 
 /**
  * Get user by Clerk ID (internal).
- * Used by webhooks to find the Convex user from Clerk user ID.
  */
 export const getByClerkId = internalQuery({
   args: { clerkId: v.string() },
@@ -192,6 +256,132 @@ export const deactivateUser = internalMutation({
     if (user) {
       await ctx.db.patch(user._id, { isActive: false });
     }
+
+    return null;
+  },
+});
+
+function hasAdminAccessForOrg(
+  user: CurrentUserWithMemberships,
+  organizationSlug: string,
+): boolean {
+  if (user.isSuperAdmin) {
+    return true;
+  }
+
+  const membership = user.memberships.find(
+    (item) => item.organizationSlug === organizationSlug,
+  );
+  return membership?.role === "admin" || membership?.role === "superadmin";
+}
+
+/**
+ * Update a user's role in single-tenant mode by writing to Clerk publicMetadata.
+ * Convex membership is updated immediately to keep the UI in sync.
+ */
+export const setSingleTenantRole = action({
+  args: {
+    organizationSlug: v.string(),
+    clerkUserId: v.string(),
+    role: v.union(v.literal("admin"), v.literal("coach")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    if (!isSingleTenantMode()) {
+      throw new Error("Single-tenant role updates are not enabled");
+    }
+
+    if (args.organizationSlug !== DEFAULT_TENANT_SLUG) {
+      throw new Error("Organization not found");
+    }
+
+    const currentUser = await ctx.runQuery(api.users.me, {});
+    if (!currentUser) {
+      throw new Error("Unauthorized");
+    }
+
+    if (!hasAdminAccessForOrg(currentUser, args.organizationSlug)) {
+      throw new Error("Forbidden");
+    }
+
+    if (currentUser.clerkId === args.clerkUserId) {
+      throw new Error("You cannot change your own role");
+    }
+
+    const targetUser = await clerkClient.users.getUser(args.clerkUserId);
+    const targetRole = targetUser.publicMetadata?.role;
+    const isTargetSuperAdmin =
+      targetUser.publicMetadata?.isSuperAdmin === true ||
+      targetRole === "superadmin" ||
+      targetRole === "org:superadmin";
+    if (isTargetSuperAdmin) {
+      throw new Error("Cannot update role for a SuperAdmin");
+    }
+
+    await clerkClient.users.updateUserMetadata(args.clerkUserId, {
+      publicMetadata: {
+        ...(targetUser.publicMetadata ?? {}),
+        role: args.role as SingleTenantAppRole,
+      },
+    });
+
+    await ctx.runMutation(internal.members.upsertFromSingleTenant, {
+      clerkUserId: args.clerkUserId,
+      organizationSlug: args.organizationSlug,
+      role: args.role,
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Delete a user from Clerk in single-tenant mode.
+ * The Convex user record is deactivated immediately.
+ */
+export const deleteSingleTenantUser = action({
+  args: {
+    organizationSlug: v.string(),
+    clerkUserId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    if (!isSingleTenantMode()) {
+      throw new Error("Single-tenant user deletion is not enabled");
+    }
+
+    if (args.organizationSlug !== DEFAULT_TENANT_SLUG) {
+      throw new Error("Organization not found");
+    }
+
+    const currentUser = await ctx.runQuery(api.users.me, {});
+    if (!currentUser) {
+      throw new Error("Unauthorized");
+    }
+
+    if (!hasAdminAccessForOrg(currentUser, args.organizationSlug)) {
+      throw new Error("Forbidden");
+    }
+
+    if (currentUser.clerkId === args.clerkUserId) {
+      throw new Error("You cannot delete your own account");
+    }
+
+    const targetUser = await clerkClient.users.getUser(args.clerkUserId);
+    const targetRole = targetUser.publicMetadata?.role;
+    const isTargetSuperAdmin =
+      targetUser.publicMetadata?.isSuperAdmin === true ||
+      targetRole === "superadmin" ||
+      targetRole === "org:superadmin";
+    if (isTargetSuperAdmin) {
+      throw new Error("Cannot delete a SuperAdmin");
+    }
+
+    await clerkClient.users.deleteUser(args.clerkUserId);
+
+    await ctx.runMutation(internal.users.deactivateUser, {
+      clerkId: args.clerkUserId,
+    });
 
     return null;
   },

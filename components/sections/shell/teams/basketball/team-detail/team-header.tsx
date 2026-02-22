@@ -10,7 +10,8 @@ import { Text } from "@/components/ui/text";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
-import { ROUTES } from "@/lib/navigation/routes";
+import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
+import type { TeamRouteScope } from "./types";
 
 interface TeamHeaderProps {
   team: {
@@ -25,10 +26,15 @@ interface TeamHeaderProps {
     colorNames?: string[] | null;
   };
   orgSlug: string;
+  routeScope: TeamRouteScope;
 }
 
-export function TeamHeader({ team, orgSlug }: TeamHeaderProps) {
+export function TeamHeader({ team, orgSlug, routeScope }: TeamHeaderProps) {
   const t = useTranslations("Common");
+  const settingsHref =
+    routeScope === "org"
+      ? ROUTES.org.teams.settings(orgSlug, team.slug)
+      : TEAM_ROUTES.settings.root(orgSlug, team.slug);
 
   const primaryColor = team.colors?.[0] ?? null;
   const hasColoredBg = !!primaryColor;
@@ -102,7 +108,7 @@ export function TeamHeader({ team, orgSlug }: TeamHeaderProps) {
             className="rounded-full ring-1 bg-transparent hover:bg-transparent"
             size="sm"
           >
-            <Link href={ROUTES.org.teams.settings(orgSlug, team.slug)}>
+            <Link href={settingsHref}>
               <Settings className="size-4" />
               <span className="hidden md:block">{t("actions.settings")}</span>
             </Link>

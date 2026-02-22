@@ -1,58 +1,145 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminFromSessionClaims } from "@/lib/auth/roles";
+import { locales, routing, type Locale } from "@/i18n/routing";
+import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
+
+const STAFF_ROLES = [
+  "head_coach",
+  "technical_director",
+  "assistant_coach",
+] as const;
+type StaffRole = (typeof STAFF_ROLES)[number];
+
+function isStaffRole(value: unknown): value is StaffRole {
+  return typeof value === "string" && STAFF_ROLES.includes(value as StaffRole);
+}
+
+function resolveLocale(value: unknown): Locale {
+  if (typeof value === "string" && locales.includes(value as Locale)) {
+    return value as Locale;
+  }
+
+  return routing.defaultLocale;
+}
 
 /**
  * POST /api/staff/invite
  *
- * Creates a Clerk Organization Invitation with staff metadata.
- * When the user accepts the invitation, the webhook will read the metadata
- * from OrganizationMembership.publicMetadata and create the staff record.
+ * - Multi-tenant: creates Clerk Organization Invitations (current flow).
+ * - Single-tenant: creates Clerk user Invitations with public metadata.
+ *   The Clerk webhook consumes this metadata and creates the staff record.
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId, orgId } = await auth();
+    const authObject = await auth();
+    const { userId, orgId, has, orgSlug } = authObject;
 
-    if (!userId || !orgId) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { emailAddress, staffRole, clubId, categoryId } = body;
+    const body = (await request.json()) as {
+      emailAddress?: unknown;
+      staffRole?: unknown;
+      clubId?: unknown;
+      categoryId?: unknown;
+      locale?: unknown;
+      tenant?: unknown;
+    };
 
-    // Validate required fields
-    if (!emailAddress || !staffRole || !clubId) {
+    const emailAddress =
+      typeof body.emailAddress === "string" ? body.emailAddress.trim() : "";
+    const clubId = typeof body.clubId === "string" ? body.clubId : "";
+    const categoryId =
+      typeof body.categoryId === "string" ? body.categoryId : "";
+    const tenant =
+      typeof body.tenant === "string" && body.tenant.trim().length > 0
+        ? body.tenant.trim().toLowerCase()
+        : null;
+
+    if (!emailAddress || !clubId || !isStaffRole(body.staffRole)) {
       return NextResponse.json(
         { error: "Missing required fields: emailAddress, staffRole, clubId" },
         { status: 400 },
       );
     }
 
-    // Validate staffRole
-    const validRoles = ["head_coach", "technical_director", "assistant_coach"];
-    if (!validRoles.includes(staffRole)) {
-      return NextResponse.json(
-        {
-          error: `Invalid staffRole. Must be one of: ${validRoles.join(", ")}`,
+    const client = await clerkClient();
+    const locale = resolveLocale(body.locale);
+
+    if (isSingleTenantMode()) {
+      if (!isAdminFromSessionClaims(authObject.sessionClaims)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      if (tenant && tenant !== DEFAULT_TENANT_SLUG) {
+        return NextResponse.json(
+          { error: "Organization not found" },
+          { status: 404 },
+        );
+      }
+
+      const localePrefix = locale === routing.defaultLocale ? "" : `/${locale}`;
+      const redirectUrl = new URL(
+        `${localePrefix}/${DEFAULT_TENANT_SLUG}/sign-up`,
+        request.url,
+      ).toString();
+
+      const invitation = await client.invitations.createInvitation({
+        emailAddress,
+        redirectUrl,
+        publicMetadata: {
+          role: "coach",
+          pendingStaff: {
+            staffRole: body.staffRole,
+            clubId,
+            ...(categoryId ? { categoryId } : {}),
+          },
         },
-        { status: 400 },
-      );
+      });
+
+      return NextResponse.json({
+        success: true,
+        invitationId: invitation.id,
+      });
     }
 
-    const client = await clerkClient();
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    // Create organization invitation with staff metadata
-    // The publicMetadata will be transferred to OrganizationMembership.publicMetadata
-    // when the user accepts the invitation
+    const canInviteInOrg =
+      (has?.({ role: "org:admin" }) ?? false) ||
+      (has?.({ role: "org:superadmin" }) ?? false);
+    if (!canInviteInOrg) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (tenant && orgSlug && tenant !== orgSlug) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const localePrefix = locale === routing.defaultLocale ? "" : `/${locale}`;
+    const targetTenant = tenant ?? orgSlug;
+    const redirectUrl = targetTenant
+      ? new URL(
+          `${localePrefix}/${targetTenant}/sign-up`,
+          request.url,
+        ).toString()
+      : undefined;
+
     const invitation = await client.organizations.createOrganizationInvitation({
       organizationId: orgId,
       inviterUserId: userId,
       emailAddress,
       role: "org:member",
       publicMetadata: {
-        staffRole,
+        staffRole: body.staffRole,
         clubId,
-        ...(categoryId && { categoryId }),
+        ...(categoryId ? { categoryId } : {}),
       },
+      ...(redirectUrl ? { redirectUrl } : {}),
     });
 
     return NextResponse.json({
@@ -62,17 +149,15 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[/api/staff/invite] Error creating invitation:", error);
 
-    // Check if it's a Clerk error with more details
     if (error && typeof error === "object") {
       const clerkError = error as {
         errors?: Array<{ message: string; code: string }>;
         message?: string;
       };
 
-      // Clerk errors often have an errors array
       if (clerkError.errors && clerkError.errors.length > 0) {
         const errorMessages = clerkError.errors
-          .map((e) => e.message)
+          .map((item) => item.message)
           .join(", ");
         console.error("[/api/staff/invite] Clerk errors:", clerkError.errors);
         return NextResponse.json({ error: errorMessages }, { status: 400 });

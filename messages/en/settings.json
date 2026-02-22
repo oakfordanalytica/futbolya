@@ -16,7 +16,50 @@
     },
     "members": {
       "title": "Organization members",
-      "description": "Manage members, roles, and permissions"
+      "description": "Manage members, roles, and permissions",
+      "invite": {
+        "title": "Invite member",
+        "description": "Send invitations with the correct tenant redirect.",
+        "emailPlaceholder": "email@example.com",
+        "roleCoach": "Coach",
+        "roleAdmin": "Admin",
+        "submit": "Send invite",
+        "submitting": "Sending...",
+        "success": "Invitation sent successfully.",
+        "error": "Unable to send invitation.",
+        "emailRequired": "Email is required."
+      },
+      "table": {
+        "searchPlaceholder": "Search by name, email, or role...",
+        "emptyMessage": "No users to display.",
+        "summary": "Total members: {count}",
+        "columns": {
+          "createdAt": "Created",
+          "user": "User",
+          "role": "Role",
+          "actions": "Actions"
+        },
+        "roles": {
+          "coach": "Coach",
+          "admin": "Admin",
+          "superadmin": "Superadmin"
+        },
+        "actions": {
+          "delete": "Delete user",
+          "deleting": "Deleting..."
+        },
+        "deleteDialog": {
+          "title": "Delete user",
+          "description": "Are you sure you want to delete {email}? This action cannot be undone."
+        },
+        "toasts": {
+          "cannotDelete": "You can't delete this user.",
+          "roleUpdated": "Role updated successfully.",
+          "roleUpdateError": "Unable to update role.",
+          "userDeleted": "User deleted successfully.",
+          "userDeleteError": "Unable to delete user."
+        }
+      }
     },
     "teamConfig": {
       "ageCategories": {

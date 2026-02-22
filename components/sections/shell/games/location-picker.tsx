@@ -45,6 +45,18 @@ function SearchControlWithMarker({
   return (
     <>
       <MapSearchControl
+        className={`
+          top-auto bottom-1
+          [&_[data-slot=command-list]]:top-auto
+          [&_[data-slot=command-list]]:bottom-full
+          [&_[data-slot=command-list]]:mb-1
+          [&_[data-slot=command-list]]:max-h-36
+          [&_[data-slot=command-list]]:rounded-t-md
+          [&_[data-slot=command-list]]:rounded-b-none
+          [&_[data-slot=command-list]]:border-t
+          [&_[data-slot=command-list]]:border-b-0
+        `}
+        limit={5}
         onPlaceSelect={(feature) => {
           const position =
             feature.geometry.coordinates.toReversed() as LatLngExpression;

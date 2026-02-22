@@ -23,6 +23,8 @@ interface GameHeaderProps {
     awayTeamName: string;
     homeTeamLogo?: string;
     awayTeamLogo?: string;
+    homeTeamColor?: string;
+    awayTeamColor?: string;
     date: string;
     startTime: string;
     category: string;
@@ -54,6 +56,11 @@ const STATUS_STYLES: Record<string, string> = {
 const DEFAULT_HOME_COLOR = "#3b82f6";
 const DEFAULT_AWAY_COLOR = "#ef4444";
 
+function resolveTeamColor(color: string | undefined, fallback: string) {
+  const normalized = color?.trim();
+  return normalized && normalized.length > 0 ? normalized : fallback;
+}
+
 export function GameHeader({ game, orgSlug }: GameHeaderProps) {
   const t = useTranslations("Common");
 
@@ -63,10 +70,9 @@ export function GameHeader({ game, orgSlug }: GameHeaderProps) {
     game.status === "completed";
   const formattedDate = format(new Date(game.date), "PPP");
 
-  const homeColor = DEFAULT_HOME_COLOR;
-  const awayColor = DEFAULT_AWAY_COLOR;
-
-  const hasTeamColors = false;
+  const homeColor = resolveTeamColor(game.homeTeamColor, DEFAULT_HOME_COLOR);
+  const awayColor = resolveTeamColor(game.awayTeamColor, DEFAULT_AWAY_COLOR);
+  const hasTeamColors = Boolean(game.homeTeamColor || game.awayTeamColor);
 
   const gameInfo = [
     { label: t("games.category"), value: game.category },
