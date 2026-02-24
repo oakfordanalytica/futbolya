@@ -62,12 +62,22 @@ export function TeamSettingsClient({
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList>
-          <TabsTrigger value="general">{t("settings.general")}</TabsTrigger>
-          <TabsTrigger value="categories">{t("categories.title")}</TabsTrigger>
-          <TabsTrigger value="players">{t("players.title")}</TabsTrigger>
-          <TabsTrigger value="staff">{t("staff.title")}</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto">
+          <TabsList className="inline-flex min-w-max flex-nowrap">
+            <TabsTrigger value="general" className="flex-none shrink-0">
+              {t("settings.general")}
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="flex-none shrink-0">
+              {t("categories.title")}
+            </TabsTrigger>
+            <TabsTrigger value="players" className="flex-none shrink-0">
+              {t("players.title")}
+            </TabsTrigger>
+            <TabsTrigger value="staff" className="flex-none shrink-0">
+              {t("staff.title")}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="general" className="mt-6">
           <TeamGeneralForm team={team} orgSlug={orgSlug} />

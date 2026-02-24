@@ -9,7 +9,16 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/sections/shell/games/location-picker";
-import { AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CalendarIcon,
+  Check,
+  ChevronsUpDown,
+  Clock2Icon,
+  Trophy,
+  Zap,
+} from "lucide-react";
 
 import {
   Dialog,
@@ -33,7 +42,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -46,8 +54,6 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Zap, Trophy, ArrowLeft, CalendarIcon, Clock2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Gender = "male" | "female" | "mixed";
@@ -281,208 +287,139 @@ export function CreateGameDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden p-0">
-        <ScrollArea className="max-h-[90vh]">
-          <div className="p-6">
-            {gameType === null ? (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="text-left">
-                    {t("games.createTitle")}
-                  </DialogTitle>
-                </DialogHeader>
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        {gameType === null ? (
+          <>
+            <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
+              <DialogTitle className="text-left">
+                {t("games.createTitle")}
+              </DialogTitle>
+            </DialogHeader>
 
-                <div className="flex flex-col gap-4 py-4">
-                  <Button
-                    variant="outline"
-                    className="flex items-center justify-start gap-3 h-auto py-4 px-4"
-                    onClick={() => setGameType("quick")}
-                  >
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-                      <Zap className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium">{t("games.quickGame")}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {t("games.quickGameDescription")}
-                      </div>
-                    </div>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="flex items-center justify-start gap-3 h-auto py-4 px-4 opacity-50 cursor-not-allowed"
-                    disabled
-                  >
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-                      <Trophy className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium">{t("games.tournament")}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {t("games.tournamentDescription")}
-                      </div>
-                    </div>
-                  </Button>
-                </div>
-
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleOpenChange(false)}
-                  >
-                    {t("actions.cancel")}
-                  </Button>
-                </DialogFooter>
-              </>
-            ) : (
-              <>
-                <DialogHeader>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleBack}
-                      className="h-8 w-8"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <DialogTitle className="text-left">
-                      {t("games.quickGame")}
-                    </DialogTitle>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
+              <div className="flex flex-col gap-4">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full items-start justify-start gap-3 px-4 py-4 whitespace-normal"
+                  onClick={() => setGameType("quick")}
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <Zap className="h-5 w-5 text-primary" />
                   </div>
-                </DialogHeader>
+                  <div className="min-w-0 text-left">
+                    <div className="font-medium">{t("games.quickGame")}</div>
+                    <div className="text-sm text-muted-foreground whitespace-normal break-words">
+                      {t("games.quickGameDescription")}
+                    </div>
+                  </div>
+                </Button>
 
-                <form onSubmit={handleSubmit}>
-                  <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <FieldLabel>{t("games.homeTeam")}</FieldLabel>
-                        {hasPreselectedClub ? (
-                          <Button
-                            variant="outline"
-                            disabled
-                            className="w-full justify-start mt-2 cursor-not-allowed"
-                          >
-                            {(() => {
-                              const preselectedClub = (clubs || []).find(
-                                (c) => c._id === preselectedClubId,
-                              );
-                              return preselectedClub ? (
-                                <span className="flex items-center gap-2">
-                                  <TeamLogo club={preselectedClub} />
+                <Button
+                  variant="outline"
+                  className="h-auto w-full cursor-not-allowed items-start justify-start gap-3 px-4 py-4 opacity-50 whitespace-normal"
+                  disabled
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <Trophy className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="font-medium">{t("games.tournament")}</div>
+                    <div className="text-sm text-muted-foreground whitespace-normal break-words">
+                      {t("games.tournamentDescription")}
+                    </div>
+                  </div>
+                </Button>
+              </div>
+            </div>
+
+            <DialogFooter className="border-t px-4 py-3 sm:px-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+              >
+                {t("actions.cancel")}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader className="border-b px-4 py-3 sm:px-6 sm:py-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBack}
+                  className="h-8 w-8"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <DialogTitle className="text-left">
+                  {t("games.quickGame")}
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+
+            <form
+              onSubmit={handleSubmit}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+                <div className="flex flex-col gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <FieldLabel>{t("games.homeTeam")}</FieldLabel>
+                      {hasPreselectedClub ? (
+                        <Button
+                          variant="outline"
+                          disabled
+                          className="mt-2 w-full min-w-0 cursor-not-allowed justify-start"
+                        >
+                          {(() => {
+                            const preselectedClub = (clubs || []).find(
+                              (c) => c._id === preselectedClubId,
+                            );
+                            return preselectedClub ? (
+                              <span className="flex min-w-0 items-center gap-2">
+                                <TeamLogo club={preselectedClub} />
+                                <span className="truncate">
                                   {preselectedClub.name}
                                 </span>
-                              ) : (
-                                t("actions.loading")
-                              );
-                            })()}
-                          </Button>
-                        ) : (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn(
-                                  "w-full justify-between mt-2",
-                                  !formState.homeTeamId &&
-                                    "text-muted-foreground",
-                                )}
-                              >
-                                {formState.homeTeamId ? (
-                                  <span className="flex items-center gap-2">
-                                    <TeamLogo
-                                      club={
-                                        availableHomeTeams.find(
-                                          (c) => c._id === formState.homeTeamId,
-                                        )!
-                                      }
-                                    />
-                                    {
-                                      availableHomeTeams.find(
-                                        (c) => c._id === formState.homeTeamId,
-                                      )?.name
-                                    }
-                                  </span>
-                                ) : (
-                                  t("games.selectTeam")
-                                )}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-[200px] p-0"
-                              align="start"
-                            >
-                              <Command>
-                                <CommandInput
-                                  placeholder={t("actions.search")}
-                                />
-                                <CommandList>
-                                  <CommandEmpty>
-                                    {t("table.noResults")}
-                                  </CommandEmpty>
-                                  <CommandGroup>
-                                    {availableHomeTeams.map((club) => (
-                                      <CommandItem
-                                        key={club._id}
-                                        value={club.name}
-                                        onSelect={() => {
-                                          updateField("homeTeamId", club._id);
-                                        }}
-                                      >
-                                        <TeamLogo club={club} />
-                                        <span className="ml-2">
-                                          {club.name}
-                                        </span>
-                                        <Check
-                                          className={cn(
-                                            "ml-auto h-4 w-4",
-                                            formState.homeTeamId === club._id
-                                              ? "opacity-100"
-                                              : "opacity-0",
-                                          )}
-                                        />
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                        )}
-                      </div>
-
-                      <div>
-                        <FieldLabel>{t("games.awayTeam")}</FieldLabel>
+                              </span>
+                            ) : (
+                              t("actions.loading")
+                            );
+                          })()}
+                        </Button>
+                      ) : (
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
                               role="combobox"
                               className={cn(
-                                "w-full justify-between mt-2",
-                                !formState.awayTeamId &&
+                                "mt-2 w-full min-w-0 justify-between",
+                                !formState.homeTeamId &&
                                   "text-muted-foreground",
                               )}
                             >
-                              {formState.awayTeamId ? (
-                                <span className="flex items-center gap-2">
+                              {formState.homeTeamId ? (
+                                <span className="flex min-w-0 items-center gap-2">
                                   <TeamLogo
                                     club={
-                                      availableAwayTeams.find(
-                                        (c) => c._id === formState.awayTeamId,
+                                      availableHomeTeams.find(
+                                        (c) => c._id === formState.homeTeamId,
                                       )!
                                     }
                                   />
-                                  {
-                                    availableAwayTeams.find(
-                                      (c) => c._id === formState.awayTeamId,
-                                    )?.name
-                                  }
+                                  <span className="truncate">
+                                    {
+                                      availableHomeTeams.find(
+                                        (c) => c._id === formState.homeTeamId,
+                                      )?.name
+                                    }
+                                  </span>
                                 </span>
                               ) : (
                                 t("games.selectTeam")
@@ -491,7 +428,7 @@ export function CreateGameDialog({
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent
-                            className="w-[200px] p-0"
+                            className="w-[--radix-popover-trigger-width] p-0"
                             align="start"
                           >
                             <Command>
@@ -501,12 +438,12 @@ export function CreateGameDialog({
                                   {t("table.noResults")}
                                 </CommandEmpty>
                                 <CommandGroup>
-                                  {availableAwayTeams.map((club) => (
+                                  {availableHomeTeams.map((club) => (
                                     <CommandItem
                                       key={club._id}
                                       value={club.name}
                                       onSelect={() => {
-                                        updateField("awayTeamId", club._id);
+                                        updateField("homeTeamId", club._id);
                                       }}
                                     >
                                       <TeamLogo club={club} />
@@ -514,7 +451,7 @@ export function CreateGameDialog({
                                       <Check
                                         className={cn(
                                           "ml-auto h-4 w-4",
-                                          formState.awayTeamId === club._id
+                                          formState.homeTeamId === club._id
                                             ? "opacity-100"
                                             : "opacity-0",
                                         )}
@@ -526,163 +463,230 @@ export function CreateGameDialog({
                             </Command>
                           </PopoverContent>
                         </Popover>
-                      </div>
+                      )}
                     </div>
 
                     <div>
-                      <FieldLabel>{t("games.dateTime")}</FieldLabel>
+                      <FieldLabel>{t("games.awayTeam")}</FieldLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
+                            role="combobox"
                             className={cn(
-                              "w-full justify-start text-left font-normal mt-2",
-                              !formState.date && "text-muted-foreground",
+                              "mt-2 w-full min-w-0 justify-between",
+                              !formState.awayTeamId && "text-muted-foreground",
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formState.date
-                              ? `${format(formState.date, "PPP")} · ${formState.startTime}`
-                              : t("games.selectDateTime")}
+                            {formState.awayTeamId ? (
+                              <span className="flex min-w-0 items-center gap-2">
+                                <TeamLogo
+                                  club={
+                                    availableAwayTeams.find(
+                                      (c) => c._id === formState.awayTeamId,
+                                    )!
+                                  }
+                                />
+                                <span className="truncate">
+                                  {
+                                    availableAwayTeams.find(
+                                      (c) => c._id === formState.awayTeamId,
+                                    )?.name
+                                  }
+                                </span>
+                              </span>
+                            ) : (
+                              t("games.selectTeam")
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={formState.date}
-                            onSelect={(date: Date | undefined) =>
-                              updateField("date", date)
-                            }
-                          />
-                          <div className="border-t p-3">
-                            <FieldLabel htmlFor="time-from">
-                              {t("games.startTime")}
-                            </FieldLabel>
-                            <InputGroup className="mt-1.5">
-                              <InputGroupInput
-                                id="time-from"
-                                type="time"
-                                value={formState.startTime}
-                                onChange={(e) =>
-                                  updateField("startTime", e.target.value)
-                                }
-                                className="appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                              />
-                              <InputGroupAddon>
-                                <Clock2Icon className="text-muted-foreground" />
-                              </InputGroupAddon>
-                            </InputGroup>
-                          </div>
+                        <PopoverContent
+                          className="w-[--radix-popover-trigger-width] p-0"
+                          align="start"
+                        >
+                          <Command>
+                            <CommandInput placeholder={t("actions.search")} />
+                            <CommandList>
+                              <CommandEmpty>
+                                {t("table.noResults")}
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {availableAwayTeams.map((club) => (
+                                  <CommandItem
+                                    key={club._id}
+                                    value={club.name}
+                                    onSelect={() => {
+                                      updateField("awayTeamId", club._id);
+                                    }}
+                                  >
+                                    <TeamLogo club={club} />
+                                    <span className="ml-2">{club.name}</span>
+                                    <Check
+                                      className={cn(
+                                        "ml-auto h-4 w-4",
+                                        formState.awayTeamId === club._id
+                                          ? "opacity-100"
+                                          : "opacity-0",
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
                         </PopoverContent>
                       </Popover>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <FieldLabel>{t("games.category")}</FieldLabel>
-                        <Select
-                          value={formState.category}
-                          onValueChange={(value) =>
-                            updateField("category", value)
-                          }
+                  <div>
+                    <FieldLabel>{t("games.dateTime")}</FieldLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "mt-2 w-full justify-start text-left font-normal",
+                            !formState.date && "text-muted-foreground",
+                          )}
                         >
-                          <SelectTrigger className="w-full mt-2">
-                            <SelectValue
-                              placeholder={t("games.selectCategory")}
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {formState.date
+                            ? `${format(formState.date, "PPP")} · ${formState.startTime}`
+                            : t("games.selectDateTime")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={formState.date}
+                          onSelect={(date: Date | undefined) =>
+                            updateField("date", date)
+                          }
+                        />
+                        <div className="border-t p-3">
+                          <FieldLabel htmlFor="time-from">
+                            {t("games.startTime")}
+                          </FieldLabel>
+                          <InputGroup className="mt-1.5">
+                            <InputGroupInput
+                              id="time-from"
+                              type="time"
+                              value={formState.startTime}
+                              onChange={(e) =>
+                                updateField("startTime", e.target.value)
+                              }
+                              className="appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                             />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ageCategories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.name}>
-                                {cat.name} ({cat.minAge}-{cat.maxAge})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                            <InputGroupAddon>
+                              <Clock2Icon className="text-muted-foreground" />
+                            </InputGroupAddon>
+                          </InputGroup>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
 
-                      <div>
-                        <FieldLabel>{t("games.gender")}</FieldLabel>
-                        <Select
-                          value={formState.gender}
-                          onValueChange={(value) =>
-                            updateField("gender", value as Gender)
-                          }
-                        >
-                          <SelectTrigger className="w-full mt-2">
-                            <SelectValue placeholder={t("games.gender")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {enabledGenders.map((gender) => (
-                              <SelectItem key={gender} value={gender}>
-                                {t(`gender.${gender}`)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <FieldLabel>{t("games.category")}</FieldLabel>
+                      <Select
+                        value={formState.category}
+                        onValueChange={(value) =>
+                          updateField("category", value)
+                        }
+                      >
+                        <SelectTrigger className="mt-2 w-full">
+                          <SelectValue
+                            placeholder={t("games.selectCategory")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ageCategories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.name}>
+                              {cat.name} ({cat.minAge}-{cat.maxAge})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    {!categoryValidation.isValid &&
-                      categoryValidation.missingTeams.length > 0 && (
-                        <div className="flex items-start gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
-                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="font-medium">
-                              {t("games.categoryValidationError")}
-                            </p>
-                            <p className="mt-1">
-                              {t("games.teamsMissingCategory", {
-                                teams:
-                                  categoryValidation.missingTeams.join(", "),
-                                category: formState.category,
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
                     <div>
-                      <FieldLabel>{t("games.location")}</FieldLabel>
-                      <div className="mt-2 h-48 rounded-md overflow-hidden border">
-                        <LocationPicker
-                          onLocationChange={(location) => {
-                            if (location) {
-                              updateField(
-                                "locationCoordinates",
-                                location.position as [number, number],
-                              );
-                              updateField("locationName", location.name);
-                            }
-                          }}
-                        />
-                      </div>
+                      <FieldLabel>{t("games.gender")}</FieldLabel>
+                      <Select
+                        value={formState.gender}
+                        onValueChange={(value) =>
+                          updateField("gender", value as Gender)
+                        }
+                      >
+                        <SelectTrigger className="mt-2 w-full">
+                          <SelectValue placeholder={t("games.gender")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {enabledGenders.map((gender) => (
+                            <SelectItem key={gender} value={gender}>
+                              {t(`gender.${gender}`)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
-                  <DialogFooter className="mt-6">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleOpenChange(false)}
-                      disabled={isSubmitting}
-                    >
-                      {t("actions.cancel")}
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting || !isFormValid}
-                    >
-                      {isSubmitting
-                        ? t("actions.loading")
-                        : t("actions.create")}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </>
-            )}
-          </div>
-        </ScrollArea>
+                  {!categoryValidation.isValid &&
+                    categoryValidation.missingTeams.length > 0 && (
+                      <div className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                        <div>
+                          <p className="font-medium">
+                            {t("games.categoryValidationError")}
+                          </p>
+                          <p className="mt-1">
+                            {t("games.teamsMissingCategory", {
+                              teams: categoryValidation.missingTeams.join(", "),
+                              category: formState.category,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                  <div>
+                    <FieldLabel>{t("games.location")}</FieldLabel>
+                    <div className="mt-2 h-48 overflow-hidden rounded-md border">
+                      <LocationPicker
+                        onLocationChange={(location) => {
+                          if (location) {
+                            updateField(
+                              "locationCoordinates",
+                              location.position as [number, number],
+                            );
+                            updateField("locationName", location.name);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="border-t px-4 py-3 sm:px-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOpenChange(false)}
+                  disabled={isSubmitting}
+                >
+                  {t("actions.cancel")}
+                </Button>
+                <Button type="submit" disabled={isSubmitting || !isFormValid}>
+                  {isSubmitting ? t("actions.loading") : t("actions.create")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -212,161 +212,167 @@ export function PlayerFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
+        <DialogHeader className="border-b px-4 py-3 sm:px-6 sm:py-4">
           <DialogTitle>
             {isEditMode ? t("players.edit") : t("players.create")}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-            <AvatarUpload
-              onFileChange={handleFileChange}
-              defaultAvatar={currentPhotoUrl ?? undefined}
-            />
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+            <div className="space-y-6">
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+                <AvatarUpload
+                  onFileChange={handleFileChange}
+                  defaultAvatar={currentPhotoUrl ?? undefined}
+                />
 
-            <FieldGroup className="flex-1 gap-4 w-full">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel>{t("players.firstName")}</FieldLabel>
-                  <Input
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    placeholder={t("players.firstName")}
-                  />
-                </Field>
+                <FieldGroup className="w-full flex-1 gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field>
+                      <FieldLabel>{t("players.firstName")}</FieldLabel>
+                      <Input
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                        placeholder={t("players.firstName")}
+                      />
+                    </Field>
 
-                <Field>
-                  <FieldLabel>{t("players.lastName")}</FieldLabel>
-                  <Input
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                    placeholder={t("players.lastName")}
-                  />
-                </Field>
+                    <Field>
+                      <FieldLabel>{t("players.lastName")}</FieldLabel>
+                      <Input
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
+                        placeholder={t("players.lastName")}
+                      />
+                    </Field>
+                  </div>
+                </FieldGroup>
               </div>
-            </FieldGroup>
-          </div>
 
-          <Field>
-            <FieldLabel>{t("players.dateOfBirth")}</FieldLabel>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dateOfBirth && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateOfBirth ? (
-                    format(dateOfBirth, "PPP")
-                  ) : (
-                    <span>{t("players.dateOfBirth")}</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateOfBirth}
-                  onSelect={setDateOfBirth}
-                  captionLayout="dropdown"
-                  fromYear={1960}
-                  toYear={new Date().getFullYear()}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date("1900-01-01")
-                  }
-                />
-              </PopoverContent>
-            </Popover>
-          </Field>
-
-          <FieldGroup>
-            <div className="grid gap-4 sm:grid-cols-2">
               <Field>
-                <FieldLabel>{t("players.jerseyNumber")}</FieldLabel>
-                <Input
-                  type="number"
-                  min="0"
-                  max="99"
-                  value={jerseyNumber}
-                  onChange={(e) => setJerseyNumber(e.target.value)}
-                  placeholder="#"
-                />
+                <FieldLabel>{t("players.dateOfBirth")}</FieldLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dateOfBirth && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateOfBirth ? (
+                        format(dateOfBirth, "PPP")
+                      ) : (
+                        <span>{t("players.dateOfBirth")}</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateOfBirth}
+                      onSelect={setDateOfBirth}
+                      captionLayout="dropdown"
+                      fromYear={1960}
+                      toYear={new Date().getFullYear()}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
               </Field>
 
+              <FieldGroup>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel>{t("players.jerseyNumber")}</FieldLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="99"
+                      value={jerseyNumber}
+                      onChange={(e) => setJerseyNumber(e.target.value)}
+                      placeholder="#"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>{t("players.position")}</FieldLabel>
+                    <Select value={position} onValueChange={setPosition}>
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={t("players.selectPosition")}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {positions.map((pos) => (
+                          <SelectItem key={pos.id} value={pos.id}>
+                            {pos.name} ({pos.abbreviation})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+              </FieldGroup>
+
+              <FieldGroup>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel>{t("players.height")}</FieldLabel>
+                    <Input
+                      type="number"
+                      min="100"
+                      max="250"
+                      value={height}
+                      onChange={(e) => setHeight(e.target.value)}
+                      placeholder="cm"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>{t("players.weight")}</FieldLabel>
+                    <Input
+                      type="number"
+                      min="30"
+                      max="200"
+                      value={weight}
+                      onChange={(e) => setWeight(e.target.value)}
+                      placeholder="kg"
+                    />
+                  </Field>
+                </div>
+              </FieldGroup>
+
               <Field>
-                <FieldLabel>{t("players.position")}</FieldLabel>
-                <Select value={position} onValueChange={setPosition}>
+                <FieldLabel>{t("players.category")}</FieldLabel>
+                <Select value={categoryId} onValueChange={setCategoryId}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("players.selectPosition")} />
+                    <SelectValue placeholder={t("players.selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {positions.map((pos) => (
-                      <SelectItem key={pos.id} value={pos.id}>
-                        {pos.name} ({pos.abbreviation})
+                    {categories?.map((category) => (
+                      <SelectItem key={category._id} value={category._id}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Field>
             </div>
-          </FieldGroup>
+          </div>
 
-          <FieldGroup>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel>{t("players.height")}</FieldLabel>
-                <Input
-                  type="number"
-                  min="100"
-                  max="250"
-                  value={height}
-                  onChange={(e) => setHeight(e.target.value)}
-                  placeholder="cm"
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel>{t("players.weight")}</FieldLabel>
-                <Input
-                  type="number"
-                  min="30"
-                  max="200"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  placeholder="kg"
-                />
-              </Field>
-            </div>
-          </FieldGroup>
-
-          <Field>
-            <FieldLabel>{t("players.category")}</FieldLabel>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("players.selectCategory")} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories?.map((category) => (
-                  <SelectItem key={category._id} value={category._id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <DialogFooter>
+          <DialogFooter className="border-t px-4 py-3 sm:px-6">
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={isSubmitting}
             >
               {t("actions.cancel")}
