@@ -67,7 +67,7 @@
     "suspended": "Suspendido"
   },
   "teams": {
-    "searchPlaceholder": "Buscar por nombre, apodo, delegado, conferencia...",
+    "searchPlaceholder": "Buscar por nombre, apodo...",
     "emptyMessage": "No se encontraron equipos. Crea tu primer equipo para comenzar.",
     "description": "Administra todos los equipos de tu liga",
     "name": "Nombre",
@@ -75,15 +75,13 @@
     "nicknameDescription": "Se usará como la URL del equipo",
     "conference": "Conferencia",
     "division": "División",
-    "delegate": "Delegado",
-    "delegateDescription": "Ingresa el correo de la persona que será el delegado del equipo",
+    "headCoach": "Entrenador Principal",
+    "headCoachDescription": "Ingresa el correo de la persona que será el entrenador principal del equipo",
     "foundedYear": "Fundado",
     "status": "Estado",
     "colors": "Colores",
     "colorName": "Nombre del color (ej. Azul marino)",
-    "inviteDelegate": "Invitar delegado",
-    "selectConferenceFirst": "Selecciona una conferencia primero",
-    "noDivisions": "No hay divisiones disponibles",
+
     "statusOptions": {
       "affiliated": "Afiliado",
       "invited": "Invitado",

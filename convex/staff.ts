@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
-import { getCurrentUser } from "./lib/auth";
+import { getCurrentUserOrNull } from "./lib/auth";
 import {
   hasOrgAdminAccess,
   requireClubAccess,
@@ -29,6 +29,10 @@ const staffMemberValidator = v.object({
   categoryName: v.optional(v.string()),
 });
 
+const ENABLED_STAFF_ROLES = ["head_coach"] as const;
+type EnabledStaffRole = (typeof ENABLED_STAFF_ROLES)[number];
+const enabledStaffRolesSet = new Set<string>(ENABLED_STAFF_ROLES);
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -48,12 +52,17 @@ export const listAllByClubSlug = query({
       .query("staff")
       .withIndex("byClub", (q) => q.eq("clubId", club._id))
       .collect();
+    const visibleStaffMembers = staffMembers.filter((member) =>
+      enabledStaffRolesSet.has(member.role),
+    );
 
     // Batch fetch users and categories
-    const userIds = [...new Set(staffMembers.map((s) => s.userId))];
+    const userIds = [...new Set(visibleStaffMembers.map((s) => s.userId))];
     const categoryIds = [
       ...new Set(
-        staffMembers.filter((s) => s.categoryId).map((s) => s.categoryId!),
+        visibleStaffMembers
+          .filter((s) => s.categoryId)
+          .map((s) => s.categoryId!),
       ),
     ];
 
@@ -74,11 +83,11 @@ export const listAllByClubSlug = query({
       fullName: string;
       email: string;
       avatarUrl?: string;
-      role: "head_coach" | "technical_director" | "assistant_coach";
+      role: EnabledStaffRole;
       categoryName?: string;
     }> = [];
 
-    for (const staff of staffMembers) {
+    for (const staff of visibleStaffMembers) {
       const user = userMap.get(staff.userId);
       const category = staff.categoryId
         ? categoryMap.get(staff.categoryId)
@@ -93,7 +102,7 @@ export const listAllByClubSlug = query({
         fullName: `${user.firstName} ${user.lastName}`.trim(),
         email: user.email,
         avatarUrl: user.imageUrl,
-        role: staff.role,
+        role: staff.role as EnabledStaffRole,
         categoryName: category?.name,
       });
     }
@@ -110,7 +119,10 @@ export const listMyClubSlugsByOrganization = query({
   args: { organizationSlug: v.string() },
   returns: v.array(v.string()),
   handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
+    const user = await getCurrentUserOrNull(ctx);
+    if (!user) {
+      return [];
+    }
 
     const organization = await ctx.db
       .query("organizations")
@@ -179,8 +191,7 @@ export const createFromClerkMembership = internalMutation({
     }
 
     // Validate staffRole
-    const validRoles = ["head_coach", "technical_director", "assistant_coach"];
-    if (!validRoles.includes(args.staffRole)) {
+    if (!enabledStaffRolesSet.has(args.staffRole)) {
       console.error(
         `[staff.createFromClerkMembership] Invalid staffRole: ${args.staffRole}`,
       );
@@ -223,10 +234,7 @@ export const createFromClerkMembership = internalMutation({
       userId: args.userId,
       clubId: club._id,
       categoryId,
-      role: args.staffRole as
-        | "head_coach"
-        | "technical_director"
-        | "assistant_coach",
+      role: args.staffRole as EnabledStaffRole,
     });
 
     console.log(
@@ -252,7 +260,22 @@ export const removeStaff = mutation({
       throw new Error("Staff member not found");
     }
 
-    await requireClubAccess(ctx, staff.clubId);
+    const access = await requireClubAccess(ctx, staff.clubId);
+
+    if (staff.userId === access.user._id) {
+      throw new Error("You cannot remove your own staff assignment");
+    }
+
+    if (access.accessLevel === "coach") {
+      const actorRole = access.staffAssignment?.role;
+      if (actorRole !== "head_coach") {
+        throw new Error("Only head coaches can remove staff members");
+      }
+
+      if (staff.role === "head_coach") {
+        throw new Error("Only organization admins can remove a head coach");
+      }
+    }
 
     await ctx.db.delete(args.staffId);
 

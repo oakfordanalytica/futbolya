@@ -33,10 +33,8 @@ const clubListItemValidator = v.object({
   name: v.string(),
   nickname: v.string(),
   logoUrl: v.optional(v.string()),
-  conference: v.string(),
-  delegate: v.object({
+  headCoach: v.object({
     name: v.string(),
-    avatarUrl: v.string(),
   }),
   status: clubStatus,
 });
@@ -67,13 +65,45 @@ export const listByLeague = query({
       .withIndex("byOrganization", (q) => q.eq("organizationId", org._id))
       .collect();
 
+    const headCoachAssignments = await Promise.all(
+      clubs.map(async (club) => {
+        const assignment = await ctx.db
+          .query("staff")
+          .withIndex("byClubAndRole", (q) =>
+            q.eq("clubId", club._id).eq("role", "head_coach"),
+          )
+          .order("desc")
+          .first();
+        return [club._id, assignment] as const;
+      }),
+    );
+    const headCoachAssignmentByClub = new Map(headCoachAssignments);
+
+    const headCoachUserIds = [
+      ...new Set(
+        clubs
+          .map((club) => {
+            const assignment = headCoachAssignmentByClub.get(club._id);
+            return assignment?.userId ?? club.delegateUserId;
+          })
+          .filter((userId): userId is Id<"users"> => Boolean(userId)),
+      ),
+    ];
+    const headCoachUsers = await Promise.all(
+      headCoachUserIds.map((userId) => ctx.db.get(userId)),
+    );
+    const headCoachUserMap = new Map(
+      headCoachUsers
+        .filter((user): user is NonNullable<typeof user> => Boolean(user))
+        .map((user) => [user._id, user]),
+    );
+
     const result: Array<{
       _id: Id<"clubs">;
       name: string;
       nickname: string;
       logoUrl?: string;
-      conference: string;
-      delegate: { name: string; avatarUrl: string };
+      headCoach: { name: string };
       status: "affiliated" | "invited" | "suspended";
     }> = [];
 
@@ -83,24 +113,23 @@ export const listByLeague = query({
         logoUrl = (await ctx.storage.getUrl(club.logoStorageId)) ?? undefined;
       }
 
-      let delegateName = "";
-      let delegateAvatarUrl = "";
-      if (club.delegateUserId) {
-        const delegate = await ctx.db.get(club.delegateUserId);
-        if (delegate) {
-          delegateName = `${delegate.firstName} ${delegate.lastName}`.trim();
-        }
-      }
+      const headCoachAssignment = headCoachAssignmentByClub.get(club._id);
+      const headCoachUserId =
+        headCoachAssignment?.userId ?? club.delegateUserId;
+      const headCoachUser = headCoachUserId
+        ? headCoachUserMap.get(headCoachUserId)
+        : undefined;
+      const headCoachName = headCoachUser
+        ? `${headCoachUser.firstName} ${headCoachUser.lastName}`.trim()
+        : "";
 
       result.push({
         _id: club._id,
         name: club.name,
         nickname: club.nickname ?? "",
         logoUrl,
-        conference: "",
-        delegate: {
-          name: delegateName,
-          avatarUrl: delegateAvatarUrl,
+        headCoach: {
+          name: headCoachName,
         },
         status: club.status,
       });

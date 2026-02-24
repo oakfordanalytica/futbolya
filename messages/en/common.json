@@ -67,7 +67,7 @@
     "suspended": "Suspended"
   },
   "teams": {
-    "searchPlaceholder": "Search by name, nickname, delegate, conference...",
+    "searchPlaceholder": "Search by name, nickname...",
     "emptyMessage": "No teams found. Create your first team to get started.",
     "description": "Manage all teams in your league",
     "name": "Name",
@@ -75,15 +75,12 @@
     "nicknameDescription": "This will be used as the team URL",
     "conference": "Conference",
     "division": "Division",
-    "delegate": "Delegate",
-    "delegateDescription": "Enter the email of the person who will be the team delegate",
+    "headCoach": "Head Coach",
+    "headCoachDescription": "Enter the email of the person who will be the team head coach",
     "foundedYear": "Founded",
     "status": "Status",
     "colors": "Colors",
     "colorName": "Color name (e.g. Navy)",
-    "inviteDelegate": "Invite delegate",
-    "selectConferenceFirst": "Select a conference first",
-    "noDivisions": "No divisions available",
     "statusOptions": {
       "affiliated": "Affiliated",
       "invited": "Invited",

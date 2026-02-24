@@ -15,7 +15,7 @@ export const COLOR_SCHEMES = [
 
 export type ColorScheme = (typeof COLOR_SCHEMES)[number];
 
-export const DEFAULT_COLOR_SCHEME: ColorScheme = "zinc";
+export const DEFAULT_COLOR_SCHEME: ColorScheme = "doom64";
 
 export interface ColorSchemeConfig {
   name: ColorScheme;

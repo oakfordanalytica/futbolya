@@ -3,17 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminFromSessionClaims } from "@/lib/auth/roles";
 import { locales, routing, type Locale } from "@/i18n/routing";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
-
-const STAFF_ROLES = [
-  "head_coach",
-  "technical_director",
-  "assistant_coach",
-] as const;
-type StaffRole = (typeof STAFF_ROLES)[number];
-
-function isStaffRole(value: unknown): value is StaffRole {
-  return typeof value === "string" && STAFF_ROLES.includes(value as StaffRole);
-}
+import { isEnabledStaffRole } from "@/lib/staff/roles";
 
 function resolveLocale(value: unknown): Locale {
   if (typeof value === "string" && locales.includes(value as Locale)) {
@@ -58,7 +48,7 @@ export async function POST(request: NextRequest) {
         ? body.tenant.trim().toLowerCase()
         : null;
 
-    if (!emailAddress || !clubId || !isStaffRole(body.staffRole)) {
+    if (!emailAddress || !clubId || !isEnabledStaffRole(body.staffRole)) {
       return NextResponse.json(
         { error: "Missing required fields: emailAddress, staffRole, clubId" },
         { status: 400 },

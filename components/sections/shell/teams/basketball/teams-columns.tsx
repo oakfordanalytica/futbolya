@@ -11,10 +11,8 @@ export interface BasketballTeamRow {
   name: string;
   nickname: string;
   logoUrl?: string;
-  conference: string;
-  delegate: {
+  headCoach: {
     name: string;
-    avatarUrl: string;
   };
   status: "affiliated" | "invited" | "suspended";
 }
@@ -32,7 +30,7 @@ export function createBasketballTeamColumns(
   t: Translator,
 ): ColumnDef<BasketballTeamRow>[] {
   return [
-    createSearchColumn<BasketballTeamRow>(["name", "nickname", "conference"]),
+    createSearchColumn<BasketballTeamRow>(["name", "nickname"]),
 
     {
       accessorKey: "name",
@@ -69,22 +67,12 @@ export function createBasketballTeamColumns(
     },
 
     {
-      accessorKey: "conference",
-      header: createSortableHeader(t("teams.conference")),
+      id: "headCoachName",
+      accessorFn: (row) => row.headCoach.name,
+      header: createSortableHeader(t("teams.headCoach")),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {row.original.conference || "—"}
-        </span>
-      ),
-    },
-
-    {
-      id: "delegateName",
-      accessorFn: (row) => row.delegate.name,
-      header: createSortableHeader(t("teams.delegate")),
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {row.original.delegate.name || "—"}
+          {row.original.headCoach.name || "—"}
         </span>
       ),
     },

@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import Image from "next/image";
 import { Navbar, NavbarSection, NavbarSpacer } from "@/components/ui/navbar";
 import {
   Sidebar,
@@ -19,33 +20,21 @@ import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { getNavConfig, getNavContext, isItemActive } from "@/lib/navigation";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/navigation/routes";
-import { routing } from "@/i18n/routing";
-import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
+import {
+  getLocalePrefix,
+  getOrgUserProfileUrl,
+  getTenantSignInUrl,
+  withLocalePrefix,
+} from "@/lib/navigation/user-button";
+import { isSingleTenantMode } from "@/lib/tenancy/config";
 
 const SINGLE_TENANT_MODE = isSingleTenantMode();
-
-function getLocalePrefix(locale: string): string {
-  return locale === routing.defaultLocale ? "" : `/${locale}`;
-}
-
-function withLocalePrefix(locale: string, path: string): string {
-  return `${getLocalePrefix(locale)}${path}`;
-}
-
-function getTenantSignInUrl(locale: string, orgSlug: string | null): string {
-  if (orgSlug) {
-    return withLocalePrefix(locale, ROUTES.tenant.auth.signIn(orgSlug));
-  }
-  return withLocalePrefix(locale, ROUTES.auth.signIn);
-}
 
 export function NavbarAppSidebar() {
   const params = useParams();
   const locale = useLocale();
   const orgSlug = (params.tenant as string) || null;
-  const userProfileUrl = orgSlug
-    ? withLocalePrefix(locale, ROUTES.org.settings.profileSecurity(orgSlug))
-    : withLocalePrefix(locale, ROUTES.auth.organizations);
+  const userProfileUrl = getOrgUserProfileUrl(locale, orgSlug);
   const afterSignOutUrl = getTenantSignInUrl(locale, orgSlug);
 
   return (
@@ -76,9 +65,7 @@ export function SidebarAppSidebar() {
   const organizationProfileUrl = orgSlug
     ? withLocalePrefix(locale, ROUTES.org.settings.root(orgSlug))
     : organizationsUrl;
-  const userProfileUrl = orgSlug
-    ? withLocalePrefix(locale, ROUTES.org.settings.profileSecurity(orgSlug))
-    : organizationsUrl;
+  const userProfileUrl = getOrgUserProfileUrl(locale, orgSlug);
 
   const context = getNavContext(pathname, orgSlug);
   const { items, settingsHref } = getNavConfig(context);
@@ -87,10 +74,15 @@ export function SidebarAppSidebar() {
     <Sidebar>
       <SidebarHeader>
         {SINGLE_TENANT_MODE ? (
-          <div className="w-full rounded-md px-3 py-2 text-left">
-            <p className="text-lg font-serif font-semibold text-sidebar-foreground">
-              {orgSlug ?? DEFAULT_TENANT_SLUG}
-            </p>
+          <div className="w-full px-2">
+            <Image
+              src="/logo_solid.png"
+              alt="NISAA"
+              width={200}
+              height={100}
+              className="h-12 w-auto"
+              priority
+            />
           </div>
         ) : (
           <OrganizationSwitcher

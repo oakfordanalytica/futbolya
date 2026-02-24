@@ -4,14 +4,17 @@ import {
   createSortableHeader,
 } from "@/components/table/column-helpers";
 import type { FilterConfig } from "@/lib/table/types";
+import { Avatar } from "@/components/ui/avatar";
 
 export interface GameRow {
   _id: string;
   _creationTime: number;
   homeTeamId: string;
   homeTeamName: string;
+  homeTeamLogo?: string;
   awayTeamId: string;
   awayTeamName: string;
+  awayTeamLogo?: string;
   date: string;
   startTime: string;
   category: string;
@@ -40,6 +43,20 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950",
 };
 
+function MatchTeam({ name, logoUrl }: { name: string; logoUrl?: string }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <Avatar
+        src={logoUrl}
+        initials={name.charAt(0).toUpperCase()}
+        alt={name}
+        className="size-6 bg-muted text-muted-foreground"
+      />
+      <span className="truncate font-medium">{name}</span>
+    </div>
+  );
+}
+
 export function createGameColumns(t: Translator): ColumnDef<GameRow>[] {
   return [
     createSearchColumn<GameRow>([
@@ -53,10 +70,16 @@ export function createGameColumns(t: Translator): ColumnDef<GameRow>[] {
       accessorKey: "teams",
       header: t("games.match"),
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{row.original.homeTeamName}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <MatchTeam
+            name={row.original.homeTeamName}
+            logoUrl={row.original.homeTeamLogo}
+          />
           <span className="text-muted-foreground">vs</span>
-          <span className="font-medium">{row.original.awayTeamName}</span>
+          <MatchTeam
+            name={row.original.awayTeamName}
+            logoUrl={row.original.awayTeamLogo}
+          />
         </div>
       ),
     },

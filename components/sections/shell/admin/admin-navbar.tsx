@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "@/i18n/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { Logo } from "@/components/ui/logo";
 import {
   Navbar,
   NavbarDivider,
@@ -36,7 +36,13 @@ export function SidebarAdminNavbar() {
     <Sidebar>
       <SidebarHeader>
         <Link href={ROUTES.admin.root} aria-label="Home">
-          <Logo className="h-10 w-auto" />
+          <Image
+            src="/logo_solid.png"
+            alt="NISAA"
+            width={160}
+            height={80}
+            className="h-10 w-auto"
+          />
         </Link>
       </SidebarHeader>
       <SidebarBody>
@@ -79,7 +85,13 @@ export function NavbarAdminNavbar() {
   return (
     <Navbar className="flex flex-row-reverse lg:flex-row">
       <Link href={ROUTES.admin.root} aria-label="Home">
-        <Logo className="h-8 w-auto" />
+        <Image
+          src="/logo_solid.png"
+          alt="NISAA"
+          width={128}
+          height={64}
+          className="h-8 w-auto"
+        />
       </Link>
       <NavbarDivider className="max-lg:hidden" />
       <NavbarSection className="max-lg:hidden">

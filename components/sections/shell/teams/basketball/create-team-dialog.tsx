@@ -408,7 +408,7 @@ export function CreateTeamDialog({
           {/* Delegate Section */}
           <Field>
             <FieldLabel>
-              {t("teams.delegate")} ({t("actions.optional")})
+              {t("teams.headCoach")} ({t("actions.optional")})
             </FieldLabel>
             <Input
               type="email"
@@ -417,7 +417,7 @@ export function CreateTeamDialog({
               placeholder="delegate@example.com"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {t("teams.delegateDescription")}
+              {t("teams.headCoachDescription")}
             </p>
           </Field>
 

@@ -10,8 +10,7 @@ import {
   createSortableHeader,
 } from "@/components/table/column-helpers";
 import { Avatar } from "@/components/ui/avatar";
-
-type StaffRole = "delegate" | "technical_director" | "assistant_coach";
+import { isEnabledStaffRole, type EnabledStaffRole } from "@/lib/staff/roles";
 
 interface StaffRow {
   _id: string;
@@ -26,20 +25,18 @@ interface TeamStaffListProps {
   clubSlug: string;
 }
 
-const ROLE_STYLES: Record<StaffRole, string> = {
-  delegate:
+const ROLE_STYLES: Record<EnabledStaffRole, string> = {
+  head_coach:
     "text-purple-700 bg-purple-50 dark:text-purple-400 dark:bg-purple-950",
-  technical_director:
-    "text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
-  assistant_coach:
-    "text-cyan-700 bg-cyan-50 dark:text-cyan-400 dark:bg-cyan-950",
 };
 
 export function TeamStaffList({ clubSlug }: TeamStaffListProps) {
   const t = useTranslations("Common");
   const staffData = useQuery(api.staff.listAllByClubSlug, { clubSlug });
 
-  const staffMembers = staffData?.staff ?? [];
+  const staffMembers = (staffData?.staff ?? []).filter((member) =>
+    isEnabledStaffRole(member.role),
+  );
 
   const columns: ColumnDef<StaffRow>[] = [
     createSearchColumn<StaffRow>(["fullName", "email", "role"]),
@@ -81,8 +78,11 @@ export function TeamStaffList({ clubSlug }: TeamStaffListProps) {
       accessorKey: "role",
       header: createSortableHeader(t("staff.role")),
       cell: ({ row }) => {
-        const role = row.original.role as StaffRole;
-        const className = ROLE_STYLES[role] || ROLE_STYLES.delegate;
+        const role = row.original.role;
+        if (!isEnabledStaffRole(role)) {
+          return null;
+        }
+        const className = ROLE_STYLES[role];
 
         return (
           <span

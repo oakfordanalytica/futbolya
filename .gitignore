@@ -36,6 +36,7 @@ yarn-error.log*
 # env files (sensitive data)
 .env
 .env.production
+.env.prod
 
 # vercel
 .vercel

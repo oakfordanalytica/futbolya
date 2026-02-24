@@ -48,14 +48,19 @@ import {
 import { FieldLabel } from "@/components/ui/field";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ENABLED_STAFF_ROLES,
+  isEnabledStaffRole,
+  type EnabledStaffRole,
+} from "@/lib/staff/roles";
 
-type StaffRole = "head_coach" | "technical_director" | "assistant_coach";
-
-const ROLE_OPTIONS: { value: StaffRole; labelKey: string }[] = [
-  { value: "head_coach", labelKey: "staffRole.head_coach" },
-  { value: "technical_director", labelKey: "staffRole.technical_director" },
-  { value: "assistant_coach", labelKey: "staffRole.assistant_coach" },
-];
+const ROLE_OPTIONS: {
+  value: EnabledStaffRole;
+  labelKey: `staffRole.${EnabledStaffRole}`;
+}[] = ENABLED_STAFF_ROLES.map((value) => ({
+  value,
+  labelKey: `staffRole.${value}` as const,
+}));
 
 interface StaffRow {
   _id: string;
@@ -72,13 +77,9 @@ interface TeamStaffTableProps {
   orgSlug: string;
 }
 
-const ROLE_STYLES: Record<StaffRole, string> = {
+const ROLE_STYLES: Record<EnabledStaffRole, string> = {
   head_coach:
     "text-purple-700 bg-purple-50 dark:text-purple-400 dark:bg-purple-950",
-  technical_director:
-    "text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
-  assistant_coach:
-    "text-cyan-700 bg-cyan-50 dark:text-cyan-400 dark:bg-cyan-950",
 };
 
 export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
@@ -86,6 +87,7 @@ export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
   const locale = useLocale();
   const staffData = useQuery(api.staff.listAllByClubSlug, { clubSlug });
   const clubData = useQuery(api.clubs.getBySlug, { slug: clubSlug });
+  const currentUser = useQuery(api.users.me);
   const removeStaff = useMutation(api.staff.removeStaff);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -93,10 +95,48 @@ export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<StaffRole>("head_coach");
+  const [role, setRole] = useState<EnabledStaffRole>("head_coach");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const staffMembers = staffData?.staff ?? [];
+  const staffMembers = (staffData?.staff ?? []).filter((member) =>
+    isEnabledStaffRole(member.role),
+  );
+  const currentUserId = currentUser?._id;
+  const currentOrgRole = currentUser?.memberships.find(
+    (membership) => membership.organizationSlug === orgSlug,
+  )?.role;
+  const isCurrentUserOrgAdmin =
+    currentUser?.isSuperAdmin ||
+    currentOrgRole === "admin" ||
+    currentOrgRole === "superadmin";
+  const currentUserStaffRole = currentUserId
+    ? (() => {
+        const role = staffMembers.find(
+          (staff) => staff.userId === currentUserId,
+        )?.role;
+        return isEnabledStaffRole(role) ? role : undefined;
+      })()
+    : undefined;
+
+  const canDeleteStaffMember = (member: StaffRow): boolean => {
+    if (!currentUserId) {
+      return false;
+    }
+
+    if (member.userId === currentUserId) {
+      return false;
+    }
+
+    if (isCurrentUserOrgAdmin) {
+      return true;
+    }
+
+    if (currentUserStaffRole !== "head_coach") {
+      return false;
+    }
+
+    return member.role !== "head_coach";
+  };
 
   const resetForm = () => {
     setEmail("");
@@ -211,8 +251,11 @@ export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
       accessorKey: "role",
       header: createSortableHeader(t("staff.role")),
       cell: ({ row }) => {
-        const role = row.original.role as StaffRole;
-        const className = ROLE_STYLES[role] || ROLE_STYLES.head_coach;
+        const role = row.original.role;
+        if (!isEnabledStaffRole(role)) {
+          return null;
+        }
+        const className = ROLE_STYLES[role];
 
         return (
           <span
@@ -227,6 +270,8 @@ export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
     {
       id: "actions",
       cell: ({ row }) => {
+        const canDelete = canDeleteStaffMember(row.original);
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -237,7 +282,13 @@ export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => setStaffToDelete(row.original)}
+                disabled={!canDelete}
+                onClick={() => {
+                  if (!canDelete) {
+                    return;
+                  }
+                  setStaffToDelete(row.original);
+                }}
               >
                 <Trash2 className="size-4 mr-2" />
                 {t("actions.delete")}
@@ -288,7 +339,11 @@ export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
 
                 <Select
                   value={role}
-                  onValueChange={(value: StaffRole) => setRole(value)}
+                  onValueChange={(value) => {
+                    if (isEnabledStaffRole(value)) {
+                      setRole(value);
+                    }
+                  }}
                 >
                   <SelectTrigger className="w-[180px] mt-2">
                     <SelectValue placeholder={t("staff.selectRole")} />

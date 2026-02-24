@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
 export const rootMetadata: Metadata = {
-  title: "Payments",
-  description: "Your ultimate payments solution.",
+  title: "NISAA",
+  description:
+    "National Independent Schools Athletic Association - Basketball Management Platform",
   icons: {
-    icon: "/soccer-ball.svg",
+    icon: "/logo_color.png",
   },
 };

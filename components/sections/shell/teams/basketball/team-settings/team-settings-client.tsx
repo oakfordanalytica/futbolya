@@ -4,7 +4,6 @@ import { Preloaded, usePreloadedQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
@@ -12,8 +11,8 @@ import { ArrowLeft } from "lucide-react";
 import { ROUTES } from "@/lib/navigation/routes";
 import { TeamGeneralForm } from "./team-general-form";
 import { TeamPlayersTable } from "./team-players-table";
-import { TeamStaffTable } from "./team-staff-table";
 import { TeamCategoriesTable } from "../../team-categories-table";
+import { TeamStaffClient } from "@/components/sections/shell/teams/team-staff-client";
 
 interface TeamSettingsClientProps {
   preloadedTeam: Preloaded<typeof api.clubs.getBySlug>;
@@ -23,14 +22,18 @@ interface TeamSettingsClientProps {
   preloadedCategories: Preloaded<
     typeof api.categories.listByClubSlugWithPlayerCount
   >;
+  preloadedStaff: Preloaded<typeof api.staff.listAllByClubSlug>;
   orgSlug: string;
+  clubSlug: string;
 }
 
 export function TeamSettingsClient({
   preloadedTeam,
   preloadedPlayers,
   preloadedCategories,
+  preloadedStaff,
   orgSlug,
+  clubSlug,
 }: TeamSettingsClientProps) {
   const t = useTranslations("Common");
   const team = usePreloadedQuery(preloadedTeam);
@@ -87,7 +90,12 @@ export function TeamSettingsClient({
         </TabsContent>
 
         <TabsContent value="staff" className="mt-6">
-          <TeamStaffTable clubSlug={team.slug} orgSlug={orgSlug} />
+          <TeamStaffClient
+            preloadedStaff={preloadedStaff}
+            clubSlug={clubSlug}
+            orgSlug={orgSlug}
+            withPadding={false}
+          />
         </TabsContent>
       </Tabs>
     </div>

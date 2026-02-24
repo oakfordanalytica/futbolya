@@ -2,6 +2,7 @@ import {
   SidebarAppSidebar,
   NavbarAppSidebar,
 } from "@/components/sections/shell/organizations/app-sidebar";
+import { CoachTeamResolver } from "@/components/sections/shell/organizations/coach-team-resolver";
 import { SidebarLayout } from "@/components/layouts/sidebar-layout";
 import { OrgMismatchError } from "@/components/sections/shell/organizations/org-mismatch-error";
 import { SportProvider } from "@/components/providers/sport-provider";
@@ -32,11 +33,7 @@ export default async function OrgLayout({ children, params }: LayoutProps) {
       redirect(`${localePrefix}${TEAM_ROUTES.roster(tenant, coachTeamSlug)}`);
     }
 
-    return (
-      <div className="flex min-h-screen items-center justify-center p-6 text-center text-sm text-muted-foreground">
-        You don&apos;t have a team assigned yet.
-      </div>
-    );
+    return <CoachTeamResolver organizationSlug={tenant} />;
   }
 
   return (

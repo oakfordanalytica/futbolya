@@ -19,11 +19,15 @@ import { Avatar } from "@/components/ui/avatar";
 import { UserButton } from "@clerk/nextjs";
 import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { getTeamNavConfig, isItemActive } from "@/lib/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/navigation/routes";
 import { useSportTerminology } from "@/lib/sports";
 import type { SportTerminology } from "@/lib/sports";
 import { Link } from "@/components/ui/link";
+import {
+  getTeamUserProfileUrl,
+  getTenantSignInUrl,
+} from "@/lib/navigation/user-button";
 
 const TERMINOLOGY_MAP: Record<string, keyof SportTerminology> = {
   roster: "players",
@@ -31,11 +35,21 @@ const TERMINOLOGY_MAP: Record<string, keyof SportTerminology> = {
 };
 
 export function TeamNavbar() {
+  const params = useParams();
+  const locale = useLocale();
+  const orgSlug = params.tenant as string;
+  const teamSlug = params.team as string;
+  const userProfileUrl = getTeamUserProfileUrl(locale, orgSlug, teamSlug);
+  const afterSignOutUrl = getTenantSignInUrl(locale, orgSlug);
+
   return (
     <Navbar>
       <NavbarSpacer />
       <NavbarSection>
-        <UserButton />
+        <UserButton
+          userProfileUrl={userProfileUrl}
+          afterSignOutUrl={afterSignOutUrl}
+        />
       </NavbarSection>
     </Navbar>
   );
@@ -44,11 +58,14 @@ export function TeamNavbar() {
 export function TeamSidebar() {
   const params = useParams();
   const pathname = usePathname();
+  const locale = useLocale();
   const t = useTranslations("Navigation.nav");
   const terminology = useSportTerminology();
 
   const orgSlug = params.tenant as string;
   const teamSlug = params.team as string;
+  const userProfileUrl = getTeamUserProfileUrl(locale, orgSlug, teamSlug);
+  const afterSignOutUrl = getTenantSignInUrl(locale, orgSlug);
 
   const team = useQuery(api.clubs.getBySlug, { slug: teamSlug });
 
@@ -70,14 +87,14 @@ export function TeamSidebar() {
       <SidebarHeader>
         <Link
           href={ROUTES.org.teams.list(orgSlug)}
-          className="flex items-center gap-3 px-2 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 px-2 text-sidebar-foreground transition-opacity hover:opacity-80"
         >
           <Avatar
             src={teamLogo}
             initials={teamName.slice(0, 2).toUpperCase()}
-            className="size-10"
+            className="size-10 bg-sidebar-accent/40 text-sidebar-foreground"
           />
-          <span className="truncate text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <span className="truncate text-lg font-semibold text-sidebar-foreground">
             {teamName}
           </span>
         </Link>
@@ -117,6 +134,8 @@ export function TeamSidebar() {
 
       <SidebarFooter className="max-lg:hidden">
         <UserButton
+          userProfileUrl={userProfileUrl}
+          afterSignOutUrl={afterSignOutUrl}
           appearance={{
             elements: {
               userButtonBox: {
@@ -124,6 +143,8 @@ export function TeamSidebar() {
                 textAlign: "left",
                 maxWidth: "95%",
               },
+              userButtonOuterIdentifier: "text-sidebar-foreground",
+              userButtonTrigger: "text-sidebar-foreground",
             },
           }}
           showName

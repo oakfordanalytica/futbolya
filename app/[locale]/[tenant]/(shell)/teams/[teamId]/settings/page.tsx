@@ -37,13 +37,22 @@ export default async function TeamSettingsPage({
     },
     { token },
   );
+  const preloadedStaff = await preloadQuery(
+    api.staff.listAllByClubSlug,
+    {
+      clubSlug: teamId,
+    },
+    { token },
+  );
 
   return (
     <TeamSettingsClient
       preloadedTeam={preloadedTeam}
       preloadedPlayers={preloadedPlayers}
       preloadedCategories={preloadedCategories}
+      preloadedStaff={preloadedStaff}
       orgSlug={tenant}
+      clubSlug={teamId}
     />
   );
 }

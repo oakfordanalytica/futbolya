@@ -68,8 +68,10 @@ const gameListItemValidator = v.object({
   _creationTime: v.number(),
   homeTeamId: v.string(),
   homeTeamName: v.string(),
+  homeTeamLogo: v.optional(v.string()),
   awayTeamId: v.string(),
   awayTeamName: v.string(),
+  awayTeamLogo: v.optional(v.string()),
   date: v.string(),
   startTime: v.string(),
   category: v.string(),
@@ -132,6 +134,30 @@ async function requireGameAdminAccess(
   return user;
 }
 
+async function loadClubsWithLogos(
+  ctx: PermissionCtx,
+  clubIds: Array<Id<"clubs">>,
+) {
+  const uniqueClubIds = [...new Set(clubIds)];
+  const clubs = await Promise.all(uniqueClubIds.map((id) => ctx.db.get(id)));
+  const clubEntries = clubs.filter((club): club is NonNullable<typeof club> =>
+    Boolean(club),
+  );
+  const clubMap = new Map(clubEntries.map((club) => [club._id, club]));
+
+  const logoEntries = await Promise.all(
+    clubEntries.map(async (club) => {
+      const logoUrl = club.logoStorageId
+        ? ((await ctx.storage.getUrl(club.logoStorageId)) ?? undefined)
+        : undefined;
+      return [club._id, logoUrl] as const;
+    }),
+  );
+  const clubLogoMap = new Map(logoEntries);
+
+  return { clubMap, clubLogoMap };
+}
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -164,20 +190,20 @@ export const listByLeagueSlug = query({
       .order("desc")
       .collect();
 
-    // Batch fetch clubs
-    const clubIds = [
-      ...new Set(games.flatMap((g) => [g.homeClubId, g.awayClubId])),
-    ];
-    const clubs = await Promise.all(clubIds.map((id) => ctx.db.get(id)));
-    const clubMap = new Map(clubs.filter(Boolean).map((c) => [c!._id, c!]));
+    const { clubMap, clubLogoMap } = await loadClubsWithLogos(
+      ctx,
+      games.flatMap((game) => [game.homeClubId, game.awayClubId]),
+    );
 
     const result: Array<{
       _id: Id<"games">;
       _creationTime: number;
       homeTeamId: string;
       homeTeamName: string;
+      homeTeamLogo?: string;
       awayTeamId: string;
       awayTeamName: string;
+      awayTeamLogo?: string;
       date: string;
       startTime: string;
       category: string;
@@ -203,8 +229,10 @@ export const listByLeagueSlug = query({
         _creationTime: game._creationTime,
         homeTeamId: game.homeClubId,
         homeTeamName: homeClub?.name ?? "Unknown",
+        homeTeamLogo: clubLogoMap.get(game.homeClubId),
         awayTeamId: game.awayClubId,
         awayTeamName: awayClub?.name ?? "Unknown",
+        awayTeamLogo: clubLogoMap.get(game.awayClubId),
         date: game.date,
         startTime: game.startTime,
         category: game.category,
@@ -255,20 +283,20 @@ export const listByClubSlug = query({
       return dateB.getTime() - dateA.getTime();
     });
 
-    // Batch fetch clubs
-    const clubIds = [
-      ...new Set(uniqueGames.flatMap((g) => [g.homeClubId, g.awayClubId])),
-    ];
-    const clubs = await Promise.all(clubIds.map((id) => ctx.db.get(id)));
-    const clubMap = new Map(clubs.filter(Boolean).map((c) => [c!._id, c!]));
+    const { clubMap, clubLogoMap } = await loadClubsWithLogos(
+      ctx,
+      uniqueGames.flatMap((game) => [game.homeClubId, game.awayClubId]),
+    );
 
     const result: Array<{
       _id: Id<"games">;
       _creationTime: number;
       homeTeamId: string;
       homeTeamName: string;
+      homeTeamLogo?: string;
       awayTeamId: string;
       awayTeamName: string;
+      awayTeamLogo?: string;
       date: string;
       startTime: string;
       category: string;
@@ -294,8 +322,10 @@ export const listByClubSlug = query({
         _creationTime: game._creationTime,
         homeTeamId: game.homeClubId,
         homeTeamName: homeClub?.name ?? "Unknown",
+        homeTeamLogo: clubLogoMap.get(game.homeClubId),
         awayTeamId: game.awayClubId,
         awayTeamName: awayClub?.name ?? "Unknown",
+        awayTeamLogo: clubLogoMap.get(game.awayClubId),
         date: game.date,
         startTime: game.startTime,
         category: game.category,
