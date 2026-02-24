@@ -2,7 +2,6 @@
 
 import { FormEvent, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { useOrganization } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -48,10 +47,17 @@ interface PlayerData {
   categoryId?: string;
 }
 
+interface PositionOption {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
 interface PlayerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clubSlug: string;
+  positions: PositionOption[];
   player?: PlayerData | null;
 }
 
@@ -59,10 +65,10 @@ export function PlayerFormDialog({
   open,
   onOpenChange,
   clubSlug,
+  positions,
   player,
 }: PlayerFormDialogProps) {
   const t = useTranslations("Common");
-  const { organization } = useOrganization();
   const createPlayer = useMutation(api.players.createPlayer);
   const updatePlayer = useMutation(api.players.updatePlayer);
   const generateUploadUrl = useMutation(api.players.generateUploadUrl);
@@ -70,13 +76,6 @@ export function PlayerFormDialog({
   const categories = useQuery(api.categories.listByClubSlug, {
     clubSlug,
   });
-
-  const teamConfig = useQuery(
-    api.leagueSettings.getTeamConfig,
-    organization?.slug ? { leagueSlug: organization.slug } : "skip",
-  );
-
-  const positions = teamConfig?.positions ?? [];
 
   const isEditMode = !!player;
 

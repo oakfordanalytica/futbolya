@@ -68,16 +68,18 @@ export function TeamPlayersTable({
   const teamConfig = useQuery(api.leagueSettings.getTeamConfig, {
     leagueSlug: orgSlug,
   });
+  const positions = useMemo(
+    () => teamConfig?.positions ?? [],
+    [teamConfig?.positions],
+  );
 
   const positionMap = useMemo(() => {
     const map = new Map<string, { name: string; abbreviation: string }>();
-    if (teamConfig?.positions) {
-      for (const pos of teamConfig.positions) {
-        map.set(pos.id, { name: pos.name, abbreviation: pos.abbreviation });
-      }
+    for (const pos of positions) {
+      map.set(pos.id, { name: pos.name, abbreviation: pos.abbreviation });
     }
     return map;
-  }, [teamConfig?.positions]);
+  }, [positions]);
 
   const handleDelete = async () => {
     if (!playerToDelete) return;
@@ -233,6 +235,7 @@ export function TeamPlayersTable({
         open={isDialogOpen}
         onOpenChange={handleDialogClose}
         clubSlug={clubSlug}
+        positions={positions}
         player={playerToEdit}
       />
 
