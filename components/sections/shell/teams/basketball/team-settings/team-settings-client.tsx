@@ -62,8 +62,8 @@ export function TeamSettingsClient({
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <div className="w-full overflow-x-auto">
-          <TabsList className="inline-flex min-w-max flex-nowrap">
+        <div className="w-full overflow-x-auto overflow-y-hidden">
+          <TabsList className="inline-flex min-w-max flex-nowrap pb-2.5">
             <TabsTrigger value="general" className="flex-none shrink-0">
               {t("settings.general")}
             </TabsTrigger>

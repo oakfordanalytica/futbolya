@@ -34,7 +34,7 @@ export function GameDetailClient({
       <GameHeader game={game} orgSlug={orgSlug} />
 
       <Tabs defaultValue="boxScore" className="w-full">
-        <div className="w-full overflow-x-auto bg-muted/50 shadow-xs">
+        <div className="w-full overflow-x-auto overflow-y-hidden bg-muted/50 shadow-xs">
           <TabsList className="inline-flex min-w-max flex-nowrap justify-start rounded-none px-4 py-2.5 md:px-6">
             <TabsTrigger value="boxScore" className="flex-none shrink-0">
               {t("games.boxScore")}
