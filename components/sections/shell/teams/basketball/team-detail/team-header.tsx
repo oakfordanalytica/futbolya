@@ -69,12 +69,30 @@ export function TeamHeader({ team, orgSlug, routeScope }: TeamHeaderProps) {
 
   return (
     <section
-      className={cn("w-full", hasColoredBg && "text-white")}
+      className={cn(
+        "relative w-full overflow-hidden",
+        hasColoredBg && "text-white",
+      )}
       style={{
         backgroundColor: hasColoredBg ? primaryColor : undefined,
       }}
     >
-      <div className="mx-auto p-4 md:p-6 ">
+      {team.logoUrl && (
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="relative size-full">
+            <Image
+              src={team.logoUrl}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-contain object-center scale-[2.5] md:scale-[3] translate-x-[8%]"
+              style={{ opacity: hasColoredBg ? 0.12 : 0.05 }}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="relative z-10 mx-auto p-4 md:p-6 ">
         <div className="flex justify-between items-start">
           <div>
             {team.divisionName && (
