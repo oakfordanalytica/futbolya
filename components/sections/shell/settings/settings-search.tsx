@@ -29,8 +29,7 @@ export function SettingsSearch({ basePath }: SettingsSearchProps) {
   const router = useRouter();
   const t = useTranslations("Settings.search");
   const [open, setOpen] = useState(false);
-  const { query, results, search, reset, isSearching } =
-    useSettingsSearch(basePath);
+  const { query, results, search, reset } = useSettingsSearch(basePath);
 
   const handleSelect = (path: string) => {
     router.push(path);

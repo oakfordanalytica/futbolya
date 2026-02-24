@@ -272,6 +272,14 @@ const SETTINGS_NAV_CONFIGS: Record<NavContext, SettingsNavConfig> = {
   },
 };
 
+const SETTINGS_ICON_BY_LABEL: Record<SettingsLabelKey, NavIcon> = {
+  general: Cog6ToothIcon,
+  teamConfig: RectangleStackIcon,
+  appearance: Palette,
+  profileSecurity: ShieldCheckIcon,
+  billing: CreditCardIcon,
+};
+
 // =============================================================================
 // Exported Functions
 // =============================================================================
@@ -314,12 +322,8 @@ export function getNavContext(
 
 /**
  * Get the icon component for a settings item by its labelKey.
- * Uses admin settings as the source of truth (icons are the same for both contexts).
+ * Uses a stable map so search stays safe even if an item is hidden from navigation.
  */
 export function getSettingsIcon(labelKey: SettingsLabelKey): NavIcon {
-  const item = ADMIN_SETTINGS_ITEMS.find((item) => item.labelKey === labelKey);
-  if (!item) {
-    throw new Error(`Unknown settings labelKey: ${labelKey}`);
-  }
-  return item.icon;
+  return SETTINGS_ICON_BY_LABEL[labelKey];
 }
