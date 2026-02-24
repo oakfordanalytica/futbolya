@@ -90,6 +90,7 @@
   },
   "players": {
     "searchPlaceholder": "Buscar por nombre...",
+    "emptyTitle": "Todavía no hay jugadores en esta plantilla",
     "emptyMessage": "No se encontraron jugadores. Agrega tu primer jugador para comenzar.",
     "name": "Jugador",
     "team": "Equipo",

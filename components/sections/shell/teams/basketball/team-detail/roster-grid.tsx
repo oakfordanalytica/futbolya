@@ -5,8 +5,15 @@ import { useQuery } from "convex/react";
 import { useOrganization } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { PlayerCard, PlayerCardSkeleton } from "./player-card";
-import { Text } from "@/components/ui/text";
 import { useTranslations } from "next-intl";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Dribbble } from "lucide-react";
 
 interface RosterGridProps {
   clubSlug: string;
@@ -41,11 +48,19 @@ export function RosterGrid({ clubSlug }: RosterGridProps) {
 
   if (data === null || data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Text className="text-muted-foreground">
-          {t("players.emptyMessage")}
-        </Text>
-      </div>
+      <Empty className="min-h-[320px] border border-dashed border-border/60 bg-gradient-to-b from-orange-50/70 via-amber-50/20 to-transparent dark:from-orange-950/20 dark:via-amber-950/5">
+        <EmptyHeader>
+          <EmptyMedia variant="default">
+            <div className="flex size-20 items-center justify-center rounded-full bg-orange-500/10 ring-8 ring-orange-500/5">
+              <Dribbble className="size-10 text-orange-500" />
+            </div>
+          </EmptyMedia>
+          <EmptyTitle>{t("players.emptyTitle")}</EmptyTitle>
+          <EmptyDescription className="max-w-sm text-pretty">
+            {t("players.emptyMessage")}
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 

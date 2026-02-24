@@ -89,6 +89,7 @@
   },
   "players": {
     "searchPlaceholder": "Search by name...",
+    "emptyTitle": "No players on this roster yet",
     "emptyMessage": "No players found. Add your first player to get started.",
     "name": "Player",
     "team": "Team",
