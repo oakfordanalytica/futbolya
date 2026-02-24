@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, internalMutation } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
 import { hasOrgAdminAccess } from "./lib/permissions";
+import { Id } from "./_generated/dataModel";
 
 const roleValidator = v.union(
   v.literal("superadmin"),
@@ -64,6 +65,13 @@ export const listByOrganization = query({
         imageUrl: v.optional(v.string()),
         isSuperAdmin: v.boolean(),
       }),
+      headCoachTeams: v.array(
+        v.object({
+          clubId: v.id("clubs"),
+          clubName: v.string(),
+          clubSlug: v.string(),
+        }),
+      ),
     }),
   ),
   handler: async (ctx, args) => {
@@ -85,9 +93,50 @@ export const listByOrganization = query({
       )
       .collect();
 
-    const userIds = [...new Set(memberships.map((membership) => membership.userId))];
+    const userIds = [
+      ...new Set(memberships.map((membership) => membership.userId)),
+    ];
     const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
-    const userMap = new Map(users.filter(Boolean).map((user) => [user!._id, user!]));
+    const userMap = new Map(
+      users.filter(Boolean).map((user) => [user!._id, user!]),
+    );
+    const clubs = await ctx.db
+      .query("clubs")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", args.organizationId),
+      )
+      .collect();
+
+    const headCoachAssignmentsByClub = await Promise.all(
+      clubs.map(async (club) => {
+        const assignments = await ctx.db
+          .query("staff")
+          .withIndex("byClubAndRole", (q) =>
+            q.eq("clubId", club._id).eq("role", "head_coach"),
+          )
+          .collect();
+        return { club, assignments };
+      }),
+    );
+
+    const headCoachTeamsByUser = new Map<
+      Id<"users">,
+      Array<{ clubId: Id<"clubs">; clubName: string; clubSlug: string }>
+    >();
+
+    for (const { club, assignments } of headCoachAssignmentsByClub) {
+      for (const assignment of assignments) {
+        const existing = headCoachTeamsByUser.get(assignment.userId) ?? [];
+        if (!existing.some((team) => team.clubId === club._id)) {
+          existing.push({
+            clubId: club._id,
+            clubName: club.name,
+            clubSlug: club.slug,
+          });
+        }
+        headCoachTeamsByUser.set(assignment.userId, existing);
+      }
+    }
 
     return memberships.flatMap((membership) => {
       const user = userMap.get(membership.userId);
@@ -107,6 +156,7 @@ export const listByOrganization = query({
             ...(user.imageUrl ? { imageUrl: user.imageUrl } : {}),
             isSuperAdmin: user.isSuperAdmin,
           },
+          headCoachTeams: headCoachTeamsByUser.get(membership.userId) ?? [],
         },
       ];
     });
@@ -141,7 +191,9 @@ export const listByUser = query({
       organizationIds.map((id) => ctx.db.get(id)),
     );
     const organizationMap = new Map(
-      organizations.filter(Boolean).map((organization) => [organization!._id, organization!]),
+      organizations
+        .filter(Boolean)
+        .map((organization) => [organization!._id, organization!]),
     );
 
     return memberships.map((membership) => {
@@ -167,9 +219,7 @@ export const listByUser = query({
 /**
  * Convert Clerk role string to our role type.
  */
-function clerkRoleToRole(
-  clerkRole: string,
-): "superadmin" | "admin" | "coach" {
+function clerkRoleToRole(clerkRole: string): "superadmin" | "admin" | "coach" {
   switch (clerkRole) {
     case "org:superadmin":
       return "superadmin";

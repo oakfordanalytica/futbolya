@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useAction, useQuery } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
@@ -30,16 +30,8 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 type MemberRole = "superadmin" | "admin" | "coach" | "member";
-type EditableRole = Exclude<MemberRole, "superadmin" | "member">;
 
 type OrganizationMemberRow = {
   userId: Id<"users">;
@@ -50,6 +42,12 @@ type OrganizationMemberRow = {
   imageUrl?: string;
   role: MemberRole;
   createdAt: number;
+  headCoachTeams: Array<{
+    clubId: Id<"clubs">;
+    clubName: string;
+    clubSlug: string;
+  }>;
+  headCoachTeamsText: string;
 };
 
 function getUserDisplayName(
@@ -67,10 +65,6 @@ function getUserInitials(
   return fromName || user.email.charAt(0).toUpperCase() || "U";
 }
 
-function normalizeEditableRole(role: MemberRole): EditableRole {
-  return role === "admin" ? "admin" : "coach";
-}
-
 interface OrganizationMembersTableProps {
   organizationSlug: string;
 }
@@ -79,6 +73,7 @@ export function OrganizationMembersTable({
   organizationSlug,
 }: OrganizationMembersTableProps) {
   const t = useTranslations("Settings.general.members.table");
+  const tCommon = useTranslations("Common");
   const tTable = useTranslations("Common.table");
   const tActions = useTranslations("Common.actions");
   const { userId: currentClerkUserId } = useAuth();
@@ -86,9 +81,6 @@ export function OrganizationMembersTable({
   const [deleteTarget, setDeleteTarget] =
     useState<OrganizationMemberRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [roleUpdatingClerkUserId, setRoleUpdatingClerkUserId] = useState<
-    string | null
-  >(null);
 
   const organization = useQuery(api.organizations.getBySlug, {
     slug: organizationSlug,
@@ -98,7 +90,6 @@ export function OrganizationMembersTable({
     organization?._id ? { organizationId: organization._id } : "skip",
   );
 
-  const setSingleTenantRole = useAction(api.users.setSingleTenantRole);
   const deleteSingleTenantUser = useAction(api.users.deleteSingleTenantUser);
 
   const rows = useMemo<OrganizationMemberRow[]>(() => {
@@ -106,7 +97,7 @@ export function OrganizationMembersTable({
       return [];
     }
 
-    return members.map(({ membership, user }) => ({
+    return members.map(({ membership, user, headCoachTeams }) => ({
       userId: user._id,
       clerkUserId: user.clerkId,
       firstName: user.firstName,
@@ -115,28 +106,10 @@ export function OrganizationMembersTable({
       imageUrl: user.imageUrl,
       role: user.isSuperAdmin ? "superadmin" : membership.role,
       createdAt: membership._creationTime,
+      headCoachTeams,
+      headCoachTeamsText: headCoachTeams.map((team) => team.clubName).join(" "),
     }));
   }, [members]);
-
-  const handleRoleUpdate = useCallback(
-    async (member: OrganizationMemberRow, role: EditableRole) => {
-      setRoleUpdatingClerkUserId(member.clerkUserId);
-      try {
-        await setSingleTenantRole({
-          organizationSlug,
-          clerkUserId: member.clerkUserId,
-          role,
-        });
-        toast.success(t("toasts.roleUpdated"));
-      } catch (error) {
-        console.error("Failed to update member role:", error);
-        toast.error(t("toasts.roleUpdateError"));
-      } finally {
-        setRoleUpdatingClerkUserId(null);
-      }
-    },
-    [organizationSlug, setSingleTenantRole, t],
-  );
 
   const columns = useMemo<ColumnDef<OrganizationMemberRow>[]>(() => {
     return [
@@ -145,6 +118,7 @@ export function OrganizationMembersTable({
         "lastName",
         "email",
         "role",
+        "headCoachTeamsText",
       ]),
       {
         accessorKey: "createdAt",
@@ -191,32 +165,32 @@ export function OrganizationMembersTable({
         header: createSortableHeader(t("columns.role")),
         cell: ({ row }) => {
           const member = row.original;
-          const isSelf = member.clerkUserId === currentClerkUserId;
           const isSuper = member.role === "superadmin";
-          const isUpdating = roleUpdatingClerkUserId === member.clerkUserId;
-          const canEdit = !isSuper && !isSelf && !isUpdating;
-          const normalizedRole = normalizeEditableRole(member.role);
 
           if (isSuper) {
             return <Badge variant="secondary">{t("roles.superadmin")}</Badge>;
           }
 
+          const isAdmin = member.role === "admin";
+          const roleLabel = isAdmin
+            ? t("roles.admin")
+            : member.headCoachTeams.length > 0
+              ? tCommon("staffRole.head_coach")
+              : t("roles.coach");
+          const teamLabel =
+            member.headCoachTeams.length > 0
+              ? member.headCoachTeams.map((team) => team.clubName).join(", ")
+              : null;
+
           return (
-            <Select
-              value={normalizedRole}
-              onValueChange={(value) =>
-                void handleRoleUpdate(member, value as EditableRole)
-              }
-              disabled={!canEdit}
-            >
-              <SelectTrigger className="w-[170px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="coach">{t("roles.coach")}</SelectItem>
-                <SelectItem value="admin">{t("roles.admin")}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">{roleLabel}</Badge>
+              {teamLabel ? (
+                <span className="text-xs text-muted-foreground">
+                  {teamLabel}
+                </span>
+              ) : null}
+            </div>
           );
         },
       },
@@ -252,7 +226,7 @@ export function OrganizationMembersTable({
         },
       },
     ];
-  }, [currentClerkUserId, handleRoleUpdate, roleUpdatingClerkUserId, t]);
+  }, [currentClerkUserId, t, tCommon]);
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) {

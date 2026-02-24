@@ -19,7 +19,7 @@
       "description": "Administra miembros, roles y permisos",
       "invite": {
         "title": "Invitar miembro",
-        "description": "Envía invitaciones con redirección correcta al tenant.",
+        "description": "Envía invitaciones de administradores con redirección correcta al tenant.",
         "emailPlaceholder": "correo@ejemplo.com",
         "roleCoach": "Entrenador",
         "roleAdmin": "Administrador",

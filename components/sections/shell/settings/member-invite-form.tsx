@@ -5,18 +5,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { isSingleTenantMode } from "@/lib/tenancy/config";
 
 const SINGLE_TENANT_MODE = isSingleTenantMode();
-type InvitableRole = "coach" | "admin" | "org:member" | "org:admin";
-const DEFAULT_ROLE: InvitableRole = SINGLE_TENANT_MODE ? "coach" : "org:member";
+type InvitableRole = "admin" | "org:admin";
+const DEFAULT_ROLE: InvitableRole = SINGLE_TENANT_MODE ? "admin" : "org:admin";
 
 interface MemberInviteFormProps {
   tenant: string;
@@ -26,7 +19,6 @@ export function MemberInviteForm({ tenant }: MemberInviteFormProps) {
   const t = useTranslations("Settings.general.members.invite");
   const locale = useLocale();
   const [emailAddress, setEmailAddress] = useState("");
-  const [role, setRole] = useState<InvitableRole>(DEFAULT_ROLE);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -41,6 +33,7 @@ export function MemberInviteForm({ tenant }: MemberInviteFormProps) {
     setIsSubmitting(true);
 
     try {
+      const role: InvitableRole = DEFAULT_ROLE;
       const response = await fetch(`/api/organizations/${tenant}/invitations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,18 +44,15 @@ export function MemberInviteForm({ tenant }: MemberInviteFormProps) {
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | {
-            error?: string;
-          }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
 
       if (!response.ok) {
         throw new Error(payload?.error || t("error"));
       }
 
       setEmailAddress("");
-      setRole(DEFAULT_ROLE);
       toast.success(t("success"));
     } catch (error) {
       const message = error instanceof Error ? error.message : t("error");
@@ -89,28 +79,6 @@ export function MemberInviteForm({ tenant }: MemberInviteFormProps) {
           disabled={isSubmitting}
           className="sm:flex-1"
         />
-        <Select
-          value={role}
-          onValueChange={(value) => setRole(value as InvitableRole)}
-          disabled={isSubmitting}
-        >
-          <SelectTrigger className="sm:w-[170px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SINGLE_TENANT_MODE ? (
-              <>
-                <SelectItem value="coach">{t("roleCoach")}</SelectItem>
-                <SelectItem value="admin">{t("roleAdmin")}</SelectItem>
-              </>
-            ) : (
-              <>
-                <SelectItem value="org:member">{t("roleCoach")}</SelectItem>
-                <SelectItem value="org:admin">{t("roleAdmin")}</SelectItem>
-              </>
-            )}
-          </SelectContent>
-        </Select>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? t("submitting") : t("submit")}
         </Button>

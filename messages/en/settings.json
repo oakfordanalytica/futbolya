@@ -19,7 +19,7 @@
       "description": "Manage members, roles, and permissions",
       "invite": {
         "title": "Invite member",
-        "description": "Send invitations with the correct tenant redirect.",
+        "description": "Send admin invitations with the correct tenant redirect.",
         "emailPlaceholder": "email@example.com",
         "roleCoach": "Coach",
         "roleAdmin": "Admin",

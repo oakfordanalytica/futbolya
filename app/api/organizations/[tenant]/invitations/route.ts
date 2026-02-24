@@ -4,12 +4,11 @@ import { isAdminFromSessionClaims } from "@/lib/auth/roles";
 import { locales, routing, type Locale } from "@/i18n/routing";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 
-const MULTI_TENANT_INVITABLE_ROLES = ["org:member", "org:admin"] as const;
-const SINGLE_TENANT_INVITABLE_ROLES = ["coach", "admin"] as const;
+const MULTI_TENANT_INVITABLE_ROLES = ["org:admin"] as const;
+const SINGLE_TENANT_INVITABLE_ROLES = ["admin"] as const;
 
 type MultiTenantInvitableRole = (typeof MULTI_TENANT_INVITABLE_ROLES)[number];
-type SingleTenantInvitableRole =
-  (typeof SINGLE_TENANT_INVITABLE_ROLES)[number];
+type SingleTenantInvitableRole = (typeof SINGLE_TENANT_INVITABLE_ROLES)[number];
 
 type InvitationAccessContext =
   | {
