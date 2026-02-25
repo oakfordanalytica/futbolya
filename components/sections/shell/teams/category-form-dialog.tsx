@@ -65,20 +65,85 @@ const INITIAL_FORM_STATE: FormState = {
 };
 
 const ALPHABETIC_DIVISIONS = [
-  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-  "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J",
+  "K",
+  "L",
+  "M",
+  "N",
+  "O",
+  "P",
+  "Q",
+  "R",
+  "S",
+  "T",
+  "U",
+  "V",
+  "W",
+  "X",
+  "Y",
+  "Z",
 ];
 
 const GREEK_DIVISIONS = [
-  "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta",
-  "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi", "Rho",
-  "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega",
+  "Alpha",
+  "Beta",
+  "Gamma",
+  "Delta",
+  "Epsilon",
+  "Zeta",
+  "Eta",
+  "Theta",
+  "Iota",
+  "Kappa",
+  "Lambda",
+  "Mu",
+  "Nu",
+  "Xi",
+  "Omicron",
+  "Pi",
+  "Rho",
+  "Sigma",
+  "Tau",
+  "Upsilon",
+  "Phi",
+  "Chi",
+  "Psi",
+  "Omega",
 ];
 
 const NUMERIC_DIVISIONS = [
-  "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
-  "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
 ];
+
+const DEFAULT_DIVISION = "A";
 
 function getDivisionOptions(type: DivisionType): string[] {
   switch (type) {
@@ -91,6 +156,39 @@ function getDivisionOptions(type: DivisionType): string[] {
     default:
       return ALPHABETIC_DIVISIONS;
   }
+}
+
+function normalizeSpaces(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function deriveDivisionFromCategoryName(
+  name: string,
+  ageGroup: string,
+): string {
+  const normalizedName = normalizeSpaces(name);
+  const normalizedAgeGroup = normalizeSpaces(ageGroup);
+
+  if (!normalizedName || !normalizedAgeGroup) {
+    return DEFAULT_DIVISION;
+  }
+
+  const lowerName = normalizedName.toLowerCase();
+  const lowerAge = normalizedAgeGroup.toLowerCase();
+
+  if (lowerName === lowerAge) {
+    return DEFAULT_DIVISION;
+  }
+
+  const prefix = `${lowerAge} `;
+  if (!lowerName.startsWith(prefix)) {
+    return DEFAULT_DIVISION;
+  }
+
+  const explicitDivision = normalizedName
+    .slice(normalizedAgeGroup.length)
+    .trim();
+  return explicitDivision || DEFAULT_DIVISION;
 }
 
 export function CategoryFormDialog({
@@ -114,6 +212,7 @@ export function CategoryFormDialog({
 
   const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const ageCategories: AgeCategory[] = teamConfig?.ageCategories || [];
   const enabledGenders = (teamConfig?.enabledGenders as Gender[]) || [
@@ -143,8 +242,15 @@ export function CategoryFormDialog({
         division,
         status: category.status,
       });
+      setFormError(null);
     }
   }, [category, open, horizontalDivisions.enabled]);
+
+  useEffect(() => {
+    if (!open) {
+      setFormError(null);
+    }
+  }, [open]);
 
   const availableDivisions = useMemo(() => {
     if (!horizontalDivisions.enabled || isEditMode) {
@@ -162,15 +268,16 @@ export function CategoryFormDialog({
     const usedDivisions = existingCategories
       .filter(
         (cat) =>
-          cat.ageGroup === formState.ageGroup &&
+          cat.ageGroup.toLowerCase() === formState.ageGroup.toLowerCase() &&
           cat.gender === formState.gender,
       )
-      .map((cat) => {
-        const parts = cat.name.split(" ");
-        return parts[parts.length - 1];
-      });
+      .map((cat) =>
+        deriveDivisionFromCategoryName(cat.name, cat.ageGroup).toLowerCase(),
+      );
 
-    return allDivisions.filter((div) => !usedDivisions.includes(div));
+    return allDivisions.filter(
+      (div) => !usedDivisions.includes(div.toLowerCase()),
+    );
   }, [
     horizontalDivisions.enabled,
     horizontalDivisions.type,
@@ -187,11 +294,60 @@ export function CategoryFormDialog({
     return formState.ageGroup;
   };
 
+  const hasDuplicateCategory = useMemo(() => {
+    if (
+      isEditMode ||
+      !existingCategories ||
+      !formState.ageGroup ||
+      !formState.gender
+    ) {
+      return false;
+    }
+
+    if (horizontalDivisions.enabled && !formState.division) {
+      return false;
+    }
+
+    const targetAgeGroup = normalizeSpaces(formState.ageGroup).toLowerCase();
+    const targetDivision = (
+      horizontalDivisions.enabled ? formState.division : DEFAULT_DIVISION
+    ).toLowerCase();
+
+    return existingCategories.some((cat) => {
+      const catAgeGroup = normalizeSpaces(cat.ageGroup).toLowerCase();
+      const catDivision = deriveDivisionFromCategoryName(
+        cat.name,
+        cat.ageGroup,
+      ).toLowerCase();
+
+      return (
+        catAgeGroup === targetAgeGroup &&
+        cat.gender === formState.gender &&
+        catDivision === targetDivision
+      );
+    });
+  }, [
+    existingCategories,
+    formState.ageGroup,
+    formState.gender,
+    formState.division,
+    horizontalDivisions.enabled,
+    isEditMode,
+  ]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setFormError(null);
 
     if (!formState.ageGroup || !formState.gender) return;
-    if (!isEditMode && horizontalDivisions.enabled && !formState.division) return;
+    if (!isEditMode && horizontalDivisions.enabled && !formState.division)
+      return;
+    if (!isEditMode && hasDuplicateCategory) {
+      setFormError(
+        "A category with the same age group, gender, and division already exists",
+      );
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -209,11 +365,19 @@ export function CategoryFormDialog({
           name: generateCategoryName(),
           ageGroup: formState.ageGroup,
           gender: formState.gender,
+          division: horizontalDivisions.enabled
+            ? formState.division || DEFAULT_DIVISION
+            : undefined,
         });
       }
       setFormState(INITIAL_FORM_STATE);
       onOpenChange(false);
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to save category. Please try again.";
+      setFormError(message);
       console.error(
         `[CategoryFormDialog] Failed to ${isEditMode ? "update" : "create"} category:`,
         error,
@@ -226,6 +390,7 @@ export function CategoryFormDialog({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setFormState(INITIAL_FORM_STATE);
+      setFormError(null);
     }
     onOpenChange(newOpen);
   };
@@ -234,6 +399,7 @@ export function CategoryFormDialog({
     field: K,
     value: FormState[K],
   ) => {
+    setFormError(null);
     setFormState((prev) => {
       const newState = { ...prev, [field]: value };
       if (field === "ageGroup" || field === "gender") {
@@ -246,7 +412,8 @@ export function CategoryFormDialog({
   const isFormValid =
     formState.ageGroup &&
     formState.gender &&
-    (!horizontalDivisions.enabled || isEditMode || formState.division);
+    (!horizontalDivisions.enabled || isEditMode || formState.division) &&
+    (isEditMode || !hasDuplicateCategory);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -371,6 +538,10 @@ export function CategoryFormDialog({
                 </SelectContent>
               </Select>
             </div>
+          )}
+
+          {formError && (
+            <p className="mt-3 text-sm text-destructive">{formError}</p>
           )}
 
           <DialogFooter className="mt-6">

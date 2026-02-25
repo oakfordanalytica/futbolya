@@ -1,5 +1,11 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import {
+  query,
+  mutation,
+  type QueryCtx,
+  type MutationCtx,
+} from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { requireClubAccess, requireClubAccessBySlug } from "./lib/permissions";
 
 // ============================================================================
@@ -33,6 +39,89 @@ const categoryWithPlayerCountValidator = v.object({
   status: categoryStatus,
   playerCount: v.number(),
 });
+
+const DEFAULT_DIVISION = "A";
+
+function normalizeSpaces(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function normalizeAgeGroup(value: string): string {
+  return normalizeSpaces(value).toLowerCase();
+}
+
+function normalizeDivision(value: string): string {
+  return normalizeSpaces(value).toUpperCase();
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Derives a semantic division from a category name.
+ * If the name has no explicit division suffix, default to "A".
+ */
+function deriveDivisionFromCategoryName(
+  name: string,
+  ageGroup: string,
+): string {
+  const normalizedName = normalizeSpaces(name);
+  const normalizedAgeGroup = normalizeSpaces(ageGroup);
+
+  if (!normalizedName || !normalizedAgeGroup) {
+    return DEFAULT_DIVISION;
+  }
+
+  const prefixRegex = new RegExp(
+    `^${escapeRegExp(normalizedAgeGroup)}(?:\\s+(.*))?$`,
+    "i",
+  );
+  const match = normalizedName.match(prefixRegex);
+  const explicitDivision = match?.[1]?.trim();
+
+  return explicitDivision
+    ? normalizeDivision(explicitDivision)
+    : DEFAULT_DIVISION;
+}
+
+async function findSemanticCategoryDuplicate(
+  ctx: QueryCtx | MutationCtx,
+  args: {
+    clubId: Id<"clubs">;
+    ageGroup: string;
+    gender: "male" | "female" | "mixed";
+    name: string;
+    division?: string;
+    excludeCategoryId?: Id<"categories">;
+  },
+) {
+  const categories = await ctx.db
+    .query("categories")
+    .withIndex("byClub", (q) => q.eq("clubId", args.clubId))
+    .collect();
+
+  const targetAgeGroup = normalizeAgeGroup(args.ageGroup);
+  const targetDivision = args.division
+    ? normalizeDivision(args.division)
+    : deriveDivisionFromCategoryName(args.name, args.ageGroup);
+
+  return categories.find((category) => {
+    if (
+      args.excludeCategoryId &&
+      String(category._id) === String(args.excludeCategoryId)
+    ) {
+      return false;
+    }
+
+    return (
+      normalizeAgeGroup(category.ageGroup) === targetAgeGroup &&
+      category.gender === args.gender &&
+      deriveDivisionFromCategoryName(category.name, category.ageGroup) ===
+        targetDivision
+    );
+  });
+}
 
 // ============================================================================
 // QUERIES
@@ -170,27 +259,36 @@ export const create = mutation({
     name: v.string(),
     ageGroup: v.string(),
     gender: gender,
+    division: v.optional(v.string()),
   },
   returns: v.id("categories"),
   handler: async (ctx, args) => {
     const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
 
-    // Check for duplicate name within club
-    const existing = await ctx.db
-      .query("categories")
-      .withIndex("byClubAndName", (q) =>
-        q.eq("clubId", club._id).eq("name", args.name),
-      )
-      .unique();
+    const normalizedName = normalizeSpaces(args.name);
+    const normalizedAgeGroup = normalizeSpaces(args.ageGroup);
+    if (!normalizedName || !normalizedAgeGroup) {
+      throw new Error("Category name and age group are required");
+    }
+
+    const existing = await findSemanticCategoryDuplicate(ctx, {
+      clubId: club._id,
+      ageGroup: normalizedAgeGroup,
+      gender: args.gender,
+      name: normalizedName,
+      division: args.division,
+    });
 
     if (existing) {
-      throw new Error(`Category "${args.name}" already exists in this club`);
+      throw new Error(
+        "A category with the same age group, gender, and division already exists",
+      );
     }
 
     return await ctx.db.insert("categories", {
       clubId: club._id,
-      name: args.name,
-      ageGroup: args.ageGroup,
+      name: normalizedName,
+      ageGroup: normalizedAgeGroup,
       gender: args.gender,
       status: "active",
     });
@@ -227,20 +325,38 @@ export const update = mutation({
       }
     }
 
-    // Check name uniqueness if changing
-    if (filteredUpdates.name && typeof filteredUpdates.name === "string") {
-      const existing = await ctx.db
-        .query("categories")
-        .withIndex("byClubAndName", (q) =>
-          q
-            .eq("clubId", category.clubId)
-            .eq("name", filteredUpdates.name as string),
-        )
-        .unique();
+    if (typeof filteredUpdates.name === "string") {
+      filteredUpdates.name = normalizeSpaces(filteredUpdates.name);
+    }
+    if (typeof filteredUpdates.ageGroup === "string") {
+      filteredUpdates.ageGroup = normalizeSpaces(filteredUpdates.ageGroup);
+    }
 
-      if (existing && existing._id !== categoryId) {
-        throw new Error(`Category "${filteredUpdates.name}" already exists`);
-      }
+    const targetName =
+      typeof filteredUpdates.name === "string"
+        ? filteredUpdates.name
+        : category.name;
+    const targetAgeGroup =
+      typeof filteredUpdates.ageGroup === "string"
+        ? filteredUpdates.ageGroup
+        : category.ageGroup;
+    const targetGender =
+      typeof filteredUpdates.gender === "string"
+        ? (filteredUpdates.gender as "male" | "female" | "mixed")
+        : category.gender;
+
+    const existing = await findSemanticCategoryDuplicate(ctx, {
+      clubId: category.clubId,
+      ageGroup: targetAgeGroup,
+      gender: targetGender,
+      name: targetName,
+      excludeCategoryId: categoryId,
+    });
+
+    if (existing) {
+      throw new Error(
+        "A category with the same age group, gender, and division already exists",
+      );
     }
 
     if (Object.keys(filteredUpdates).length > 0) {
