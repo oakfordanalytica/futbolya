@@ -50,6 +50,13 @@ const positionValidator = v.object({
   abbreviation: v.string(),
 });
 
+const seasonValidator = v.object({
+  id: v.string(),
+  name: v.string(),
+  startDate: v.string(),
+  endDate: v.string(),
+});
+
 // ============================================================================
 // CLERK SYNCED TABLES (from webhooks)
 // ============================================================================
@@ -212,6 +219,7 @@ export default defineSchema({
     ),
     positions: v.optional(v.array(positionValidator)),
     enabledGenders: v.array(gender),
+    seasons: v.optional(v.array(seasonValidator)),
     horizontalDivisions: v.optional(
       v.object({
         enabled: v.boolean(),
@@ -229,6 +237,7 @@ export default defineSchema({
    */
   games: defineTable({
     organizationId: v.id("organizations"),
+    seasonId: v.optional(v.string()),
     homeClubId: v.id("clubs"),
     awayClubId: v.id("clubs"),
     date: v.string(),
@@ -247,6 +256,7 @@ export default defineSchema({
     awayStatsConfirmed: v.optional(v.boolean()),
   })
     .index("byOrganization", ["organizationId"])
+    .index("byOrganizationAndSeason", ["organizationId", "seasonId"])
     .index("byHomeClub", ["homeClubId"])
     .index("byAwayClub", ["awayClubId"])
     .index("byDate", ["date"])

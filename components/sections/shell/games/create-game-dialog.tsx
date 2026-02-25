@@ -57,7 +57,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type Gender = "male" | "female" | "mixed";
-type GameType = "quick" | "tournament" | null;
+type GameType = "quick" | "season" | "tournament" | null;
 
 interface Club {
   _id: string;
@@ -96,7 +96,8 @@ interface CreateGameDialogProps {
   preselectedClubId?: string;
 }
 
-interface QuickGameFormState {
+interface GameFormState {
+  seasonId: string;
   homeTeamId: string;
   awayTeamId: string;
   date: Date | undefined;
@@ -107,7 +108,8 @@ interface QuickGameFormState {
   locationCoordinates: [number, number] | null;
 }
 
-const INITIAL_FORM_STATE: QuickGameFormState = {
+const INITIAL_FORM_STATE: GameFormState = {
+  seasonId: "",
   homeTeamId: "",
   awayTeamId: "",
   date: undefined,
@@ -132,17 +134,19 @@ export function CreateGameDialog({
   const clubs = useQuery(api.clubs.listByLeague, {
     orgSlug,
   });
+  const activeSeasons = useQuery(api.leagueSettings.listActiveSeasons, {
+    leagueSlug: orgSlug,
+  });
 
   const createGame = useMutation(api.games.create);
 
-  const initialFormState: QuickGameFormState = {
+  const initialFormState: GameFormState = {
     ...INITIAL_FORM_STATE,
     homeTeamId: preselectedClubId || "",
   };
 
   const [gameType, setGameType] = useState<GameType>(null);
-  const [formState, setFormState] =
-    useState<QuickGameFormState>(initialFormState);
+  const [formState, setFormState] = useState<GameFormState>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasPreselectedClub = Boolean(preselectedClubId);
@@ -202,6 +206,7 @@ export function CreateGameDialog({
     "male",
     "female",
   ];
+  const hasActiveSeasons = (activeSeasons?.length ?? 0) > 0;
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
@@ -216,9 +221,9 @@ export function CreateGameDialog({
     setFormState(initialFormState);
   };
 
-  const updateField = <K extends keyof QuickGameFormState>(
+  const updateField = <K extends keyof GameFormState>(
     field: K,
-    value: QuickGameFormState[K],
+    value: GameFormState[K],
   ) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
@@ -241,12 +246,17 @@ export function CreateGameDialog({
       return;
     }
 
+    if (gameType === "season" && !formState.seasonId) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const dateString = format(formState.date, "yyyy-MM-dd");
 
       await createGame({
         orgSlug,
+        seasonId: gameType === "season" ? formState.seasonId : undefined,
         homeClubId: formState.homeTeamId as Id<"clubs">,
         awayClubId: formState.awayTeamId as Id<"clubs">,
         date: dateString,
@@ -268,6 +278,7 @@ export function CreateGameDialog({
   };
 
   const isFormValid =
+    (gameType !== "season" || formState.seasonId) &&
     formState.homeTeamId &&
     formState.awayTeamId &&
     formState.homeTeamId !== formState.awayTeamId &&
@@ -283,6 +294,9 @@ export function CreateGameDialog({
 
   const availableHomeTeams = (clubs || []).filter(
     (club) => club._id !== formState.awayTeamId,
+  );
+  const selectedSeason = (activeSeasons || []).find(
+    (season) => season.id === formState.seasonId,
   );
 
   return (
@@ -310,6 +324,40 @@ export function CreateGameDialog({
                     <div className="font-medium">{t("games.quickGame")}</div>
                     <div className="text-sm text-muted-foreground whitespace-normal break-words">
                       {t("games.quickGameDescription")}
+                    </div>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "h-auto w-full items-start justify-start gap-3 px-4 py-4 whitespace-normal",
+                    !hasActiveSeasons && "cursor-not-allowed opacity-50",
+                  )}
+                  onClick={() => setGameType("season")}
+                  disabled={!hasActiveSeasons}
+                >
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                      hasActiveSeasons ? "bg-primary/10" : "bg-muted",
+                    )}
+                  >
+                    <CalendarIcon
+                      className={cn(
+                        "h-5 w-5",
+                        hasActiveSeasons
+                          ? "text-primary"
+                          : "text-muted-foreground",
+                      )}
+                    />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="font-medium">{t("games.seasonGame")}</div>
+                    <div className="text-sm text-muted-foreground whitespace-normal break-words">
+                      {hasActiveSeasons
+                        ? t("games.seasonGameDescription")
+                        : t("games.noActiveSeasons")}
                     </div>
                   </div>
                 </Button>
@@ -356,7 +404,9 @@ export function CreateGameDialog({
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <DialogTitle className="text-left">
-                  {t("games.quickGame")}
+                  {gameType === "season"
+                    ? t("games.seasonGame")
+                    : t("games.quickGame")}
                 </DialogTitle>
               </div>
             </DialogHeader>
@@ -539,6 +589,77 @@ export function CreateGameDialog({
                       </Popover>
                     </div>
                   </div>
+
+                  {gameType === "season" && (
+                    <div>
+                      <FieldLabel>{t("games.season")}</FieldLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            disabled={!hasActiveSeasons}
+                            className={cn(
+                              "mt-2 w-full min-w-0 justify-between",
+                              !formState.seasonId && "text-muted-foreground",
+                            )}
+                          >
+                            {formState.seasonId && selectedSeason ? (
+                              <span className="truncate">
+                                {selectedSeason.name}
+                              </span>
+                            ) : hasActiveSeasons ? (
+                              t("games.selectSeason")
+                            ) : (
+                              t("games.noActiveSeasons")
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-[--radix-popover-trigger-width] p-0"
+                          align="start"
+                        >
+                          <Command>
+                            <CommandInput placeholder={t("actions.search")} />
+                            <CommandList>
+                              <CommandEmpty>
+                                {t("table.noResults")}
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {(activeSeasons || []).map((season) => (
+                                  <CommandItem
+                                    key={season.id}
+                                    value={season.name}
+                                    onSelect={() => {
+                                      updateField("seasonId", season.id);
+                                    }}
+                                  >
+                                    <div className="flex min-w-0 flex-1 flex-col">
+                                      <span className="truncate font-medium">
+                                        {season.name}
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {season.startDate} - {season.endDate}
+                                      </span>
+                                    </div>
+                                    <Check
+                                      className={cn(
+                                        "ml-auto h-4 w-4",
+                                        formState.seasonId === season.id
+                                          ? "opacity-100"
+                                          : "opacity-0",
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
 
                   <div>
                     <FieldLabel>{t("games.dateTime")}</FieldLabel>

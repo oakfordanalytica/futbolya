@@ -7,6 +7,7 @@ import { ROUTES } from "@/lib/navigation/routes";
 import { useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { parseIsoDateAsLocal } from "@/lib/utils/date";
 
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +69,8 @@ export function GameHeader({ game, orgSlug }: GameHeaderProps) {
     game.status === "awaiting_stats" ||
     game.status === "pending_review" ||
     game.status === "completed";
-  const formattedDate = format(new Date(game.date), "PPP");
+  const parsedGameDate = parseIsoDateAsLocal(game.date);
+  const formattedDate = parsedGameDate ? format(parsedGameDate, "PPP") : "—";
 
   const homeColor = resolveTeamColor(game.homeTeamColor, DEFAULT_HOME_COLOR);
   const awayColor = resolveTeamColor(game.awayTeamColor, DEFAULT_AWAY_COLOR);

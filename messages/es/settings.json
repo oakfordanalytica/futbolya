@@ -61,6 +61,26 @@
         }
       }
     },
+    "seasons": {
+      "title": "Temporadas",
+      "description": "Crea y administra temporadas para organizar juegos y estadísticas.",
+      "name": "Nombre",
+      "namePlaceholder": "Ej. Temporada 2026",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "empty": "No hay temporadas configuradas",
+      "emptyActive": "No hay temporadas activas.",
+      "emptyInactive": "No hay temporadas programadas o pasadas.",
+      "tabs": {
+        "active": "Activas",
+        "inactive": "Programadas / Pasadas"
+      },
+      "status": {
+        "active": "Activa",
+        "upcoming": "Próxima",
+        "ended": "Finalizada"
+      }
+    },
     "teamConfig": {
       "ageCategories": {
         "title": "Categorías de Edad",

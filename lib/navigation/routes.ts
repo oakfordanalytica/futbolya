@@ -118,6 +118,10 @@ export const ROUTES = {
       create: (orgSlug: string) => `/${orgSlug}/games/create`,
     },
 
+    stats: {
+      list: (orgSlug: string) => `/${orgSlug}/stats`,
+    },
+
     settings: {
       root: (orgSlug: string) => `/${orgSlug}/settings`,
       teamConfig: (orgSlug: string) => `/${orgSlug}/settings/team-config`,

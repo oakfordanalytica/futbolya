@@ -27,7 +27,9 @@
     "skip": "Skip",
     "sendInvitation": "Send invitation",
     "settings": "Settings",
-    "optional": "Optional"
+    "optional": "Optional",
+    "showMore": "Show more",
+    "showLess": "Show less"
   },
   "table": {
     "columns": "Columns",
@@ -292,8 +294,13 @@
     "createTitle": "Create Game",
     "quickGame": "Quick Game",
     "quickGameDescription": "Schedule a single game between two teams",
+    "seasonGame": "Season Game",
+    "seasonGameDescription": "Create a game linked to an active season",
     "tournament": "Tournament Game",
     "tournamentDescription": "Create a game as part of a tournament",
+    "season": "Season",
+    "selectSeason": "Select season",
+    "noActiveSeasons": "No active seasons available",
     "match": "Match",
     "homeTeam": "Home Team",
     "awayTeam": "Away Team",
@@ -309,6 +316,11 @@
     "location": "Location",
     "status": "Status",
     "score": "Score",
+    "type": "Type",
+    "typeOptions": {
+      "quick": "Quick",
+      "season": "Season"
+    },
     "boxScore": "Box Score",
     "stats": "Statistics",
     "boxScoreNote": "Full box score data coming soon",
@@ -420,6 +432,16 @@
       "alreadySubmitted": "Your team has already submitted stats for this game.",
       "noPlayers": "No players found. Please add players to your team first.",
       "playerStats": "Player Statistics"
+    },
+    "leaders": {
+      "seasonLeaders": "Season Leaders",
+      "playersTitle": "Players",
+      "teamsTitle": "Teams",
+      "noSeasons": "No seasons available yet.",
+      "noSeasonGames": "No completed season games with stats yet.",
+      "loading": "Loading season leaders...",
+      "gamesCount": "{count} games",
+      "winPct": "Win %"
     }
   }
 }

@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { getCurrentUser } from "./lib/auth";
 import { requireOrgAdmin } from "./lib/permissions";
 
 // ============================================================================
@@ -28,6 +27,13 @@ const positionValidator = v.object({
   abbreviation: v.string(),
 });
 
+const seasonValidator = v.object({
+  id: v.string(),
+  name: v.string(),
+  startDate: v.string(),
+  endDate: v.string(),
+});
+
 const horizontalDivisionsValidator = v.object({
   enabled: v.boolean(),
   type: v.union(
@@ -44,6 +50,14 @@ const teamConfigValidator = v.object({
   enabledGenders: v.array(gender),
   horizontalDivisions: v.optional(horizontalDivisionsValidator),
 });
+
+function getTodayDateString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isIsoDateString(date: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date);
+}
 
 // ============================================================================
 // QUERIES
@@ -108,6 +122,7 @@ export const getByLeagueSlug = query({
       ageCategories: v.array(ageCategoryValidator),
       positions: v.optional(v.array(positionValidator)),
       enabledGenders: v.array(gender),
+      seasons: v.optional(v.array(seasonValidator)),
       horizontalDivisions: v.optional(horizontalDivisionsValidator),
     }),
     v.null(),
@@ -126,6 +141,55 @@ export const getByLeagueSlug = query({
       .query("leagueSettings")
       .withIndex("byOrganization", (q) => q.eq("organizationId", org._id))
       .unique();
+  },
+});
+
+/**
+ * List all seasons for a league.
+ */
+export const listSeasons = query({
+  args: { leagueSlug: v.string() },
+  returns: v.array(seasonValidator),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    const seasons = settings?.seasons ?? [];
+    return [...seasons].sort((a, b) => b.startDate.localeCompare(a.startDate));
+  },
+});
+
+/**
+ * List active seasons for a league.
+ * A season is active when today is within its date range.
+ */
+export const listActiveSeasons = query({
+  args: { leagueSlug: v.string() },
+  returns: v.array(seasonValidator),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings?.seasons?.length) {
+      return [];
+    }
+
+    const today = getTodayDateString();
+    return settings.seasons
+      .filter((season) => season.startDate <= today && season.endDate >= today)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate));
   },
 });
 
@@ -251,6 +315,72 @@ export const removeAgeCategory = mutation({
     await ctx.db.patch(settings._id, {
       ageCategories: settings.ageCategories.filter(
         (c) => c.id !== args.categoryId,
+      ),
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Update an age category.
+ */
+export const updateAgeCategory = mutation({
+  args: {
+    leagueSlug: v.string(),
+    categoryId: v.string(),
+    name: v.string(),
+    minAge: v.number(),
+    maxAge: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const categoryName = args.name.trim();
+    if (!categoryName) {
+      throw new Error("Age category name is required");
+    }
+    if (args.minAge > args.maxAge) {
+      throw new Error("Minimum age cannot be greater than maximum age");
+    }
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings) {
+      throw new Error("League settings not found");
+    }
+
+    const categoryExists = settings.ageCategories.some(
+      (category) => category.id === args.categoryId,
+    );
+    if (!categoryExists) {
+      throw new Error("Age category not found");
+    }
+
+    const duplicateName = settings.ageCategories.some(
+      (category) =>
+        category.id !== args.categoryId && category.name === categoryName,
+    );
+    if (duplicateName) {
+      throw new Error("Age category already exists");
+    }
+
+    await ctx.db.patch(settings._id, {
+      ageCategories: settings.ageCategories.map((category) =>
+        category.id === args.categoryId
+          ? {
+              ...category,
+              name: categoryName,
+              minAge: args.minAge,
+              maxAge: args.maxAge,
+            }
+          : category,
       ),
     });
 
@@ -411,6 +541,278 @@ export const removePosition = mutation({
     const currentPositions = settings.positions ?? [];
     await ctx.db.patch(settings._id, {
       positions: currentPositions.filter((p) => p.id !== args.positionId),
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Update a position.
+ */
+export const updatePosition = mutation({
+  args: {
+    leagueSlug: v.string(),
+    positionId: v.string(),
+    name: v.string(),
+    abbreviation: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const positionName = args.name.trim();
+    const positionAbbreviation = args.abbreviation.trim();
+    if (!positionName || !positionAbbreviation) {
+      throw new Error("Position name and abbreviation are required");
+    }
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings) {
+      throw new Error("League settings not found");
+    }
+
+    const currentPositions = settings.positions ?? [];
+    const positionExists = currentPositions.some(
+      (position) => position.id === args.positionId,
+    );
+    if (!positionExists) {
+      throw new Error("Position not found");
+    }
+
+    const duplicatePosition = currentPositions.some(
+      (position) =>
+        position.id !== args.positionId &&
+        (position.name === positionName ||
+          position.abbreviation === positionAbbreviation),
+    );
+    if (duplicatePosition) {
+      throw new Error("Position already exists");
+    }
+
+    await ctx.db.patch(settings._id, {
+      positions: currentPositions.map((position) =>
+        position.id === args.positionId
+          ? {
+              ...position,
+              name: positionName,
+              abbreviation: positionAbbreviation,
+            }
+          : position,
+      ),
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Add a season.
+ */
+export const addSeason = mutation({
+  args: {
+    leagueSlug: v.string(),
+    season: seasonValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const seasonName = args.season.name.trim();
+    if (!seasonName) {
+      throw new Error("Season name is required");
+    }
+
+    if (
+      !isIsoDateString(args.season.startDate) ||
+      !isIsoDateString(args.season.endDate)
+    ) {
+      throw new Error("Season dates must use YYYY-MM-DD format");
+    }
+
+    if (args.season.startDate > args.season.endDate) {
+      throw new Error("Season start date must be before end date");
+    }
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings) {
+      await ctx.db.insert("leagueSettings", {
+        organizationId: organization._id,
+        sportType: "basketball",
+        ageCategories: [],
+        positions: [],
+        enabledGenders: ["male", "female"],
+        seasons: [
+          {
+            ...args.season,
+            name: seasonName,
+          },
+        ],
+      });
+      return null;
+    }
+
+    const currentSeasons = settings.seasons ?? [];
+    const seasonAlreadyExists = currentSeasons.some(
+      (season) => season.id === args.season.id || season.name === seasonName,
+    );
+    if (seasonAlreadyExists) {
+      throw new Error("Season already exists");
+    }
+
+    await ctx.db.patch(settings._id, {
+      seasons: [
+        ...currentSeasons,
+        {
+          ...args.season,
+          name: seasonName,
+        },
+      ],
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Remove a season.
+ */
+export const removeSeason = mutation({
+  args: {
+    leagueSlug: v.string(),
+    seasonId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings?.seasons?.length) {
+      return null;
+    }
+
+    const seasonExists = settings.seasons.some(
+      (season) => season.id === args.seasonId,
+    );
+    if (!seasonExists) {
+      return null;
+    }
+
+    const gamesWithSeason = await ctx.db
+      .query("games")
+      .withIndex("byOrganizationAndSeason", (q) =>
+        q.eq("organizationId", organization._id).eq("seasonId", args.seasonId),
+      )
+      .take(1);
+
+    if (gamesWithSeason.length > 0) {
+      throw new Error(
+        "Season cannot be removed because there are games linked to it",
+      );
+    }
+
+    await ctx.db.patch(settings._id, {
+      seasons: settings.seasons.filter((season) => season.id !== args.seasonId),
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Update a season.
+ */
+export const updateSeason = mutation({
+  args: {
+    leagueSlug: v.string(),
+    seasonId: v.string(),
+    name: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const seasonName = args.name.trim();
+    if (!seasonName) {
+      throw new Error("Season name is required");
+    }
+    if (!isIsoDateString(args.startDate) || !isIsoDateString(args.endDate)) {
+      throw new Error("Season dates must use YYYY-MM-DD format");
+    }
+    if (args.startDate > args.endDate) {
+      throw new Error("Season start date must be before end date");
+    }
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings?.seasons?.length) {
+      throw new Error("Season not found");
+    }
+
+    const seasonExists = settings.seasons.some(
+      (season) => season.id === args.seasonId,
+    );
+    if (!seasonExists) {
+      throw new Error("Season not found");
+    }
+
+    const duplicateName = settings.seasons.some(
+      (season) => season.id !== args.seasonId && season.name === seasonName,
+    );
+    if (duplicateName) {
+      throw new Error("Season already exists");
+    }
+
+    const gamesWithSeason = await ctx.db
+      .query("games")
+      .withIndex("byOrganizationAndSeason", (q) =>
+        q.eq("organizationId", organization._id).eq("seasonId", args.seasonId),
+      )
+      .collect();
+
+    const gameOutOfRange = gamesWithSeason.some(
+      (game) => game.date < args.startDate || game.date > args.endDate,
+    );
+    if (gameOutOfRange) {
+      throw new Error("Season range must include all linked games");
+    }
+
+    await ctx.db.patch(settings._id, {
+      seasons: settings.seasons.map((season) =>
+        season.id === args.seasonId
+          ? {
+              ...season,
+              name: seasonName,
+              startDate: args.startDate,
+              endDate: args.endDate,
+            }
+          : season,
+      ),
     });
 
     return null;

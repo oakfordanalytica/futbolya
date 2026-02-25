@@ -27,7 +27,9 @@
     "skip": "Omitir",
     "sendInvitation": "Enviar invitación",
     "settings": "Configuración",
-    "optional": "Opcional"
+    "optional": "Opcional",
+    "showMore": "Ver más",
+    "showLess": "Ocultar"
   },
   "table": {
     "columns": "Columnas",
@@ -293,8 +295,13 @@
     "createTitle": "Crear Juego",
     "quickGame": "Juego Rápido",
     "quickGameDescription": "Programa un juego individual entre dos equipos",
+    "seasonGame": "Juego de Temporada",
+    "seasonGameDescription": "Crea un juego asociado a una temporada activa",
     "tournament": "Juego de Torneo",
     "tournamentDescription": "Crea un juego como parte de un torneo",
+    "season": "Temporada",
+    "selectSeason": "Seleccionar temporada",
+    "noActiveSeasons": "No hay temporadas activas disponibles",
     "match": "Partido",
     "homeTeam": "Equipo Local",
     "awayTeam": "Equipo Visitante",
@@ -310,6 +317,11 @@
     "location": "Ubicación",
     "status": "Estado",
     "score": "Puntuación",
+    "type": "Tipo",
+    "typeOptions": {
+      "quick": "Rápido",
+      "season": "Temporada"
+    },
     "boxScore": "Estadísticas del Juego",
     "stats": "Estadísticas",
     "boxScoreNote": "Estadísticas completas próximamente",
@@ -421,6 +433,16 @@
       "alreadySubmitted": "Tu equipo ya envió las estadísticas de este juego.",
       "noPlayers": "No se encontraron jugadores. Por favor agrega jugadores a tu equipo primero.",
       "playerStats": "Estadísticas de Jugadores"
+    },
+    "leaders": {
+      "seasonLeaders": "Líderes de Temporada",
+      "playersTitle": "Jugadores",
+      "teamsTitle": "Equipos",
+      "noSeasons": "No hay temporadas disponibles todavía.",
+      "noSeasonGames": "No hay juegos de temporada completados con estadísticas todavía.",
+      "loading": "Cargando líderes de temporada...",
+      "gamesCount": "{count} juegos",
+      "winPct": "% de victorias"
     }
   }
 }

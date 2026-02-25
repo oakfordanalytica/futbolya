@@ -34,10 +34,13 @@ const gameStatus = v.union(
   v.literal("cancelled"),
 );
 
+const gameType = v.union(v.literal("quick"), v.literal("season"));
+
 const gameValidator = v.object({
   _id: v.id("games"),
   _creationTime: v.number(),
   organizationId: v.id("organizations"),
+  seasonId: v.optional(v.string()),
   homeClubId: v.id("clubs"),
   awayClubId: v.id("clubs"),
   homeClubSlug: v.string(),
@@ -66,6 +69,8 @@ const gameValidator = v.object({
 const gameListItemValidator = v.object({
   _id: v.id("games"),
   _creationTime: v.number(),
+  seasonId: v.optional(v.string()),
+  gameType: gameType,
   homeTeamId: v.string(),
   homeTeamName: v.string(),
   homeTeamLogo: v.optional(v.string()),
@@ -82,6 +87,99 @@ const gameListItemValidator = v.object({
   homeScore: v.optional(v.number()),
   awayScore: v.optional(v.number()),
 });
+
+const seasonValidator = v.object({
+  id: v.string(),
+  name: v.string(),
+  startDate: v.string(),
+  endDate: v.string(),
+});
+
+const seasonPlayerLeaderValidator = v.object({
+  playerId: v.id("players"),
+  playerName: v.string(),
+  photoUrl: v.optional(v.string()),
+  clubId: v.id("clubs"),
+  clubName: v.string(),
+  gamesPlayed: v.number(),
+  points: v.number(),
+  rebounds: v.number(),
+  assists: v.number(),
+  steals: v.number(),
+  blocks: v.number(),
+  pointsPerGame: v.number(),
+  reboundsPerGame: v.number(),
+  assistsPerGame: v.number(),
+  stealsPerGame: v.number(),
+  blocksPerGame: v.number(),
+});
+
+const seasonTeamLeaderValidator = v.object({
+  clubId: v.id("clubs"),
+  clubName: v.string(),
+  gamesPlayed: v.number(),
+  statGamesPlayed: v.number(),
+  wins: v.number(),
+  losses: v.number(),
+  winPct: v.number(),
+  pointsForPerGame: v.number(),
+  pointsAllowedPerGame: v.number(),
+  reboundsPerGame: v.number(),
+  assistsPerGame: v.number(),
+  stealsPerGame: v.number(),
+  blocksPerGame: v.number(),
+});
+
+type SeasonPlayerLeader = {
+  playerId: Id<"players">;
+  playerName: string;
+  photoUrl?: string;
+  clubId: Id<"clubs">;
+  clubName: string;
+  gamesPlayed: number;
+  points: number;
+  rebounds: number;
+  assists: number;
+  steals: number;
+  blocks: number;
+  pointsPerGame: number;
+  reboundsPerGame: number;
+  assistsPerGame: number;
+  stealsPerGame: number;
+  blocksPerGame: number;
+};
+
+type SeasonTeamLeader = {
+  clubId: Id<"clubs">;
+  clubName: string;
+  gamesPlayed: number;
+  statGamesPlayed: number;
+  wins: number;
+  losses: number;
+  winPct: number;
+  pointsForPerGame: number;
+  pointsAllowedPerGame: number;
+  reboundsPerGame: number;
+  assistsPerGame: number;
+  stealsPerGame: number;
+  blocksPerGame: number;
+};
+
+type SeasonPlayerLeaders = {
+  pointsPerGame: Array<SeasonPlayerLeader>;
+  reboundsPerGame: Array<SeasonPlayerLeader>;
+  assistsPerGame: Array<SeasonPlayerLeader>;
+  stealsPerGame: Array<SeasonPlayerLeader>;
+  blocksPerGame: Array<SeasonPlayerLeader>;
+};
+
+type SeasonTeamLeaders = {
+  pointsForPerGame: Array<SeasonTeamLeader>;
+  pointsAllowedPerGame: Array<SeasonTeamLeader>;
+  reboundsPerGame: Array<SeasonTeamLeader>;
+  assistsPerGame: Array<SeasonTeamLeader>;
+  winPct: Array<SeasonTeamLeader>;
+};
 
 async function requireGameAccess(
   ctx: PermissionCtx,
@@ -158,6 +256,34 @@ async function loadClubsWithLogos(
   return { clubMap, clubLogoMap };
 }
 
+function getTodayDateString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isIsoDateString(date: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date);
+}
+
+function roundToSingleDecimal(value: number): number {
+  return Number(value.toFixed(1));
+}
+
+function topByMetric<T>(
+  items: Array<T>,
+  getValue: (item: T) => number,
+  limit: number,
+): Array<T> {
+  return [...items]
+    .sort((a, b) => {
+      const diff = getValue(b) - getValue(a);
+      if (diff !== 0) {
+        return diff;
+      }
+      return 0;
+    })
+    .slice(0, limit);
+}
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -198,6 +324,8 @@ export const listByLeagueSlug = query({
     const result: Array<{
       _id: Id<"games">;
       _creationTime: number;
+      seasonId?: string;
+      gameType: "quick" | "season";
       homeTeamId: string;
       homeTeamName: string;
       homeTeamLogo?: string;
@@ -227,6 +355,8 @@ export const listByLeagueSlug = query({
       result.push({
         _id: game._id,
         _creationTime: game._creationTime,
+        seasonId: game.seasonId,
+        gameType: game.seasonId ? "season" : "quick",
         homeTeamId: game.homeClubId,
         homeTeamName: homeClub?.name ?? "Unknown",
         homeTeamLogo: clubLogoMap.get(game.homeClubId),
@@ -291,6 +421,8 @@ export const listByClubSlug = query({
     const result: Array<{
       _id: Id<"games">;
       _creationTime: number;
+      seasonId?: string;
+      gameType: "quick" | "season";
       homeTeamId: string;
       homeTeamName: string;
       homeTeamLogo?: string;
@@ -320,6 +452,8 @@ export const listByClubSlug = query({
       result.push({
         _id: game._id,
         _creationTime: game._creationTime,
+        seasonId: game.seasonId,
+        gameType: game.seasonId ? "season" : "quick",
         homeTeamId: game.homeClubId,
         homeTeamName: homeClub?.name ?? "Unknown",
         homeTeamLogo: clubLogoMap.get(game.homeClubId),
@@ -450,6 +584,409 @@ export const getGamePlayerStats = query({
 });
 
 /**
+ * Get season leaders for players and teams.
+ * Only completed season games are considered.
+ */
+export const getSeasonLeaders = query({
+  args: {
+    orgSlug: v.string(),
+    seasonId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    season: seasonValidator,
+    gamesCount: v.number(),
+    leaderLimit: v.number(),
+    playerLeaders: v.object({
+      pointsPerGame: v.array(seasonPlayerLeaderValidator),
+      reboundsPerGame: v.array(seasonPlayerLeaderValidator),
+      assistsPerGame: v.array(seasonPlayerLeaderValidator),
+      stealsPerGame: v.array(seasonPlayerLeaderValidator),
+      blocksPerGame: v.array(seasonPlayerLeaderValidator),
+    }),
+    teamLeaders: v.object({
+      pointsForPerGame: v.array(seasonTeamLeaderValidator),
+      pointsAllowedPerGame: v.array(seasonTeamLeaderValidator),
+      reboundsPerGame: v.array(seasonTeamLeaderValidator),
+      assistsPerGame: v.array(seasonTeamLeaderValidator),
+      winPct: v.array(seasonTeamLeaderValidator),
+    }),
+  }),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.orgSlug);
+
+    const rawLimit = Math.floor(args.limit ?? 10);
+    const leaderLimit = Math.max(1, Math.min(20, rawLimit));
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    const season = (settings?.seasons ?? []).find(
+      (item) => item.id === args.seasonId,
+    );
+    if (!season) {
+      throw new Error("Season not found");
+    }
+
+    const emptyPlayerLeaders: SeasonPlayerLeaders = {
+      pointsPerGame: [],
+      reboundsPerGame: [],
+      assistsPerGame: [],
+      stealsPerGame: [],
+      blocksPerGame: [],
+    };
+
+    const emptyTeamLeaders: SeasonTeamLeaders = {
+      pointsForPerGame: [],
+      pointsAllowedPerGame: [],
+      reboundsPerGame: [],
+      assistsPerGame: [],
+      winPct: [],
+    };
+
+    const seasonGames = await ctx.db
+      .query("games")
+      .withIndex("byOrganizationAndSeason", (q) =>
+        q.eq("organizationId", organization._id).eq("seasonId", args.seasonId),
+      )
+      .collect();
+
+    const completedGames = seasonGames.filter(
+      (game) =>
+        game.status === "completed" &&
+        typeof game.homeScore === "number" &&
+        typeof game.awayScore === "number",
+    );
+
+    if (completedGames.length === 0) {
+      return {
+        season,
+        gamesCount: 0,
+        leaderLimit,
+        playerLeaders: emptyPlayerLeaders,
+        teamLeaders: emptyTeamLeaders,
+      };
+    }
+
+    type PlayerSeasonAggregate = {
+      playerId: Id<"players">;
+      clubId: Id<"clubs">;
+      gamesPlayed: number;
+      points: number;
+      rebounds: number;
+      assists: number;
+      steals: number;
+      blocks: number;
+    };
+
+    type TeamSeasonAggregate = {
+      clubId: Id<"clubs">;
+      gamesPlayed: number;
+      statGamesPlayed: number;
+      wins: number;
+      losses: number;
+      pointsFor: number;
+      pointsAgainst: number;
+      rebounds: number;
+      assists: number;
+      steals: number;
+      blocks: number;
+    };
+
+    type TeamSingleGameTotals = {
+      rebounds: number;
+      assists: number;
+      steals: number;
+      blocks: number;
+      entries: number;
+    };
+
+    const playerAggregates = new Map<Id<"players">, PlayerSeasonAggregate>();
+    const teamAggregates = new Map<Id<"clubs">, TeamSeasonAggregate>();
+
+    const getOrCreateTeamAggregate = (
+      clubId: Id<"clubs">,
+    ): TeamSeasonAggregate => {
+      const existing = teamAggregates.get(clubId);
+      if (existing) {
+        return existing;
+      }
+
+      const created: TeamSeasonAggregate = {
+        clubId,
+        gamesPlayed: 0,
+        statGamesPlayed: 0,
+        wins: 0,
+        losses: 0,
+        pointsFor: 0,
+        pointsAgainst: 0,
+        rebounds: 0,
+        assists: 0,
+        steals: 0,
+        blocks: 0,
+      };
+      teamAggregates.set(clubId, created);
+      return created;
+    };
+
+    const allGameStats = await Promise.all(
+      completedGames.map((game) =>
+        ctx.db
+          .query("gamePlayerStats")
+          .withIndex("byGame", (q) => q.eq("gameId", game._id))
+          .collect(),
+      ),
+    );
+
+    for (let index = 0; index < completedGames.length; index += 1) {
+      const game = completedGames[index];
+      const gameStats = allGameStats[index];
+      const homeScore = game.homeScore ?? 0;
+      const awayScore = game.awayScore ?? 0;
+
+      const homeTeamAggregate = getOrCreateTeamAggregate(game.homeClubId);
+      const awayTeamAggregate = getOrCreateTeamAggregate(game.awayClubId);
+
+      homeTeamAggregate.gamesPlayed += 1;
+      awayTeamAggregate.gamesPlayed += 1;
+      homeTeamAggregate.pointsFor += homeScore;
+      homeTeamAggregate.pointsAgainst += awayScore;
+      awayTeamAggregate.pointsFor += awayScore;
+      awayTeamAggregate.pointsAgainst += homeScore;
+
+      if (homeScore > awayScore) {
+        homeTeamAggregate.wins += 1;
+        awayTeamAggregate.losses += 1;
+      } else if (awayScore > homeScore) {
+        awayTeamAggregate.wins += 1;
+        homeTeamAggregate.losses += 1;
+      }
+
+      const teamSingleGameTotals = new Map<Id<"clubs">, TeamSingleGameTotals>();
+
+      for (const stat of gameStats) {
+        const rebounds =
+          (stat.offensiveRebounds ?? 0) + (stat.defensiveRebounds ?? 0);
+        const assists = stat.assists ?? 0;
+        const steals = stat.steals ?? 0;
+        const blocks = stat.blocks ?? 0;
+
+        const playerAggregate = playerAggregates.get(stat.playerId);
+        if (playerAggregate) {
+          playerAggregate.gamesPlayed += 1;
+          playerAggregate.points += stat.points ?? 0;
+          playerAggregate.rebounds += rebounds;
+          playerAggregate.assists += assists;
+          playerAggregate.steals += steals;
+          playerAggregate.blocks += blocks;
+        } else {
+          playerAggregates.set(stat.playerId, {
+            playerId: stat.playerId,
+            clubId: stat.clubId,
+            gamesPlayed: 1,
+            points: stat.points ?? 0,
+            rebounds,
+            assists,
+            steals,
+            blocks,
+          });
+        }
+
+        const teamGameTotals = teamSingleGameTotals.get(stat.clubId);
+        if (teamGameTotals) {
+          teamGameTotals.entries += 1;
+          teamGameTotals.rebounds += rebounds;
+          teamGameTotals.assists += assists;
+          teamGameTotals.steals += steals;
+          teamGameTotals.blocks += blocks;
+        } else {
+          teamSingleGameTotals.set(stat.clubId, {
+            entries: 1,
+            rebounds,
+            assists,
+            steals,
+            blocks,
+          });
+        }
+      }
+
+      for (const [clubId, totals] of teamSingleGameTotals) {
+        const teamAggregate = teamAggregates.get(clubId);
+        if (!teamAggregate || totals.entries === 0) {
+          continue;
+        }
+        teamAggregate.statGamesPlayed += 1;
+        teamAggregate.rebounds += totals.rebounds;
+        teamAggregate.assists += totals.assists;
+        teamAggregate.steals += totals.steals;
+        teamAggregate.blocks += totals.blocks;
+      }
+    }
+
+    const clubIds = new Set<Id<"clubs">>();
+    for (const clubId of teamAggregates.keys()) {
+      clubIds.add(clubId);
+    }
+    for (const playerAggregate of playerAggregates.values()) {
+      clubIds.add(playerAggregate.clubId);
+    }
+
+    const clubDocs = await Promise.all(
+      Array.from(clubIds).map((clubId) => ctx.db.get(clubId)),
+    );
+    const clubNameById = new Map<Id<"clubs">, string>();
+    for (const club of clubDocs) {
+      if (club) {
+        clubNameById.set(club._id, club.name);
+      }
+    }
+
+    const playerIds = Array.from(playerAggregates.keys());
+    const playerDocs = await Promise.all(
+      playerIds.map((playerId) => ctx.db.get(playerId)),
+    );
+    const existingPlayers = playerDocs.filter(
+      (player): player is NonNullable<typeof player> => Boolean(player),
+    );
+
+    const playerById = new Map(
+      existingPlayers.map((player) => [player._id, player]),
+    );
+    const playerPhotoById = new Map<Id<"players">, string>();
+    await Promise.all(
+      existingPlayers.map(async (player) => {
+        if (!player.photoStorageId) {
+          return;
+        }
+        const photoUrl = await ctx.storage.getUrl(player.photoStorageId);
+        if (photoUrl) {
+          playerPhotoById.set(player._id, photoUrl);
+        }
+      }),
+    );
+
+    const playerLeaderRows: Array<SeasonPlayerLeader> = Array.from(
+      playerAggregates.values(),
+    )
+      .filter((aggregate) => aggregate.gamesPlayed > 0)
+      .map((aggregate) => {
+        const player = playerById.get(aggregate.playerId);
+        const gamesPlayed = aggregate.gamesPlayed;
+        return {
+          playerId: aggregate.playerId,
+          playerName: player
+            ? `${player.firstName} ${player.lastName}`
+            : "Unknown",
+          photoUrl: playerPhotoById.get(aggregate.playerId),
+          clubId: aggregate.clubId,
+          clubName: clubNameById.get(aggregate.clubId) ?? "Unknown",
+          gamesPlayed,
+          points: aggregate.points,
+          rebounds: aggregate.rebounds,
+          assists: aggregate.assists,
+          steals: aggregate.steals,
+          blocks: aggregate.blocks,
+          pointsPerGame: roundToSingleDecimal(aggregate.points / gamesPlayed),
+          reboundsPerGame: roundToSingleDecimal(
+            aggregate.rebounds / gamesPlayed,
+          ),
+          assistsPerGame: roundToSingleDecimal(aggregate.assists / gamesPlayed),
+          stealsPerGame: roundToSingleDecimal(aggregate.steals / gamesPlayed),
+          blocksPerGame: roundToSingleDecimal(aggregate.blocks / gamesPlayed),
+        };
+      });
+
+    const teamLeaderRows: Array<SeasonTeamLeader> = Array.from(
+      teamAggregates.values(),
+    )
+      .filter((aggregate) => aggregate.gamesPlayed > 0)
+      .map((aggregate) => {
+        const gamesPlayed = aggregate.gamesPlayed;
+        const statGames = aggregate.statGamesPlayed || gamesPlayed;
+        return {
+          clubId: aggregate.clubId,
+          clubName: clubNameById.get(aggregate.clubId) ?? "Unknown",
+          gamesPlayed,
+          statGamesPlayed: aggregate.statGamesPlayed,
+          wins: aggregate.wins,
+          losses: aggregate.losses,
+          winPct: roundToSingleDecimal((aggregate.wins / gamesPlayed) * 100),
+          pointsForPerGame: roundToSingleDecimal(
+            aggregate.pointsFor / gamesPlayed,
+          ),
+          pointsAllowedPerGame: roundToSingleDecimal(
+            aggregate.pointsAgainst / gamesPlayed,
+          ),
+          reboundsPerGame: roundToSingleDecimal(aggregate.rebounds / statGames),
+          assistsPerGame: roundToSingleDecimal(aggregate.assists / statGames),
+          stealsPerGame: roundToSingleDecimal(aggregate.steals / statGames),
+          blocksPerGame: roundToSingleDecimal(aggregate.blocks / statGames),
+        };
+      });
+
+    return {
+      season,
+      gamesCount: completedGames.length,
+      leaderLimit,
+      playerLeaders: {
+        pointsPerGame: topByMetric(
+          playerLeaderRows,
+          (item) => item.pointsPerGame,
+          leaderLimit,
+        ),
+        reboundsPerGame: topByMetric(
+          playerLeaderRows,
+          (item) => item.reboundsPerGame,
+          leaderLimit,
+        ),
+        assistsPerGame: topByMetric(
+          playerLeaderRows,
+          (item) => item.assistsPerGame,
+          leaderLimit,
+        ),
+        stealsPerGame: topByMetric(
+          playerLeaderRows,
+          (item) => item.stealsPerGame,
+          leaderLimit,
+        ),
+        blocksPerGame: topByMetric(
+          playerLeaderRows,
+          (item) => item.blocksPerGame,
+          leaderLimit,
+        ),
+      },
+      teamLeaders: {
+        pointsForPerGame: topByMetric(
+          teamLeaderRows,
+          (item) => item.pointsForPerGame,
+          leaderLimit,
+        ),
+        pointsAllowedPerGame: topByMetric(
+          teamLeaderRows,
+          (item) => item.pointsAllowedPerGame * -1,
+          leaderLimit,
+        ),
+        reboundsPerGame: topByMetric(
+          teamLeaderRows,
+          (item) => item.reboundsPerGame,
+          leaderLimit,
+        ),
+        assistsPerGame: topByMetric(
+          teamLeaderRows,
+          (item) => item.assistsPerGame,
+          leaderLimit,
+        ),
+        winPct: topByMetric(teamLeaderRows, (item) => item.winPct, leaderLimit),
+      },
+    };
+  },
+});
+
+/**
  * Get a game by ID with team details.
  */
 export const getById = query({
@@ -483,6 +1020,7 @@ export const getById = query({
       _id: game._id,
       _creationTime: game._creationTime,
       organizationId: game.organizationId,
+      seasonId: game.seasonId,
       homeClubId: game.homeClubId,
       awayClubId: game.awayClubId,
       homeClubSlug: homeClub?.slug ?? "",
@@ -520,6 +1058,7 @@ export const getById = query({
 export const create = mutation({
   args: {
     orgSlug: v.string(),
+    seasonId: v.optional(v.string()),
     homeClubId: v.id("clubs"),
     awayClubId: v.id("clubs"),
     date: v.string(),
@@ -548,8 +1087,38 @@ export const create = mutation({
       throw new Error("Home and away clubs must be different");
     }
 
+    if (!isIsoDateString(args.date)) {
+      throw new Error("Game date must use YYYY-MM-DD format");
+    }
+
+    if (args.seasonId) {
+      const settings = await ctx.db
+        .query("leagueSettings")
+        .withIndex("byOrganization", (q) =>
+          q.eq("organizationId", organization._id),
+        )
+        .unique();
+
+      const season = (settings?.seasons ?? []).find(
+        (item) => item.id === args.seasonId,
+      );
+      if (!season) {
+        throw new Error("Selected season not found");
+      }
+
+      const today = getTodayDateString();
+      if (season.startDate > today || season.endDate < today) {
+        throw new Error("Selected season is not currently active");
+      }
+
+      if (args.date < season.startDate || args.date > season.endDate) {
+        throw new Error("Game date must be within the selected season range");
+      }
+    }
+
     return await ctx.db.insert("games", {
       organizationId: organization._id,
+      seasonId: args.seasonId,
       homeClubId: args.homeClubId,
       awayClubId: args.awayClubId,
       date: args.date,

@@ -1,5 +1,6 @@
 import {
   BuildingLibraryIcon,
+  ChartBarIcon,
   UsersIcon,
   CreditCardIcon,
   Cog6ToothIcon,
@@ -56,6 +57,12 @@ const ORG_ITEMS: NavItem[] = [
     labelKey: "games",
     icon: CalendarIcon,
     href: (orgSlug) => ROUTES.org.games.list(orgSlug!),
+    isIndex: false,
+  },
+  {
+    labelKey: "stats",
+    icon: ChartBarIcon,
+    href: (orgSlug) => ROUTES.org.stats.list(orgSlug!),
     isIndex: false,
   },
   //

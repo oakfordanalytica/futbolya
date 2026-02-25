@@ -61,6 +61,26 @@
         }
       }
     },
+    "seasons": {
+      "title": "Seasons",
+      "description": "Create and manage seasons to organize games and statistics.",
+      "name": "Name",
+      "namePlaceholder": "e.g. 2026 Season",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "empty": "No seasons configured",
+      "emptyActive": "No active seasons.",
+      "emptyInactive": "No scheduled or past seasons.",
+      "tabs": {
+        "active": "Active",
+        "inactive": "Scheduled / Past"
+      },
+      "status": {
+        "active": "Active",
+        "upcoming": "Upcoming",
+        "ended": "Ended"
+      }
+    },
     "teamConfig": {
       "ageCategories": {
         "title": "Age Categories",

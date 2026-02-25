@@ -5,10 +5,13 @@ import {
 } from "@/components/table/column-helpers";
 import type { FilterConfig } from "@/lib/table/types";
 import { Avatar } from "@/components/ui/avatar";
+import { formatIsoDateAsLocal } from "@/lib/utils/date";
 
 export interface GameRow {
   _id: string;
   _creationTime: number;
+  seasonId?: string;
+  gameType?: "quick" | "season";
   homeTeamId: string;
   homeTeamName: string;
   homeTeamLogo?: string;
@@ -43,6 +46,12 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950",
 };
 
+const GAME_TYPE_STYLES: Record<"quick" | "season", string> = {
+  quick: "text-slate-700 bg-slate-100 dark:text-slate-300 dark:bg-slate-900/70",
+  season:
+    "text-indigo-700 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950",
+};
+
 function MatchTeam({ name, logoUrl }: { name: string; logoUrl?: string }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -64,6 +73,7 @@ export function createGameColumns(t: Translator): ColumnDef<GameRow>[] {
       "awayTeamName",
       "locationName",
       "category",
+      "gameType",
     ]),
 
     {
@@ -92,10 +102,35 @@ export function createGameColumns(t: Translator): ColumnDef<GameRow>[] {
         const time = row.original.startTime;
         return (
           <span className="text-sm">
-            {date ? new Date(date).toLocaleDateString() : "—"}
+            {date ? formatIsoDateAsLocal(date) : "—"}
             {time && ` · ${time}`}
           </span>
         );
+      },
+    },
+
+    {
+      accessorKey: "gameType",
+      header: t("games.type"),
+      cell: ({ row }) => {
+        const resolvedGameType: "quick" | "season" =
+          row.original.gameType ?? (row.original.seasonId ? "season" : "quick");
+        const className = GAME_TYPE_STYLES[resolvedGameType];
+        return (
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${className}`}
+          >
+            {t(`games.typeOptions.${resolvedGameType}`)}
+          </span>
+        );
+      },
+      filterFn: (row, id, value) => {
+        const resolvedGameType =
+          (row.original.gameType ??
+            (row.original.seasonId ? "season" : "quick")) === "season"
+            ? "season"
+            : "quick";
+        return value.includes(resolvedGameType);
       },
     },
 
@@ -191,6 +226,14 @@ export function createGameFilterConfigs(t: Translator): FilterConfig[] {
         { value: "male", label: t("gender.male") },
         { value: "female", label: t("gender.female") },
         { value: "mixed", label: t("gender.mixed") },
+      ],
+    },
+    {
+      id: "gameType",
+      label: t("games.type"),
+      options: [
+        { value: "quick", label: t("games.typeOptions.quick") },
+        { value: "season", label: t("games.typeOptions.season") },
       ],
     },
   ];
