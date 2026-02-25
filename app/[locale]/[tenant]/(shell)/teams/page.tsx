@@ -18,15 +18,29 @@ export default async function TeamsPage({ params }: TeamsPageProps) {
   const sportType = "basketball";
 
   if (sportType === "basketball") {
-    const preloadedTeams = await preloadQuery(
-      api.clubs.listByLeague,
-      {
-        orgSlug: tenant,
-      },
-      { token },
-    );
+    const [preloadedTeams, preloadedGames] = await Promise.all([
+      preloadQuery(
+        api.clubs.listByLeague,
+        {
+          orgSlug: tenant,
+        },
+        { token },
+      ),
+      preloadQuery(
+        api.games.listByLeagueSlug,
+        {
+          orgSlug: tenant,
+        },
+        { token },
+      ),
+    ]);
+
     return (
-      <BasketballTeamsTable preloadedTeams={preloadedTeams} orgSlug={tenant} />
+      <BasketballTeamsTable
+        preloadedTeams={preloadedTeams}
+        preloadedGames={preloadedGames}
+        orgSlug={tenant}
+      />
     );
   }
 

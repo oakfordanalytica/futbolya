@@ -12,20 +12,24 @@ import {
   type BasketballTeamRow,
 } from "@/components/sections/shell/teams/basketball/teams-columns";
 import { CreateTeamDialog } from "@/components/sections/shell/teams/basketball/create-team-dialog";
+import { TeamsGamesWeekStrip } from "@/components/sections/shell/teams/basketball/teams-games-week-strip";
 import { ROUTES } from "@/lib/navigation/routes";
 
 interface BasketballTeamsTableProps {
   preloadedTeams: Preloaded<typeof api.clubs.listByLeague>;
+  preloadedGames: Preloaded<typeof api.games.listByLeagueSlug>;
   orgSlug: string;
 }
 
 export function BasketballTeamsTable({
   preloadedTeams,
+  preloadedGames,
   orgSlug,
 }: BasketballTeamsTableProps) {
   const router = useRouter();
   const t = useTranslations("Common");
-  const data = usePreloadedQuery(preloadedTeams);
+  const teams = usePreloadedQuery(preloadedTeams);
+  const games = usePreloadedQuery(preloadedGames);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const handleRowClick = (team: BasketballTeamRow) => {
@@ -38,10 +42,12 @@ export function BasketballTeamsTable({
   const teamFilterConfigs = createBasketballTeamFilterConfigs(t);
 
   return (
-    <div className="p-4 md:p-6 ">
+    <div className="space-y-4 p-4 md:p-6">
+      <TeamsGamesWeekStrip games={games ?? []} orgSlug={orgSlug} />
+
       <DataTable
         columns={teamColumns}
-        data={data ?? []}
+        data={teams ?? []}
         filterColumn="search"
         filterPlaceholder={t("teams.searchPlaceholder")}
         filterConfigs={teamFilterConfigs}
