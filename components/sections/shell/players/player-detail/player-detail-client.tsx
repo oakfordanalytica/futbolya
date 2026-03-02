@@ -2,16 +2,23 @@
 
 import { useMemo, useState } from "react";
 import { Preloaded, usePreloadedQuery, useQuery } from "convex/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
+import { DataTable } from "@/components/table/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { darkenHex } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { PlayerFormDialog } from "@/components/sections/shell/teams/basketball/team-settings/player-form-dialog";
 import { PlayerBioDialog } from "./player-bio-dialog";
+import { PlayerHighlightDialog } from "./player-highlight-dialog";
+import { PlayerHighlightsStrip } from "./player-highlights-strip";
+import {
+  createPlayerGameLogColumns,
+  PlayerRecentStatsPreview,
+} from "./player-recent-stats";
 import { PlayerProfileHeader } from "./player-profile-header";
 
 interface PlayerDetailClientProps {
@@ -25,15 +32,26 @@ export function PlayerDetailClient({
   preloadedPlayer,
   orgSlug,
 }: PlayerDetailClientProps) {
+  const locale = useLocale();
   const t = useTranslations("Common");
   const player = usePreloadedQuery(preloadedPlayer);
   const { isAdmin, isLoaded } = useIsAdmin();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isBioEditOpen, setIsBioEditOpen] = useState(false);
+  const [isHighlightDialogOpen, setIsHighlightDialogOpen] = useState(false);
 
   const teamConfig = useQuery(api.leagueSettings.getTeamConfig, {
     leagueSlug: orgSlug,
   });
+  const playerGameLog = useQuery(
+    api.players.listBasketballPlayerGameLog,
+    player
+      ? {
+          playerId: player._id,
+          limit: 100,
+        }
+      : "skip",
+  );
 
   const positionMap = useMemo(() => {
     const map = new Map<string, { name: string; abbreviation: string }>();
@@ -70,11 +88,15 @@ export function PlayerDetailClient({
   const primaryColor = player.clubPrimaryColor ?? null;
   const darkerColor = primaryColor ? darkenHex(primaryColor, 0.2) : null;
   const positions = teamConfig?.positions ?? [];
-  const canEditBio =
-    isLoaded &&
-    (player.viewerAccessLevel === "superadmin" ||
-      player.viewerAccessLevel === "admin" ||
-      player.viewerAccessLevel === "coach");
+  const playerGameLogColumns = useMemo(
+    () => createPlayerGameLogColumns(t, locale),
+    [locale, t],
+  );
+  const gameLogRows = playerGameLog ?? [];
+  const canManagePlayerContent =
+    player.viewerAccessLevel === "superadmin" ||
+    player.viewerAccessLevel === "admin" ||
+    player.viewerAccessLevel === "coach";
   const bioTitle = player.bioTitle?.trim() || t("players.bio");
   const bioContent = player.bioContent?.trim() || t("players.bioPlaceholder");
 
@@ -115,6 +137,11 @@ export function PlayerDetailClient({
         initialTitle={player.bioTitle}
         initialContent={player.bioContent}
       />
+      <PlayerHighlightDialog
+        open={isHighlightDialogOpen}
+        onOpenChange={setIsHighlightDialogOpen}
+        playerId={player._id}
+      />
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList
@@ -140,30 +167,65 @@ export function PlayerDetailClient({
         </TabsList>
 
         <TabsContent value="profile" className="mt-0 px-4 py-4 md:px-6">
-          <section className="max-w-3xl rounded-md border bg-card p-4">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {bioTitle}
-              </h2>
-              {canEditBio && (
-                <Button
-                  type="button"
-                  onClick={() => setIsBioEditOpen(true)}
-                  className="rounded-full ring-1 bg-transparent hover:bg-transparent"
-                  size="sm"
-                >
-                  <Settings className="size-4" />
-                  <span className="hidden md:block">{t("actions.edit")}</span>
-                </Button>
-              )}
+          <div className="space-y-4">
+            <PlayerHighlightsStrip
+              highlights={player.highlights ?? []}
+              canManage={canManagePlayerContent}
+              onAdd={() => setIsHighlightDialogOpen(true)}
+            />
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <section className="order-2 rounded-md border bg-card p-4 xl:order-1">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    {bioTitle}
+                  </h2>
+                  {canManagePlayerContent && (
+                    <Button
+                      type="button"
+                      onClick={() => setIsBioEditOpen(true)}
+                      className="rounded-full bg-transparent text-foreground ring-1 ring-border hover:bg-accent/40"
+                      size="sm"
+                    >
+                      <Settings className="size-4" />
+                      <span className="hidden md:block">
+                        {t("actions.edit")}
+                      </span>
+                    </Button>
+                  )}
+                </div>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                  {bioContent}
+                </p>
+              </section>
+
+              <PlayerRecentStatsPreview
+                className="order-1 xl:order-2"
+                rows={gameLogRows}
+                isLoading={playerGameLog === undefined}
+              />
             </div>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-              {bioContent}
-            </p>
-          </section>
+          </div>
         </TabsContent>
-        <TabsContent value="stats" className="mt-0 px-4 md:px-6">
-          <div className="h-1" />
+        <TabsContent value="stats" className="mt-0 px-4 py-4 md:px-6">
+          {playerGameLog === undefined ? (
+            <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+              {t("games.leaders.loading")}
+            </div>
+          ) : (
+            <DataTable
+              columns={playerGameLogColumns}
+              data={gameLogRows}
+              filterColumn="search"
+              filterPlaceholder={t("players.statsSearchPlaceholder")}
+              emptyMessage={t("players.statsEmpty")}
+              columnsMenuLabel={t("table.columns")}
+              filtersMenuLabel={t("table.filters")}
+              previousLabel={t("actions.previous")}
+              nextLabel={t("actions.next")}
+              initialSorting={[{ id: "date", desc: true }]}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

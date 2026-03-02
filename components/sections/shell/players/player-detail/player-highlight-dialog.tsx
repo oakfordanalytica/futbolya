@@ -14,49 +14,51 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 
-interface PlayerBioDialogProps {
+interface PlayerHighlightDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   playerId: Id<"players">;
-  initialTitle?: string | null;
-  initialContent?: string | null;
 }
 
-export function PlayerBioDialog({
+export function PlayerHighlightDialog({
   open,
   onOpenChange,
   playerId,
-  initialTitle,
-  initialContent,
-}: PlayerBioDialogProps) {
+}: PlayerHighlightDialogProps) {
   const t = useTranslations("Common");
-  const updatePlayerBio = useMutation(api.players.updatePlayerBio);
+  const addPlayerHighlight = useMutation(api.players.addPlayerHighlight);
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [url, setUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
-      return;
+      setTitle("");
+      setUrl("");
+      setErrorMessage(null);
+      setIsSubmitting(false);
     }
-    setTitle(initialTitle ?? "");
-    setContent(initialContent ?? "");
-  }, [open, initialTitle, initialContent]);
+  }, [open]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setErrorMessage(null);
     setIsSubmitting(true);
 
     try {
-      await updatePlayerBio({
+      await addPlayerHighlight({
         playerId,
-        bioTitle: title,
-        bioContent: content,
+        title,
+        url,
       });
       onOpenChange(false);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("errors.generic"),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -66,34 +68,37 @@ export function PlayerBioDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="border-b px-4 py-3 sm:px-6 sm:py-4">
-          <DialogTitle>
-            {t("actions.edit")} {t("players.bio")}
-          </DialogTitle>
+          <DialogTitle>{t("players.addHighlight")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
             <FieldGroup>
               <Field>
-                <FieldLabel>{t("players.bioTitle")}</FieldLabel>
+                <FieldLabel>{t("players.highlightName")}</FieldLabel>
                 <Input
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  placeholder={t("players.bioTitlePlaceholder")}
+                  placeholder={t("players.highlightNamePlaceholder")}
                   maxLength={120}
+                  required
                 />
               </Field>
               <Field>
-                <FieldLabel>{t("players.bioContent")}</FieldLabel>
-                <Textarea
-                  value={content}
-                  onChange={(event) => setContent(event.target.value)}
-                  placeholder={t("players.bioContentPlaceholder")}
-                  className="min-h-36 resize-y"
-                  maxLength={4000}
+                <FieldLabel>{t("players.highlightUrl")}</FieldLabel>
+                <Input
+                  type="url"
+                  value={url}
+                  onChange={(event) => setUrl(event.target.value)}
+                  placeholder={t("players.highlightUrlPlaceholder")}
+                  required
                 />
               </Field>
             </FieldGroup>
+
+            {errorMessage && (
+              <p className="mt-4 text-sm text-destructive">{errorMessage}</p>
+            )}
           </div>
 
           <DialogFooter className="border-t px-4 py-3 sm:px-6">
@@ -106,7 +111,7 @@ export function PlayerBioDialog({
               {t("actions.cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? t("actions.loading") : t("actions.save")}
+              {isSubmitting ? t("actions.loading") : t("actions.add")}
             </Button>
           </DialogFooter>
         </form>

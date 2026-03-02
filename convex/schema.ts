@@ -50,6 +50,13 @@ const positionValidator = v.object({
   abbreviation: v.string(),
 });
 
+const playerHighlightValidator = v.object({
+  id: v.string(),
+  title: v.string(),
+  url: v.string(),
+  videoId: v.string(),
+});
+
 const seasonValidator = v.object({
   id: v.string(),
   name: v.string(),
@@ -165,6 +172,7 @@ export default defineSchema({
     position: v.optional(v.string()),
     height: v.optional(v.number()),
     weight: v.optional(v.number()),
+    highlights: v.optional(v.array(playerHighlightValidator)),
     bioTitle: v.optional(v.string()),
     bioContent: v.optional(v.string()),
     country: v.optional(v.string()),

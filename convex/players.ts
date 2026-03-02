@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
 import { requireClubAccess, requireClubAccessBySlug } from "./lib/permissions";
 
@@ -13,6 +14,29 @@ const playerViewerAccessLevel = v.union(
   v.literal("admin"),
   v.literal("coach"),
 );
+const playerHighlightValidator = v.object({
+  id: v.string(),
+  title: v.string(),
+  url: v.string(),
+  videoId: v.string(),
+});
+const playerGameLogRowValidator = v.object({
+  gameId: v.id("games"),
+  date: v.string(),
+  startTime: v.string(),
+  gameType: v.union(v.literal("quick"), v.literal("season")),
+  opponentName: v.string(),
+  result: v.union(v.literal("W"), v.literal("L"), v.literal("—")),
+  teamScore: v.optional(v.number()),
+  opponentScore: v.optional(v.number()),
+  minutes: v.number(),
+  points: v.number(),
+  rebounds: v.number(),
+  assists: v.number(),
+  steals: v.number(),
+  blocks: v.number(),
+  plusMinus: v.number(),
+});
 
 const basketballPlayerValidator = v.object({
   _id: v.id("players"),
@@ -55,6 +79,7 @@ const basketballPlayerDetailValidator = v.object({
   clubSlug: v.string(),
   clubLogoUrl: v.optional(v.string()),
   clubPrimaryColor: v.optional(v.string()),
+  highlights: v.array(playerHighlightValidator),
   gamesPlayed: v.number(),
   pointsPerGame: v.number(),
   reboundsPerGame: v.number(),
@@ -64,6 +89,32 @@ const basketballPlayerDetailValidator = v.object({
 
 function roundToSingleDecimal(value: number): number {
   return Number(value.toFixed(1));
+}
+
+function extractYouTubeVideoId(rawUrl: string): string | null {
+  try {
+    const parsed = new URL(rawUrl);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    let candidate = "";
+
+    if (host === "youtu.be") {
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      candidate = parts[0] ?? "";
+    } else if (host.endsWith("youtube.com")) {
+      if (parsed.pathname === "/watch") {
+        candidate = parsed.searchParams.get("v") ?? "";
+      } else {
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        if (parts[0] === "shorts" || parts[0] === "embed") {
+          candidate = parts[1] ?? "";
+        }
+      }
+    }
+
+    return /^[A-Za-z0-9_-]{11}$/.test(candidate) ? candidate : null;
+  } catch {
+    return null;
+  }
 }
 
 // ============================================================================
@@ -221,12 +272,155 @@ export const getBasketballPlayerDetailByClubSlug = query({
       clubSlug: club.slug,
       clubLogoUrl: clubLogoUrl ?? undefined,
       clubPrimaryColor: club.colors?.[0],
+      highlights: player.highlights ?? [],
       gamesPlayed,
       pointsPerGame,
       reboundsPerGame,
       assistsPerGame,
       viewerAccessLevel: accessLevel,
     };
+  },
+});
+
+/**
+ * List recent game log rows for a basketball player.
+ * Includes quick and season games with completed box score stats.
+ */
+export const listBasketballPlayerGameLog = query({
+  args: {
+    playerId: v.id("players"),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(playerGameLogRowValidator),
+  handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+
+    const player = await ctx.db.get(args.playerId);
+    if (!player || player.sportType !== "basketball") {
+      return [];
+    }
+
+    const { organization } = await requireClubAccess(ctx, player.clubId);
+
+    const requestedLimit = Math.floor(args.limit ?? 50);
+    const boundedLimit = Math.max(
+      1,
+      Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 50, 200),
+    );
+
+    const stats = await ctx.db
+      .query("gamePlayerStats")
+      .withIndex("byPlayer", (q) => q.eq("playerId", player._id))
+      .collect();
+
+    if (stats.length === 0) {
+      return [];
+    }
+
+    const linkedGames = await Promise.all(
+      stats.map((stat) => ctx.db.get(stat.gameId)),
+    );
+
+    const rowsWithOpponentId: Array<{
+      gameId: Id<"games">;
+      date: string;
+      startTime: string;
+      gameType: "quick" | "season";
+      opponentId: Id<"clubs">;
+      result: "W" | "L" | "—";
+      teamScore?: number;
+      opponentScore?: number;
+      minutes: number;
+      points: number;
+      rebounds: number;
+      assists: number;
+      steals: number;
+      blocks: number;
+      plusMinus: number;
+      sortKey: number;
+    }> = [];
+    const opponentClubIds = new Set<Id<"clubs">>();
+
+    for (let index = 0; index < stats.length; index += 1) {
+      const stat = stats[index];
+      const game = linkedGames[index];
+      if (!game || game.organizationId !== organization._id) {
+        continue;
+      }
+
+      if (game.status !== "completed") {
+        continue;
+      }
+
+      const playedAsHome = stat.clubId === game.homeClubId;
+      const playedAsAway = stat.clubId === game.awayClubId;
+      if (!playedAsHome && !playedAsAway) {
+        continue;
+      }
+
+      const opponentId = playedAsHome ? game.awayClubId : game.homeClubId;
+      opponentClubIds.add(opponentId);
+
+      const teamScore = playedAsHome ? game.homeScore : game.awayScore;
+      const opponentScore = playedAsHome ? game.awayScore : game.homeScore;
+
+      let result: "W" | "L" | "—" = "—";
+      if (typeof teamScore === "number" && typeof opponentScore === "number") {
+        if (teamScore > opponentScore) {
+          result = "W";
+        } else if (teamScore < opponentScore) {
+          result = "L";
+        }
+      }
+
+      const [year, month, day] = game.date.split("-").map(Number);
+      const [hours = 0, minutes = 0] = game.startTime.split(":").map(Number);
+      const sortKey = Date.UTC(
+        year,
+        (month || 1) - 1,
+        day || 1,
+        hours,
+        minutes,
+      );
+
+      rowsWithOpponentId.push({
+        gameId: game._id,
+        date: game.date,
+        startTime: game.startTime,
+        gameType: game.seasonId ? "season" : "quick",
+        opponentId,
+        result,
+        teamScore,
+        opponentScore,
+        minutes: stat.minutes ?? 0,
+        points: stat.points ?? 0,
+        rebounds: (stat.offensiveRebounds ?? 0) + (stat.defensiveRebounds ?? 0),
+        assists: stat.assists ?? 0,
+        steals: stat.steals ?? 0,
+        blocks: stat.blocks ?? 0,
+        plusMinus: stat.plusMinus ?? 0,
+        sortKey,
+      });
+    }
+
+    if (rowsWithOpponentId.length === 0) {
+      return [];
+    }
+
+    const opponentClubs = await Promise.all(
+      [...opponentClubIds].map((clubId) => ctx.db.get(clubId)),
+    );
+    const opponentClubMap = new Map(
+      opponentClubs.filter(Boolean).map((club) => [club!._id, club!]),
+    );
+
+    return rowsWithOpponentId
+      .sort((a, b) => b.sortKey - a.sortKey)
+      .slice(0, boundedLimit)
+      .map(({ opponentId, sortKey: _sortKey, ...row }) => ({
+        ...row,
+        opponentName: opponentClubMap.get(opponentId)?.name ?? "Unknown",
+      }));
   },
 });
 
@@ -412,6 +606,65 @@ export const updatePlayerBio = mutation({
     await ctx.db.patch(args.playerId, {
       bioTitle: args.bioTitle.trim(),
       bioContent: args.bioContent.trim(),
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Add a highlight video to a player profile.
+ * Available for users with coach/admin access to the player's club.
+ */
+export const addPlayerHighlight = mutation({
+  args: {
+    playerId: v.id("players"),
+    title: v.string(),
+    url: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+
+    const player = await ctx.db.get(args.playerId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    await requireClubAccess(ctx, player.clubId);
+
+    const trimmedTitle = args.title.trim();
+    const trimmedUrl = args.url.trim();
+    if (!trimmedTitle) {
+      throw new Error("Highlight title is required");
+    }
+    if (!trimmedUrl) {
+      throw new Error("Highlight URL is required");
+    }
+
+    const videoId = extractYouTubeVideoId(trimmedUrl);
+    if (!videoId) {
+      throw new Error("Only valid YouTube URLs are allowed");
+    }
+
+    const currentHighlights = player.highlights ?? [];
+    if (currentHighlights.some((highlight) => highlight.videoId === videoId)) {
+      throw new Error("This highlight already exists for the player");
+    }
+
+    if (currentHighlights.length >= 20) {
+      throw new Error("Maximum number of highlights reached");
+    }
+
+    const newHighlight = {
+      id: `${Date.now()}-${videoId}`,
+      title: trimmedTitle,
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+      videoId,
+    };
+
+    await ctx.db.patch(args.playerId, {
+      highlights: [...currentHighlights, newHighlight],
     });
 
     return null;
