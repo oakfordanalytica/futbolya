@@ -319,6 +319,7 @@
     "season": "Season",
     "selectSeason": "Select season",
     "noActiveSeasons": "No active seasons available",
+    "clubStatusNotEligible": "This team is not eligible for scheduling games because its status is not affiliated.",
     "match": "Match",
     "homeTeam": "Home Team",
     "awayTeam": "Away Team",

@@ -63,6 +63,7 @@ interface Club {
   _id: string;
   name: string;
   nickname: string;
+  status: "affiliated" | "invited" | "suspended";
   logoUrl?: string;
 }
 
@@ -277,6 +278,15 @@ export function CreateGameDialog({
     }
   };
 
+  const affiliatedClubs = (clubs || []).filter(
+    (club) => club.status === "affiliated",
+  );
+  const preselectedClub = hasPreselectedClub
+    ? (clubs || []).find((club) => club._id === preselectedClubId)
+    : null;
+  const isPreselectedClubAffiliated =
+    !hasPreselectedClub || preselectedClub?.status === "affiliated";
+
   const isFormValid =
     (gameType !== "season" || formState.seasonId) &&
     formState.homeTeamId &&
@@ -286,13 +296,14 @@ export function CreateGameDialog({
     formState.startTime &&
     formState.category &&
     formState.gender &&
-    categoryValidation.isValid;
+    categoryValidation.isValid &&
+    isPreselectedClubAffiliated;
 
-  const availableAwayTeams = (clubs || []).filter(
+  const availableAwayTeams = affiliatedClubs.filter(
     (club) => club._id !== formState.homeTeamId,
   );
 
-  const availableHomeTeams = (clubs || []).filter(
+  const availableHomeTeams = affiliatedClubs.filter(
     (club) => club._id !== formState.awayTeamId,
   );
   const selectedSeason = (activeSeasons || []).find(
@@ -589,6 +600,13 @@ export function CreateGameDialog({
                       </Popover>
                     </div>
                   </div>
+
+                  {hasPreselectedClub && !isPreselectedClubAffiliated && (
+                    <div className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <p>{t("games.clubStatusNotEligible")}</p>
+                    </div>
+                  )}
 
                   {gameType === "season" && (
                     <div>

@@ -1517,6 +1517,10 @@ export const create = mutation({
       throw new Error("Away club not found or doesn't belong to this league");
     }
 
+    if (homeClub.status !== "affiliated" || awayClub.status !== "affiliated") {
+      throw new Error("Only affiliated teams can be scheduled for games");
+    }
+
     if (args.homeClubId === args.awayClubId) {
       throw new Error("Home and away clubs must be different");
     }

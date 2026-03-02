@@ -320,6 +320,7 @@
     "season": "Temporada",
     "selectSeason": "Seleccionar temporada",
     "noActiveSeasons": "No hay temporadas activas disponibles",
+    "clubStatusNotEligible": "Este equipo no puede programar juegos porque su estado no es afiliado.",
     "match": "Partido",
     "homeTeam": "Equipo Local",
     "awayTeam": "Equipo Visitante",

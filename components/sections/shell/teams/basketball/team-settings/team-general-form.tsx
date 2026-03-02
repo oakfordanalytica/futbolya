@@ -8,6 +8,13 @@ import { Id } from "@/convex/_generated/dataModel";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import ColorPicker from "@/components/ui/color-picker";
@@ -18,6 +25,8 @@ interface TeamColor {
   name: string;
 }
 
+type TeamStatus = "affiliated" | "suspended";
+
 interface TeamGeneralFormProps {
   team: {
     _id: string;
@@ -25,7 +34,7 @@ interface TeamGeneralFormProps {
     slug: string;
     nickname?: string | null;
     logoUrl?: string | null;
-    status: string;
+    status: "affiliated" | "invited" | "suspended";
     colors?: string[] | null;
     colorNames?: string[] | null;
   };
@@ -40,6 +49,9 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
   const [name, setName] = useState(team.name);
   // Use slug as nickname since nickname is the slug
   const [nickname, setNickname] = useState(team.slug || "");
+  const [status, setStatus] = useState<TeamStatus>(
+    team.status === "suspended" ? "suspended" : "affiliated",
+  );
   const [colors, setColors] = useState<TeamColor[]>(() => {
     if (team.colors && team.colors.length > 0) {
       return team.colors.map((hex, index) => ({
@@ -129,6 +141,7 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
         clubId: team._id as Id<"clubs">,
         name,
         nickname,
+        status,
         logoStorageId,
         colors:
           colorsToSave.length > 0 ? colorsToSave.map((c) => c.hex) : undefined,
@@ -217,6 +230,26 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
                 fallback: "This will be used as the team URL",
               })}
             </p>
+          </Field>
+
+          <Field>
+            <FieldLabel>{t("teams.status")}</FieldLabel>
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value as TeamStatus)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t("teams.status")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="affiliated">
+                  {t("teams.statusOptions.affiliated")}
+                </SelectItem>
+                <SelectItem value="suspended">
+                  {t("teams.statusOptions.suspended")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
         </FieldGroup>
       </div>
