@@ -2,7 +2,11 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
-import { requireClubAccess, requireClubAccessBySlug } from "./lib/permissions";
+import {
+  requireClubAccess,
+  requireClubAccessBySlug,
+  requireOrgAdmin,
+} from "./lib/permissions";
 
 // ============================================================================
 // VALIDATORS
@@ -58,6 +62,9 @@ const basketballPlayerValidator = v.object({
   country: v.optional(v.string()),
   categoryId: v.id("categories"),
   categoryName: v.optional(v.string()),
+  clubSlug: v.string(),
+  clubName: v.string(),
+  clubNickname: v.optional(v.string()),
 });
 
 const basketballPlayerDetailValidator = v.object({
@@ -138,9 +145,14 @@ export const listBasketballPlayersByClubSlug = query({
       .query("players")
       .withIndex("byClub", (q) => q.eq("clubId", club._id))
       .collect();
+    const basketballPlayers = players.filter(
+      (player) => player.sportType === "basketball",
+    );
 
     // Batch fetch categories
-    const categoryIds = [...new Set(players.map((p) => p.categoryId))];
+    const categoryIds = [
+      ...new Set(basketballPlayers.map((p) => p.categoryId)),
+    ];
     const categories = await Promise.all(
       categoryIds.map((id) => ctx.db.get(id)),
     );
@@ -150,7 +162,7 @@ export const listBasketballPlayersByClubSlug = query({
 
     // Build result with photo URLs
     const result = await Promise.all(
-      players.map(async (player) => {
+      basketballPlayers.map(async (player) => {
         const category = categoryMap.get(player.categoryId);
         const photoUrl = player.photoStorageId
           ? await ctx.storage.getUrl(player.photoStorageId)
@@ -171,6 +183,94 @@ export const listBasketballPlayersByClubSlug = query({
           country: player.country,
           categoryId: player.categoryId,
           categoryName: category?.name,
+          clubSlug: club.slug,
+          clubName: club.name,
+          clubNickname: club.nickname,
+        };
+      }),
+    );
+
+    return result;
+  },
+});
+
+/**
+ * List basketball players across all clubs in a league.
+ * Used by org-level roster views.
+ */
+export const listBasketballPlayersByLeagueSlug = query({
+  args: { leagueSlug: v.string() },
+  returns: v.array(basketballPlayerValidator),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const clubs = await ctx.db
+      .query("clubs")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .collect();
+
+    if (clubs.length === 0) {
+      return [];
+    }
+
+    const clubMap = new Map(clubs.map((club) => [club._id, club]));
+    const playersByClub = await Promise.all(
+      clubs.map((club) =>
+        ctx.db
+          .query("players")
+          .withIndex("byClub", (q) => q.eq("clubId", club._id))
+          .collect(),
+      ),
+    );
+    const players = playersByClub
+      .flat()
+      .filter((player) => player.sportType === "basketball")
+      .sort((a, b) =>
+        `${a.lastName} ${a.firstName}`.localeCompare(
+          `${b.lastName} ${b.firstName}`,
+        ),
+      );
+
+    const categoryIds = [
+      ...new Set(players.map((player) => player.categoryId)),
+    ];
+    const categories = await Promise.all(
+      categoryIds.map((categoryId) => ctx.db.get(categoryId)),
+    );
+    const categoryMap = new Map(
+      categories.filter(Boolean).map((category) => [category!._id, category!]),
+    );
+
+    const result = await Promise.all(
+      players.map(async (player) => {
+        const club = clubMap.get(player.clubId)!;
+        const category = categoryMap.get(player.categoryId);
+        const photoUrl = player.photoStorageId
+          ? await ctx.storage.getUrl(player.photoStorageId)
+          : undefined;
+
+        return {
+          _id: player._id,
+          _creationTime: player._creationTime,
+          firstName: player.firstName,
+          lastName: player.lastName,
+          photoUrl: photoUrl ?? undefined,
+          dateOfBirth: player.dateOfBirth,
+          jerseyNumber: player.jerseyNumber,
+          position: player.position,
+          status: player.status,
+          height: player.height,
+          weight: player.weight,
+          bioTitle: player.bioTitle,
+          bioContent: player.bioContent,
+          country: player.country,
+          categoryId: player.categoryId,
+          categoryName: category?.name,
+          clubSlug: club.slug,
+          clubName: club.name,
+          clubNickname: club.nickname,
         };
       }),
     );

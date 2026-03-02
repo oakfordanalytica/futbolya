@@ -54,6 +54,12 @@ const ORG_ITEMS: NavItem[] = [
     isIndex: false,
   },
   {
+    labelKey: "roster",
+    icon: UsersIcon,
+    href: (orgSlug) => ROUTES.org.roster.list(orgSlug!),
+    isIndex: false,
+  },
+  {
     labelKey: "games",
     icon: CalendarIcon,
     href: (orgSlug) => ROUTES.org.games.list(orgSlug!),
@@ -149,6 +155,12 @@ const TEAM_ITEMS: TeamNavItem[] = [
     labelKey: "games",
     icon: CalendarIcon,
     href: (orgSlug, teamSlug) => TEAM_ROUTES.games.list(orgSlug, teamSlug),
+    isIndex: false,
+  },
+  {
+    labelKey: "stats",
+    icon: ChartBarIcon,
+    href: (orgSlug, teamSlug) => TEAM_ROUTES.stats.list(orgSlug, teamSlug),
     isIndex: false,
   },
 ];

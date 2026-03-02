@@ -33,6 +33,7 @@ import {
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { PlayerFormDialog } from "./player-form-dialog";
 import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
+import { getCountryLabel } from "@/lib/countries/countries";
 
 interface PlayerRow {
   _id: string;
@@ -48,13 +49,17 @@ interface PlayerRow {
   country?: string | null;
   categoryName?: string | null;
   categoryId?: string;
+  clubSlug?: string;
+  clubName?: string;
+  clubNickname?: string | null;
 }
 
 interface TeamPlayersTableProps {
   players: PlayerRow[];
-  clubSlug: string;
+  clubSlug?: string;
   orgSlug: string;
   routeScope?: "org" | "team";
+  enableCreate?: boolean;
 }
 
 export function TeamPlayersTable({
@@ -62,6 +67,7 @@ export function TeamPlayersTable({
   clubSlug,
   orgSlug,
   routeScope = "org",
+  enableCreate,
 }: TeamPlayersTableProps) {
   const router = useRouter();
   const t = useTranslations("Common");
@@ -69,6 +75,7 @@ export function TeamPlayersTable({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [playerToEdit, setPlayerToEdit] = useState<PlayerRow | null>(null);
   const [playerToDelete, setPlayerToDelete] = useState<PlayerRow | null>(null);
+  const [dialogClubSlug, setDialogClubSlug] = useState(clubSlug ?? "");
   const [isDeleting, setIsDeleting] = useState(false);
 
   const teamConfig = useQuery(api.leagueSettings.getTeamConfig, {
@@ -104,7 +111,14 @@ export function TeamPlayersTable({
   };
 
   const columns: ColumnDef<PlayerRow>[] = [
-    createSearchColumn<PlayerRow>(["firstName", "lastName", "position"]),
+    createSearchColumn<PlayerRow>([
+      "firstName",
+      "lastName",
+      "position",
+      "country",
+      "clubName",
+      "clubNickname",
+    ]),
 
     {
       accessorKey: "firstName",
@@ -130,6 +144,21 @@ export function TeamPlayersTable({
         );
       },
     },
+
+    ...(routeScope === "org"
+      ? [
+          {
+            id: "team",
+            accessorFn: (row) => row.clubNickname ?? row.clubName ?? "",
+            header: createSortableHeader(t("players.team")),
+            cell: ({ row }: { row: { original: PlayerRow } }) => (
+              <span className="text-sm text-muted-foreground">
+                {row.original.clubNickname ?? row.original.clubName ?? "—"}
+              </span>
+            ),
+          } satisfies ColumnDef<PlayerRow>,
+        ]
+      : []),
 
     {
       accessorKey: "jerseyNumber",
@@ -183,6 +212,16 @@ export function TeamPlayersTable({
     },
 
     {
+      accessorKey: "country",
+      header: createSortableHeader(t("players.country")),
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {getCountryLabel(row.original.country ?? undefined) ?? "—"}
+        </span>
+      ),
+    },
+
+    {
       id: "actions",
       cell: ({ row }) => {
         return (
@@ -195,6 +234,11 @@ export function TeamPlayersTable({
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
+                  const targetClubSlug = row.original.clubSlug ?? clubSlug;
+                  if (!targetClubSlug) {
+                    return;
+                  }
+                  setDialogClubSlug(targetClubSlug);
                   setPlayerToEdit(row.original);
                   setIsDialogOpen(true);
                 }}
@@ -224,12 +268,19 @@ export function TeamPlayersTable({
   };
 
   const handlePlayerRowClick = (player: PlayerRow) => {
+    const targetClubSlug = player.clubSlug ?? clubSlug;
+    if (!targetClubSlug) {
+      return;
+    }
+
     const href =
       routeScope === "org"
-        ? ROUTES.org.teams.playerDetail(orgSlug, clubSlug, player._id)
-        : TEAM_ROUTES.rosterPlayerDetail(orgSlug, clubSlug, player._id);
+        ? ROUTES.org.teams.playerDetail(orgSlug, targetClubSlug, player._id)
+        : TEAM_ROUTES.rosterPlayerDetail(orgSlug, targetClubSlug, player._id);
     router.push(href);
   };
+
+  const canCreate = Boolean(enableCreate ?? clubSlug);
 
   return (
     <>
@@ -240,19 +291,29 @@ export function TeamPlayersTable({
         filterPlaceholder={t("players.searchPlaceholder")}
         emptyMessage={t("players.emptyMessage")}
         onRowClick={handlePlayerRowClick}
-        onCreate={() => {
-          setPlayerToEdit(null);
-          setIsDialogOpen(true);
-        }}
+        onCreate={
+          canCreate
+            ? () => {
+                if (!clubSlug) {
+                  return;
+                }
+                setDialogClubSlug(clubSlug);
+                setPlayerToEdit(null);
+                setIsDialogOpen(true);
+              }
+            : undefined
+        }
       />
 
-      <PlayerFormDialog
-        open={isDialogOpen}
-        onOpenChange={handleDialogClose}
-        clubSlug={clubSlug}
-        positions={positions}
-        player={playerToEdit}
-      />
+      {dialogClubSlug && (
+        <PlayerFormDialog
+          open={isDialogOpen}
+          onOpenChange={handleDialogClose}
+          clubSlug={dialogClubSlug}
+          positions={positions}
+          player={playerToEdit}
+        />
+      )}
 
       <AlertDialog
         open={!!playerToDelete}

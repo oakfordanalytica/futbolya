@@ -59,6 +59,10 @@ export const ROUTES = {
       create: (orgSlug: string) => `/${orgSlug}/teams/create`,
     },
 
+    roster: {
+      list: (orgSlug: string) => `/${orgSlug}/roster`,
+    },
+
     offerings: {
       list: (orgSlug: string) => `/${orgSlug}/offerings`,
       detail: (orgSlug: string, offeringId: string) =>
@@ -147,6 +151,10 @@ export const TEAM_ROUTES = {
   staff: (orgSlug: string, teamSlug: string) => `/${orgSlug}/${teamSlug}/staff`,
   categories: (orgSlug: string, teamSlug: string) =>
     `/${orgSlug}/${teamSlug}/categories`,
+  stats: {
+    list: (orgSlug: string, teamSlug: string) =>
+      `/${orgSlug}/${teamSlug}/stats`,
+  },
   games: {
     list: (orgSlug: string, teamSlug: string) =>
       `/${orgSlug}/${teamSlug}/games`,

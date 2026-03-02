@@ -10,6 +10,7 @@ import { getCurrentUser } from "./lib/auth";
 import {
   hasClubStaffAccess,
   hasOrgAdminAccess,
+  requireOrgAccess,
   requireOrgAdmin,
   requireClubAccessBySlug,
 } from "./lib/permissions";
@@ -1253,7 +1254,7 @@ export const getSeasonLeaders = query({
     }),
   }),
   handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.orgSlug);
+    const { organization } = await requireOrgAccess(ctx, args.orgSlug);
     const rawLimit = Math.floor(args.limit ?? 10);
     const leaderLimit = Math.max(1, Math.min(20, rawLimit));
 
@@ -1403,7 +1404,7 @@ export const getSeasonStatsTable = query({
     teams: v.array(seasonTeamStatsRowValidator),
   }),
   handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.orgSlug);
+    const { organization } = await requireOrgAccess(ctx, args.orgSlug);
     const seasonStats = await buildSeasonStatsAggregate(
       ctx,
       organization._id,
