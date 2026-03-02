@@ -23,12 +23,14 @@ interface PlayerCardProps {
   };
   positionLabel?: string;
   className?: string;
+  onClick?: () => void;
 }
 
 export function PlayerCard({
   player,
   positionLabel,
   className,
+  onClick,
 }: PlayerCardProps) {
   const t = useTranslations("Common");
 
@@ -48,13 +50,25 @@ export function PlayerCard({
   ].filter(Boolean) as { label: string; value: string | number }[];
 
   return (
-    <Card className={cn("overflow-hidden  py-4 relative", className)}>
-      {player.jerseyNumber !== undefined && (
-        <span className="absolute top-0 right-0 p-3 text-3xl font-bold text-foreground/70 tabular-nums z-10">
-          {player.jerseyNumber}
-        </span>
+    <Card
+      className={cn(
+        "overflow-hidden py-4 relative",
+        onClick && "cursor-pointer transition-colors hover:bg-accent/40",
+        className,
       )}
-
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (!onClick) {
+          return;
+        }
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       {player.photoUrl && (
         <Image
           src={player.photoUrl}
@@ -68,15 +82,22 @@ export function PlayerCard({
 
       <div className="grid grid-cols-2">
         <div className="p-4 flex flex-col">
-          <div className="mb-3">
-            <p className="text-sm text-muted-foreground font-medium">
-              {player.firstName}
-            </p>
-            <h3 className=" font-bold leading-tight">{player.lastName}</h3>
-            {positionLabel && (
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-0.5">
-                {positionLabel}
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground font-medium">
+                {player.firstName}
               </p>
+              <h3 className="font-bold leading-tight">{player.lastName}</h3>
+              {positionLabel && (
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-0.5">
+                  {positionLabel}
+                </p>
+              )}
+            </div>
+            {player.jerseyNumber !== undefined && (
+              <span className="shrink-0 text-[2.1rem] leading-[2.1rem] font-black text-foreground/25 tabular-nums select-none">
+                {player.jerseyNumber}
+              </span>
             )}
           </div>
 
@@ -123,16 +144,15 @@ export function PlayerCard({
 export function PlayerCardSkeleton({ className }: { className?: string }) {
   return (
     <Card className={cn("overflow-hidden py-0 relative", className)}>
-      <div className="absolute top-0 right-0 p-3">
-        <div className="h-8 w-8 bg-muted rounded" />
-      </div>
-
       <div className="grid grid-cols-2 animate-pulse">
         <div className="p-4 flex flex-col">
-          <div className="mb-3 space-y-1">
-            <div className="h-4 w-16 bg-muted rounded" />
-            <div className="h-6 w-24 bg-muted rounded" />
-            <div className="h-3 w-20 bg-muted rounded" />
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div className="space-y-1">
+              <div className="h-4 w-16 bg-muted rounded" />
+              <div className="h-6 w-24 bg-muted rounded" />
+              <div className="h-3 w-20 bg-muted rounded" />
+            </div>
+            <div className="h-8 w-10 bg-muted rounded" />
           </div>
 
           <div className="mt-auto">

@@ -96,6 +96,7 @@ export function TeamSettingsClient({
             players={playersData ?? []}
             clubSlug={team.slug}
             orgSlug={orgSlug}
+            routeScope="org"
           />
         </TabsContent>
 

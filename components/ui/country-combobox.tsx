@@ -24,12 +24,16 @@ interface CountryComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
+  emptyText?: string;
 }
 
 export function CountryCombobox({
   value,
   onValueChange,
   placeholder = "Select a country...",
+  searchPlaceholder = "Search country...",
+  emptyText = "No country found.",
 }: CountryComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -49,17 +53,22 @@ export function CountryCombobox({
               <span>{selectedCountry.flag}</span>
               <span>{selectedCountry.label}</span>
             </span>
+          ) : value ? (
+            value
           ) : (
             placeholder
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0"
+        align="start"
+      >
         <Command>
-          <CommandInput placeholder="Search country..." className="h-9" />
+          <CommandInput placeholder={searchPlaceholder} className="h-9" />
           <CommandList>
-            <CommandEmpty>No country found.</CommandEmpty>
+            <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {COUNTRIES.map((country) => (
                 <CommandItem
@@ -77,7 +86,7 @@ export function CountryCombobox({
                   <Check
                     className={cn(
                       "ml-auto h-4 w-4",
-                      value === country.value ? "opacity-100" : "opacity-0"
+                      value === country.value ? "opacity-100" : "opacity-0",
                     )}
                   />
                 </CommandItem>

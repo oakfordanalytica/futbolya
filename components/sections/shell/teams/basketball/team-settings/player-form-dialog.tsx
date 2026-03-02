@@ -32,6 +32,8 @@ import { CalendarIcon } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import AvatarUpload from "@/components/ui/avatar-upload";
+import { CountryCombobox } from "@/components/ui/country-combobox";
+import { normalizeCountryValue } from "@/lib/countries/countries";
 import type { FileWithPreview } from "@/hooks/use-file-upload";
 
 interface PlayerData {
@@ -44,6 +46,7 @@ interface PlayerData {
   position?: string | null;
   height?: number | null;
   weight?: number | null;
+  country?: string | null;
   categoryId?: string;
 }
 
@@ -86,6 +89,7 @@ export function PlayerFormDialog({
   const [position, setPosition] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
+  const [country, setCountry] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [photoFile, setPhotoFile] = useState<FileWithPreview | null>(null);
   const [currentPhotoUrl, setCurrentPhotoUrl] = useState<string | null>(null);
@@ -105,6 +109,7 @@ export function PlayerFormDialog({
       setPosition(player.position ?? "");
       setHeight(player.height?.toString() ?? "");
       setWeight(player.weight?.toString() ?? "");
+      setCountry(normalizeCountryValue(player.country));
       setCategoryId(player.categoryId ?? "");
       setCurrentPhotoUrl(player.photoUrl ?? null);
       setPhotoFile(null);
@@ -119,6 +124,7 @@ export function PlayerFormDialog({
     setPosition("");
     setHeight("");
     setWeight("");
+    setCountry("");
     setCategoryId("");
     setPhotoFile(null);
     setCurrentPhotoUrl(null);
@@ -152,6 +158,7 @@ export function PlayerFormDialog({
 
     try {
       const photoStorageId = await uploadPhoto();
+      const normalizedCountry = normalizeCountryValue(country);
 
       if (isEditMode) {
         // Update existing player
@@ -168,6 +175,7 @@ export function PlayerFormDialog({
           position: position || undefined,
           height: height ? parseInt(height, 10) : undefined,
           weight: weight ? parseInt(weight, 10) : undefined,
+          country: normalizedCountry || undefined,
         });
       } else {
         // Create new player
@@ -184,6 +192,7 @@ export function PlayerFormDialog({
           position: position || undefined,
           height: height ? parseInt(height, 10) : undefined,
           weight: weight ? parseInt(weight, 10) : undefined,
+          country: normalizedCountry || undefined,
         });
       }
 
@@ -349,6 +358,17 @@ export function PlayerFormDialog({
                   </Field>
                 </div>
               </FieldGroup>
+
+              <Field>
+                <FieldLabel>{t("players.country")}</FieldLabel>
+                <CountryCombobox
+                  value={country}
+                  onValueChange={setCountry}
+                  placeholder={t("players.selectCountry")}
+                  searchPlaceholder={`${t("actions.search")} ${t("players.country").toLowerCase()}...`}
+                  emptyText={t("table.noResults")}
+                />
+              </Field>
 
               <Field>
                 <FieldLabel>{t("players.category")}</FieldLabel>

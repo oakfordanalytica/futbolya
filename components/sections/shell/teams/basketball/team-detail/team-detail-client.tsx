@@ -78,7 +78,11 @@ export function TeamDetailClient({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="roster" className="mt-4 px-6">
-          <RosterGrid clubSlug={team.slug} />
+          <RosterGrid
+            clubSlug={team.slug}
+            orgSlug={orgSlug}
+            routeScope={routeScope}
+          />
         </TabsContent>
         <TabsContent value="staff" className="mt-4 px-6">
           <TeamStaffList clubSlug={team.slug} />

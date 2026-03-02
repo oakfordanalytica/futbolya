@@ -165,6 +165,9 @@ export default defineSchema({
     position: v.optional(v.string()),
     height: v.optional(v.number()),
     weight: v.optional(v.number()),
+    bioTitle: v.optional(v.string()),
+    bioContent: v.optional(v.string()),
+    country: v.optional(v.string()),
 
     // Status
     status: playerStatus,

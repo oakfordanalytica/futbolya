@@ -25,6 +25,7 @@ export function TeamRosterClient({
         players={players ?? []}
         clubSlug={clubSlug}
         orgSlug={orgSlug}
+        routeScope="team"
       />
     </div>
   );

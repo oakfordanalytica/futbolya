@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useQuery } from "convex/react";
 import { useOrganization } from "@clerk/nextjs";
+import { useRouter } from "@/i18n/navigation";
 import { api } from "@/convex/_generated/api";
 import { PlayerCard, PlayerCardSkeleton } from "./player-card";
 import { useTranslations } from "next-intl";
@@ -14,12 +15,17 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Dribbble } from "lucide-react";
+import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
+import type { TeamRouteScope } from "./types";
 
 interface RosterGridProps {
   clubSlug: string;
+  orgSlug: string;
+  routeScope: TeamRouteScope;
 }
 
-export function RosterGrid({ clubSlug }: RosterGridProps) {
+export function RosterGrid({ clubSlug, orgSlug, routeScope }: RosterGridProps) {
+  const router = useRouter();
   const t = useTranslations("Common");
   const { organization } = useOrganization();
 
@@ -70,11 +76,18 @@ export function RosterGrid({ clubSlug }: RosterGridProps) {
         const positionData = player.position
           ? positionMap.get(player.position)
           : null;
+
+        const playerDetailHref =
+          routeScope === "org"
+            ? ROUTES.org.teams.playerDetail(orgSlug, clubSlug, player._id)
+            : TEAM_ROUTES.rosterPlayerDetail(orgSlug, clubSlug, player._id);
+
         return (
           <PlayerCard
             key={player._id}
             player={player}
             positionLabel={positionData?.abbreviation}
+            onClick={() => router.push(playerDetailHref)}
           />
         );
       })}

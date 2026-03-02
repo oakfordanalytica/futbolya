@@ -52,6 +52,8 @@ export const ROUTES = {
       list: (orgSlug: string) => `/${orgSlug}/teams`,
       detail: (orgSlug: string, teamId: string) =>
         `/${orgSlug}/teams/${teamId}`,
+      playerDetail: (orgSlug: string, teamId: string, playerId: string) =>
+        `/${orgSlug}/teams/${teamId}/players/${playerId}`,
       settings: (orgSlug: string, teamId: string) =>
         `/${orgSlug}/teams/${teamId}/settings`,
       create: (orgSlug: string) => `/${orgSlug}/teams/create`,
@@ -140,6 +142,8 @@ export const TEAM_ROUTES = {
   root: (orgSlug: string, teamSlug: string) => `/${orgSlug}/${teamSlug}`,
   roster: (orgSlug: string, teamSlug: string) =>
     `/${orgSlug}/${teamSlug}/roster`,
+  rosterPlayerDetail: (orgSlug: string, teamSlug: string, playerId: string) =>
+    `/${orgSlug}/${teamSlug}/roster/${playerId}`,
   staff: (orgSlug: string, teamSlug: string) => `/${orgSlug}/${teamSlug}/staff`,
   categories: (orgSlug: string, teamSlug: string) =>
     `/${orgSlug}/${teamSlug}/categories`,

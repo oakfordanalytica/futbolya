@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "@/i18n/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { ColumnDef } from "@tanstack/react-table";
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { PlayerFormDialog } from "./player-form-dialog";
+import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
 
 interface PlayerRow {
   _id: string;
@@ -43,6 +45,7 @@ interface PlayerRow {
   status: "active" | "inactive";
   height?: number | null;
   weight?: number | null;
+  country?: string | null;
   categoryName?: string | null;
   categoryId?: string;
 }
@@ -51,13 +54,16 @@ interface TeamPlayersTableProps {
   players: PlayerRow[];
   clubSlug: string;
   orgSlug: string;
+  routeScope?: "org" | "team";
 }
 
 export function TeamPlayersTable({
   players,
   clubSlug,
   orgSlug,
+  routeScope = "org",
 }: TeamPlayersTableProps) {
+  const router = useRouter();
   const t = useTranslations("Common");
   const deletePlayer = useMutation(api.players.deletePlayer);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -217,6 +223,14 @@ export function TeamPlayersTable({
     }
   };
 
+  const handlePlayerRowClick = (player: PlayerRow) => {
+    const href =
+      routeScope === "org"
+        ? ROUTES.org.teams.playerDetail(orgSlug, clubSlug, player._id)
+        : TEAM_ROUTES.rosterPlayerDetail(orgSlug, clubSlug, player._id);
+    router.push(href);
+  };
+
   return (
     <>
       <DataTable
@@ -225,6 +239,7 @@ export function TeamPlayersTable({
         filterColumn="search"
         filterPlaceholder={t("players.searchPlaceholder")}
         emptyMessage={t("players.emptyMessage")}
+        onRowClick={handlePlayerRowClick}
         onCreate={() => {
           setPlayerToEdit(null);
           setIsDialogOpen(true);
