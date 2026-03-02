@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { DataTable } from "@/components/table/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { COMPACT_STATS_TABLE_CLASS } from "@/components/sections/shell/stats/stats-columns";
 import { darkenHex } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { PlayerFormDialog } from "@/components/sections/shell/teams/basketball/team-settings/player-form-dialog";
@@ -39,6 +40,12 @@ export function PlayerDetailClient({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isBioEditOpen, setIsBioEditOpen] = useState(false);
   const [isHighlightDialogOpen, setIsHighlightDialogOpen] = useState(false);
+  const [highlightToEdit, setHighlightToEdit] = useState<{
+    id: string;
+    title: string;
+    url: string;
+    videoId: string;
+  } | null>(null);
 
   const teamConfig = useQuery(api.leagueSettings.getTeamConfig, {
     leagueSlug: orgSlug,
@@ -139,8 +146,14 @@ export function PlayerDetailClient({
       />
       <PlayerHighlightDialog
         open={isHighlightDialogOpen}
-        onOpenChange={setIsHighlightDialogOpen}
+        onOpenChange={(open) => {
+          setIsHighlightDialogOpen(open);
+          if (!open) {
+            setTimeout(() => setHighlightToEdit(null), 150);
+          }
+        }}
         playerId={player._id}
+        highlight={highlightToEdit}
       />
 
       <Tabs defaultValue="profile" className="w-full">
@@ -171,7 +184,14 @@ export function PlayerDetailClient({
             <PlayerHighlightsStrip
               highlights={player.highlights ?? []}
               canManage={canManagePlayerContent}
-              onAdd={() => setIsHighlightDialogOpen(true)}
+              onAdd={() => {
+                setHighlightToEdit(null);
+                setIsHighlightDialogOpen(true);
+              }}
+              onEditHighlight={(highlight) => {
+                setHighlightToEdit(highlight);
+                setIsHighlightDialogOpen(true);
+              }}
             />
 
             <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -213,18 +233,20 @@ export function PlayerDetailClient({
               {t("games.leaders.loading")}
             </div>
           ) : (
-            <DataTable
-              columns={playerGameLogColumns}
-              data={gameLogRows}
-              filterColumn="search"
-              filterPlaceholder={t("players.statsSearchPlaceholder")}
-              emptyMessage={t("players.statsEmpty")}
-              columnsMenuLabel={t("table.columns")}
-              filtersMenuLabel={t("table.filters")}
-              previousLabel={t("actions.previous")}
-              nextLabel={t("actions.next")}
-              initialSorting={[{ id: "date", desc: true }]}
-            />
+            <div className={COMPACT_STATS_TABLE_CLASS}>
+              <DataTable
+                columns={playerGameLogColumns}
+                data={gameLogRows}
+                filterColumn="search"
+                filterPlaceholder={t("players.statsSearchPlaceholder")}
+                emptyMessage={t("players.statsEmpty")}
+                columnsMenuLabel={t("table.columns")}
+                filtersMenuLabel={t("table.filters")}
+                previousLabel={t("actions.previous")}
+                nextLabel={t("actions.next")}
+                initialSorting={[{ id: "date", desc: true }]}
+              />
+            </div>
           )}
         </TabsContent>
       </Tabs>

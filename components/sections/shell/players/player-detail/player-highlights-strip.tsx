@@ -7,6 +7,7 @@ import {
   ChevronRightIcon,
   PlayIcon,
   PlusIcon,
+  Settings,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ interface PlayerHighlightsStripProps {
   highlights: PlayerHighlight[];
   canManage: boolean;
   onAdd: () => void;
+  onEditHighlight?: (highlight: PlayerHighlight) => void;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export function PlayerHighlightsStrip({
   highlights,
   canManage,
   onAdd,
+  onEditHighlight,
   className,
 }: PlayerHighlightsStripProps) {
   const t = useTranslations("Common");
@@ -89,31 +92,42 @@ export function PlayerHighlightsStrip({
           )}
 
           {highlights.map((highlight) => (
-            <a
+            <article
               key={highlight.id}
-              href={highlight.url}
-              target="_blank"
-              rel="noreferrer"
-              className="w-[190px] shrink-0 snap-start overflow-hidden rounded-sm border border-border bg-card transition-colors hover:bg-accent/40"
+              className="group/card relative w-[190px] shrink-0 snap-start overflow-hidden rounded-sm border border-border bg-card transition-colors hover:bg-accent/40"
             >
-              <div className="relative h-[104px] bg-muted">
-                <Image
-                  src={`https://i.ytimg.com/vi/${highlight.videoId}/hqdefault.jpg`}
-                  alt={highlight.title}
-                  fill
-                  sizes="190px"
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/15">
-                  <span className="flex size-8 items-center justify-center rounded-full bg-black/60 text-white">
-                    <PlayIcon className="size-4 fill-current" />
-                  </span>
+              <a href={highlight.url} target="_blank" rel="noreferrer">
+                <div className="relative h-[104px] bg-muted">
+                  <Image
+                    src={`https://i.ytimg.com/vi/${highlight.videoId}/hqdefault.jpg`}
+                    alt={highlight.title}
+                    fill
+                    sizes="190px"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/15">
+                    <span className="flex size-8 items-center justify-center rounded-full bg-black/60 text-white">
+                      <PlayIcon className="size-4 fill-current" />
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <p className="truncate px-3 py-2 text-sm font-semibold">
-                {highlight.title}
-              </p>
-            </a>
+                <p className="truncate px-3 py-2 text-sm font-semibold">
+                  {highlight.title}
+                </p>
+              </a>
+
+              {canManage && onEditHighlight && (
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  onClick={() => onEditHighlight(highlight)}
+                  className="absolute right-2 top-2 rounded-full ring-1 bg-transparent text-white hover:bg-transparent opacity-100 md:opacity-0 md:group-hover/card:opacity-100"
+                >
+                  <Settings className="size-4" />
+                  <span className="sr-only">{t("actions.edit")}</span>
+                </Button>
+              )}
+            </article>
           ))}
         </div>
       </div>

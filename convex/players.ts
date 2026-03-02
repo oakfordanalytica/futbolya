@@ -25,7 +25,10 @@ const playerGameLogRowValidator = v.object({
   date: v.string(),
   startTime: v.string(),
   gameType: v.union(v.literal("quick"), v.literal("season")),
+  teamName: v.string(),
+  teamNickname: v.optional(v.string()),
   opponentName: v.string(),
+  opponentNickname: v.optional(v.string()),
   result: v.union(v.literal("W"), v.literal("L"), v.literal("—")),
   teamScore: v.optional(v.number()),
   opponentScore: v.optional(v.number()),
@@ -326,6 +329,7 @@ export const listBasketballPlayerGameLog = query({
       date: string;
       startTime: string;
       gameType: "quick" | "season";
+      teamId: Id<"clubs">;
       opponentId: Id<"clubs">;
       result: "W" | "L" | "—";
       teamScore?: number;
@@ -339,7 +343,7 @@ export const listBasketballPlayerGameLog = query({
       plusMinus: number;
       sortKey: number;
     }> = [];
-    const opponentClubIds = new Set<Id<"clubs">>();
+    const relatedClubIds = new Set<Id<"clubs">>();
 
     for (let index = 0; index < stats.length; index += 1) {
       const stat = stats[index];
@@ -359,7 +363,8 @@ export const listBasketballPlayerGameLog = query({
       }
 
       const opponentId = playedAsHome ? game.awayClubId : game.homeClubId;
-      opponentClubIds.add(opponentId);
+      relatedClubIds.add(stat.clubId);
+      relatedClubIds.add(opponentId);
 
       const teamScore = playedAsHome ? game.homeScore : game.awayScore;
       const opponentScore = playedAsHome ? game.awayScore : game.homeScore;
@@ -388,6 +393,7 @@ export const listBasketballPlayerGameLog = query({
         date: game.date,
         startTime: game.startTime,
         gameType: game.seasonId ? "season" : "quick",
+        teamId: stat.clubId,
         opponentId,
         result,
         teamScore,
@@ -407,19 +413,22 @@ export const listBasketballPlayerGameLog = query({
       return [];
     }
 
-    const opponentClubs = await Promise.all(
-      [...opponentClubIds].map((clubId) => ctx.db.get(clubId)),
+    const relatedClubs = await Promise.all(
+      [...relatedClubIds].map((clubId) => ctx.db.get(clubId)),
     );
-    const opponentClubMap = new Map(
-      opponentClubs.filter(Boolean).map((club) => [club!._id, club!]),
+    const clubMap = new Map(
+      relatedClubs.filter(Boolean).map((club) => [club!._id, club!]),
     );
 
     return rowsWithOpponentId
       .sort((a, b) => b.sortKey - a.sortKey)
       .slice(0, boundedLimit)
-      .map(({ opponentId, sortKey: _sortKey, ...row }) => ({
+      .map(({ teamId, opponentId, sortKey: _sortKey, ...row }) => ({
         ...row,
-        opponentName: opponentClubMap.get(opponentId)?.name ?? "Unknown",
+        teamName: clubMap.get(teamId)?.name ?? "Unknown",
+        teamNickname: clubMap.get(teamId)?.nickname,
+        opponentName: clubMap.get(opponentId)?.name ?? "Unknown",
+        opponentNickname: clubMap.get(opponentId)?.nickname,
       }));
   },
 });
@@ -665,6 +674,112 @@ export const addPlayerHighlight = mutation({
 
     await ctx.db.patch(args.playerId, {
       highlights: [...currentHighlights, newHighlight],
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Update an existing highlight video in a player profile.
+ * Available for users with coach/admin access to the player's club.
+ */
+export const updatePlayerHighlight = mutation({
+  args: {
+    playerId: v.id("players"),
+    highlightId: v.string(),
+    title: v.string(),
+    url: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+
+    const player = await ctx.db.get(args.playerId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    await requireClubAccess(ctx, player.clubId);
+
+    const trimmedTitle = args.title.trim();
+    const trimmedUrl = args.url.trim();
+    if (!trimmedTitle) {
+      throw new Error("Highlight title is required");
+    }
+    if (!trimmedUrl) {
+      throw new Error("Highlight URL is required");
+    }
+
+    const videoId = extractYouTubeVideoId(trimmedUrl);
+    if (!videoId) {
+      throw new Error("Only valid YouTube URLs are allowed");
+    }
+
+    const currentHighlights = player.highlights ?? [];
+    const highlightIndex = currentHighlights.findIndex(
+      (highlight) => highlight.id === args.highlightId,
+    );
+    if (highlightIndex === -1) {
+      throw new Error("Highlight not found");
+    }
+
+    if (
+      currentHighlights.some(
+        (highlight) =>
+          highlight.id !== args.highlightId && highlight.videoId === videoId,
+      )
+    ) {
+      throw new Error("This highlight already exists for the player");
+    }
+
+    const updatedHighlights = [...currentHighlights];
+    updatedHighlights[highlightIndex] = {
+      ...updatedHighlights[highlightIndex],
+      title: trimmedTitle,
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+      videoId,
+    };
+
+    await ctx.db.patch(args.playerId, {
+      highlights: updatedHighlights,
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Remove an existing highlight video from a player profile.
+ * Available for users with coach/admin access to the player's club.
+ */
+export const removePlayerHighlight = mutation({
+  args: {
+    playerId: v.id("players"),
+    highlightId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+
+    const player = await ctx.db.get(args.playerId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    await requireClubAccess(ctx, player.clubId);
+
+    const currentHighlights = player.highlights ?? [];
+    if (
+      !currentHighlights.some((highlight) => highlight.id === args.highlightId)
+    ) {
+      throw new Error("Highlight not found");
+    }
+
+    await ctx.db.patch(args.playerId, {
+      highlights: currentHighlights.filter(
+        (highlight) => highlight.id !== args.highlightId,
+      ),
     });
 
     return null;

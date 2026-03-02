@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/table/data-table";
 import {
+  COMPACT_STATS_TABLE_CLASS,
   createSeasonPlayerStatsColumns,
   createSeasonPlayerStatsFilterConfigs,
   createSeasonTeamStatsColumns,
@@ -644,9 +645,6 @@ export function SeasonStatsPage({
     [playerRows, t],
   );
 
-  const compactStatsTableClass =
-    "[&_[data-slot=table]]:text-[11px] [&_[data-slot=table-head]]:h-8 [&_[data-slot=table-head]]:px-1.5 [&_[data-slot=table-head]]:text-[10px] [&_[data-slot=table-head]]:font-semibold [&_[data-slot=table-head]_*]:text-[10px] [&_[data-slot=table-cell]]:px-1.5 [&_[data-slot=table-cell]]:py-1.5 [&_[data-slot=table-cell]]:text-[11px] [&_[data-slot=table-cell]_*]:text-[11px] [&_[data-slot=table]_.lucide]:size-3 [&_[data-slot=table-row]>*:first-child]:sticky [&_[data-slot=table-row]>*:first-child]:left-0 [&_[data-slot=table-row]>*:first-child]:z-10 [&_[data-slot=table-row]>*:first-child]:bg-card [&_[data-slot=table-header]_[data-slot=table-row]>*:first-child]:z-20 [&_[data-slot=table-row]>*:first-child]:shadow-[1px_0_0_0_hsl(var(--border))]";
-
   const updateTabInUrl = (tab: StatsTab) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
@@ -841,7 +839,7 @@ export function SeasonStatsPage({
               {t("games.leaders.loading")}
             </div>
           ) : (
-            <div className={compactStatsTableClass}>
+            <div className={COMPACT_STATS_TABLE_CLASS}>
               <DataTable
                 columns={playerColumns}
                 data={playerRows}
@@ -867,7 +865,7 @@ export function SeasonStatsPage({
               {t("games.leaders.loading")}
             </div>
           ) : (
-            <div className={compactStatsTableClass}>
+            <div className={COMPACT_STATS_TABLE_CLASS}>
               <DataTable
                 columns={teamColumns}
                 data={teamRows}

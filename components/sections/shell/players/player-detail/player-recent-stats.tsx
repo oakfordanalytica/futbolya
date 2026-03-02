@@ -2,7 +2,8 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useLocale, useTranslations } from "next-intl";
-import { createSearchColumn, createSortableHeader } from "@/components/table/column-helpers";
+import { createSearchColumn } from "@/components/table/column-helpers";
+import { createStatsSortableHeader } from "@/components/sections/shell/stats/stats-columns";
 import {
   Table,
   TableBody,
@@ -20,7 +21,10 @@ export interface PlayerGameLogRow {
   date: string;
   startTime: string;
   gameType: "quick" | "season";
+  teamName: string;
+  teamNickname?: string;
   opponentName: string;
+  opponentNickname?: string;
   result: "W" | "L" | "—";
   teamScore?: number;
   opponentScore?: number;
@@ -33,20 +37,17 @@ export interface PlayerGameLogRow {
   plusMinus: number;
 }
 
-function formatDateTime(date: string, startTime: string, locale: string): string {
+function formatDateOnly(date: string, locale: string): string {
   const [year, month, day] = date.split("-").map(Number);
-  const [hours = 0, minutes = 0] = startTime.split(":").map(Number);
   if (!year || !month || !day) {
-    return `${date} · ${startTime}`;
+    return date;
   }
 
-  const formattedDate = new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(locale, {
     month: "2-digit",
     day: "2-digit",
     year: "2-digit",
-  }).format(new Date(year, month - 1, day, hours, minutes));
-
-  return `${formattedDate} · ${startTime}`;
+  }).format(new Date(year, month - 1, day));
 }
 
 function formatScore(teamScore?: number, opponentScore?: number): string {
@@ -65,35 +66,61 @@ export function createPlayerGameLogColumns(
   locale: string,
 ): ColumnDef<PlayerGameLogRow>[] {
   return [
-    createSearchColumn<PlayerGameLogRow>(["date", "opponentName", "gameType"]),
+    createSearchColumn<PlayerGameLogRow>([
+      "date",
+      "teamName",
+      "teamNickname",
+      "opponentName",
+      "opponentNickname",
+      "gameType",
+    ]),
     {
       accessorKey: "date",
-      header: createSortableHeader(t("games.date")),
+      header: createStatsSortableHeader(t("games.date")),
       cell: ({ row }) => (
         <span className="tabular-nums">
-          {formatDateTime(row.original.date, row.original.startTime, locale)}
+          {formatDateOnly(row.original.date, locale)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "teamName",
+      header: createStatsSortableHeader(t("games.statsTableColumns.team")),
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {row.original.teamNickname?.trim()
+            ? row.original.teamNickname.toUpperCase()
+            : row.original.teamName}
         </span>
       ),
     },
     {
       accessorKey: "opponentName",
-      header: createSortableHeader(t("games.opponent")),
-      cell: ({ row }) => <span className="font-medium">{row.original.opponentName}</span>,
+      header: createStatsSortableHeader(t("games.opponent")),
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {row.original.opponentNickname?.trim()
+            ? row.original.opponentNickname.toUpperCase()
+            : row.original.opponentName}
+        </span>
+      ),
     },
     {
       accessorKey: "gameType",
-      header: createSortableHeader(t("games.type")),
+      header: createStatsSortableHeader(t("games.type")),
       cell: ({ row }) => t(`games.typeOptions.${row.original.gameType}`),
     },
     {
       accessorKey: "result",
-      header: createSortableHeader("W/L"),
+      header: createStatsSortableHeader("W/L"),
       cell: ({ row }) => (
         <span
           className={cn(
             "inline-flex min-w-8 items-center justify-center rounded-sm px-1 py-0.5 text-xs font-semibold",
-            row.original.result === "W" && "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
-            row.original.result === "L" && "bg-red-500/20 text-red-700 dark:text-red-300",
+            row.original.result === "W" &&
+              "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+            row.original.result === "L" &&
+              "bg-red-500/20 text-red-700 dark:text-red-300",
             row.original.result === "—" && "text-muted-foreground",
           )}
         >
@@ -103,7 +130,7 @@ export function createPlayerGameLogColumns(
     },
     {
       accessorKey: "score",
-      header: createSortableHeader(t("games.score")),
+      header: createStatsSortableHeader(t("games.score")),
       cell: ({ row }) => (
         <span className="tabular-nums">
           {formatScore(row.original.teamScore, row.original.opponentScore)}
@@ -125,32 +152,32 @@ export function createPlayerGameLogColumns(
     },
     {
       accessorKey: "points",
-      header: createSortableHeader("PTS"),
+      header: createStatsSortableHeader("PTS"),
       cell: ({ row }) => <NumericCell value={row.original.points} />,
     },
     {
       accessorKey: "rebounds",
-      header: createSortableHeader("REB"),
+      header: createStatsSortableHeader("REB"),
       cell: ({ row }) => <NumericCell value={row.original.rebounds} />,
     },
     {
       accessorKey: "assists",
-      header: createSortableHeader("AST"),
+      header: createStatsSortableHeader("AST"),
       cell: ({ row }) => <NumericCell value={row.original.assists} />,
     },
     {
       accessorKey: "steals",
-      header: createSortableHeader("STL"),
+      header: createStatsSortableHeader("STL"),
       cell: ({ row }) => <NumericCell value={row.original.steals} />,
     },
     {
       accessorKey: "blocks",
-      header: createSortableHeader("BLK"),
+      header: createStatsSortableHeader("BLK"),
       cell: ({ row }) => <NumericCell value={row.original.blocks} />,
     },
     {
       accessorKey: "minutes",
-      header: createSortableHeader(t("games.statsTableColumns.min")),
+      header: createStatsSortableHeader(t("games.statsTableColumns.min")),
       cell: ({ row }) => <NumericCell value={row.original.minutes} />,
     },
   ];
@@ -177,15 +204,20 @@ export function PlayerRecentStatsPreview({
       </h2>
 
       {isLoading ? (
-        <p className="mt-3 text-sm text-muted-foreground">{t("actions.loading")}</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {t("actions.loading")}
+        </p>
       ) : rows.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">{t("players.recentStatsEmpty")}</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {t("players.recentStatsEmpty")}
+        </p>
       ) : (
         <div className="mt-3 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t("games.date")}</TableHead>
+                <TableHead>{t("games.statsTableColumns.team")}</TableHead>
                 <TableHead>{t("games.opponent")}</TableHead>
                 <TableHead className="text-right">PTS</TableHead>
                 <TableHead className="text-right">REB</TableHead>
@@ -196,14 +228,27 @@ export function PlayerRecentStatsPreview({
               {rows.slice(0, 5).map((row) => (
                 <TableRow key={row.gameId}>
                   <TableCell className="whitespace-nowrap tabular-nums">
-                    {formatDateTime(row.date, row.startTime, locale)}
+                    {formatDateOnly(row.date, locale)}
+                  </TableCell>
+                  <TableCell className="max-w-[90px] truncate font-medium">
+                    {row.teamNickname?.trim()
+                      ? row.teamNickname.toUpperCase()
+                      : row.teamName}
                   </TableCell>
                   <TableCell className="max-w-[120px] truncate font-medium">
-                    {row.opponentName}
+                    {row.opponentNickname?.trim()
+                      ? row.opponentNickname.toUpperCase()
+                      : row.opponentName}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{row.points}</TableCell>
-                  <TableCell className="text-right tabular-nums">{row.rebounds}</TableCell>
-                  <TableCell className="text-right tabular-nums">{row.assists}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {row.points}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {row.rebounds}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {row.assists}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
