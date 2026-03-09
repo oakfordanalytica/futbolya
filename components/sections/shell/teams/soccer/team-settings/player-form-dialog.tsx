@@ -48,6 +48,7 @@ interface PlayerData {
   dateOfBirth?: string | null;
   documentNumber?: string | null;
   gender?: PlayerGender | null;
+  jerseyNumber?: number | null;
   cometNumber?: string | null;
   fifaId?: string | null;
   position?: string | null;
@@ -96,12 +97,13 @@ export function PlayerFormDialog({
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined);
   const [documentNumber, setDocumentNumber] = useState("");
   const [gender, setGender] = useState<PlayerGender | "">("");
+  const [jerseyNumber, setJerseyNumber] = useState("");
   const [cometNumber, setCometNumber] = useState("");
   const [fifaId, setFifaId] = useState("");
   const [position, setPosition] = useState("");
-  const [dominantProfile, setDominantProfile] = useState<
-    DominantProfile | ""
-  >("");
+  const [dominantProfile, setDominantProfile] = useState<DominantProfile | "">(
+    "",
+  );
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [country, setCountry] = useState("");
@@ -122,6 +124,7 @@ export function PlayerFormDialog({
       );
       setDocumentNumber(player.documentNumber ?? "");
       setGender(player.gender ?? "");
+      setJerseyNumber(player.jerseyNumber?.toString() ?? "");
       setCometNumber(player.cometNumber ?? "");
       setFifaId(player.fifaId ?? "");
       setPosition(player.position ?? "");
@@ -142,6 +145,7 @@ export function PlayerFormDialog({
     setDateOfBirth(undefined);
     setDocumentNumber("");
     setGender("");
+    setJerseyNumber("");
     setCometNumber("");
     setFifaId("");
     setPosition("");
@@ -183,6 +187,7 @@ export function PlayerFormDialog({
           dateOfBirth &&
           documentNumber.trim() &&
           gender &&
+          jerseyNumber.trim() &&
           cometNumber.trim() &&
           position &&
           dominantProfile &&
@@ -198,6 +203,7 @@ export function PlayerFormDialog({
       dominantProfile,
       firstName,
       gender,
+      jerseyNumber,
       lastName,
       position,
       secondLastName,
@@ -226,6 +232,7 @@ export function PlayerFormDialog({
           dateOfBirth: format(dateOfBirth, "yyyy-MM-dd"),
           documentNumber: documentNumber.trim(),
           gender,
+          jerseyNumber: parseInt(jerseyNumber, 10),
           categoryId: categoryId as Id<"categories">,
           cometNumber: cometNumber.trim(),
           fifaId: fifaId.trim() || undefined,
@@ -244,6 +251,7 @@ export function PlayerFormDialog({
           dateOfBirth: format(dateOfBirth, "yyyy-MM-dd"),
           documentNumber: documentNumber.trim(),
           gender,
+          jerseyNumber: parseInt(jerseyNumber, 10),
           categoryId: categoryId as Id<"categories">,
           cometNumber: cometNumber.trim(),
           fifaId: fifaId.trim() || undefined,
@@ -336,7 +344,7 @@ export function PlayerFormDialog({
               </div>
 
               <FieldGroup>
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                   <Field>
                     <FieldLabel>{t("players.cometNumber")}</FieldLabel>
                     <Input
@@ -391,6 +399,19 @@ export function PlayerFormDialog({
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>{t("players.jerseyNumber")}</FieldLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="99"
+                      value={jerseyNumber}
+                      onChange={(event) => setJerseyNumber(event.target.value)}
+                      required
+                      placeholder={t("players.jerseyNumber")}
+                    />
                   </Field>
                 </div>
               </FieldGroup>

@@ -132,6 +132,7 @@ export function PlayerDetailClient({
           dateOfBirth: player.dateOfBirth ?? null,
           documentNumber: player.documentNumber ?? null,
           gender: player.gender ?? null,
+          jerseyNumber: player.jerseyNumber ?? null,
           cometNumber: player.cometNumber ?? null,
           fifaId: player.fifaId ?? null,
           position: player.position ?? null,

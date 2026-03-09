@@ -34,6 +34,19 @@ const seasonValidator = v.object({
   endDate: v.string(),
 });
 
+const lineupSlotValidator = v.object({
+  id: v.string(),
+  x: v.number(),
+  y: v.number(),
+  role: v.union(v.literal("goalkeeper"), v.literal("outfield")),
+});
+
+const lineupTemplateValidator = v.object({
+  id: v.string(),
+  name: v.string(),
+  slots: v.array(lineupSlotValidator),
+});
+
 const horizontalDivisionsValidator = v.object({
   enabled: v.boolean(),
   type: v.union(
@@ -47,6 +60,7 @@ const teamConfigValidator = v.object({
   sportType: sportType,
   ageCategories: v.array(ageCategoryValidator),
   positions: v.array(positionValidator),
+  lineups: v.array(lineupTemplateValidator),
   enabledGenders: v.array(gender),
   horizontalDivisions: v.optional(horizontalDivisionsValidator),
 });
@@ -91,6 +105,7 @@ export const getTeamConfig = query({
         sportType: "soccer" as const,
         ageCategories: [],
         positions: [],
+        lineups: [],
         enabledGenders: ["male", "female"] as Array<
           "male" | "female" | "mixed"
         >,
@@ -102,6 +117,7 @@ export const getTeamConfig = query({
       sportType: settings.sportType,
       ageCategories: settings.ageCategories,
       positions: settings.positions ?? [],
+      lineups: settings.lineups ?? [],
       enabledGenders: settings.enabledGenders,
       horizontalDivisions: settings.horizontalDivisions,
     };
@@ -121,6 +137,7 @@ export const getByLeagueSlug = query({
       sportType: sportType,
       ageCategories: v.array(ageCategoryValidator),
       positions: v.optional(v.array(positionValidator)),
+      lineups: v.optional(v.array(lineupTemplateValidator)),
       enabledGenders: v.array(gender),
       seasons: v.optional(v.array(seasonValidator)),
       horizontalDivisions: v.optional(horizontalDivisionsValidator),
@@ -206,6 +223,7 @@ export const upsert = mutation({
     sportType: sportType,
     ageCategories: v.array(ageCategoryValidator),
     positions: v.array(positionValidator),
+    lineups: v.optional(v.array(lineupTemplateValidator)),
     enabledGenders: v.array(gender),
     horizontalDivisions: v.optional(horizontalDivisionsValidator),
   },
@@ -225,6 +243,7 @@ export const upsert = mutation({
         sportType: args.sportType,
         ageCategories: args.ageCategories,
         positions: args.positions,
+        lineups: args.lineups,
         enabledGenders: args.enabledGenders,
         horizontalDivisions: args.horizontalDivisions,
       });
@@ -236,6 +255,7 @@ export const upsert = mutation({
       sportType: args.sportType,
       ageCategories: args.ageCategories,
       positions: args.positions,
+      lineups: args.lineups,
       enabledGenders: args.enabledGenders,
       horizontalDivisions: args.horizontalDivisions,
     });
@@ -268,6 +288,7 @@ export const addAgeCategory = mutation({
         sportType: "soccer",
         ageCategories: [args.category],
         positions: [],
+        lineups: [],
         enabledGenders: ["male", "female"],
       });
       return null;
@@ -414,6 +435,7 @@ export const updateEnabledGenders = mutation({
         sportType: "soccer",
         ageCategories: [],
         positions: [],
+        lineups: [],
         enabledGenders: args.enabledGenders,
       });
       return null;
@@ -453,6 +475,7 @@ export const updateHorizontalDivisions = mutation({
         sportType: "soccer",
         ageCategories: [],
         positions: [],
+        lineups: [],
         enabledGenders: ["male", "female"],
         horizontalDivisions: args.horizontalDivisions,
       });
@@ -493,6 +516,7 @@ export const addPosition = mutation({
         sportType: "soccer",
         ageCategories: [],
         positions: [args.position],
+        lineups: [],
         enabledGenders: ["male", "female"],
       });
       return null;
@@ -653,6 +677,7 @@ export const addSeason = mutation({
         sportType: "soccer",
         ageCategories: [],
         positions: [],
+        lineups: [],
         enabledGenders: ["male", "female"],
         seasons: [
           {
@@ -812,6 +837,154 @@ export const updateSeason = mutation({
               endDate: args.endDate,
             }
           : season,
+      ),
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Add a lineup template.
+ */
+export const addLineup = mutation({
+  args: {
+    leagueSlug: v.string(),
+    lineup: lineupTemplateValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const lineupName = args.lineup.name.trim();
+    if (!lineupName) {
+      throw new Error("Lineup name is required");
+    }
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings) {
+      await ctx.db.insert("leagueSettings", {
+        organizationId: organization._id,
+        sportType: "soccer",
+        ageCategories: [],
+        positions: [],
+        lineups: [{ ...args.lineup, name: lineupName }],
+        enabledGenders: ["male", "female"],
+      });
+      return null;
+    }
+
+    const currentLineups = settings.lineups ?? [];
+    const exists = currentLineups.some(
+      (lineup) =>
+        lineup.id === args.lineup.id ||
+        lineup.name.toLowerCase() === lineupName.toLowerCase(),
+    );
+    if (exists) {
+      throw new Error("Lineup already exists");
+    }
+
+    await ctx.db.patch(settings._id, {
+      lineups: [...currentLineups, { ...args.lineup, name: lineupName }],
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Update a lineup template.
+ */
+export const updateLineup = mutation({
+  args: {
+    leagueSlug: v.string(),
+    lineupId: v.string(),
+    name: v.string(),
+    slots: v.array(lineupSlotValidator),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const lineupName = args.name.trim();
+    if (!lineupName) {
+      throw new Error("Lineup name is required");
+    }
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings) {
+      throw new Error("League settings not found");
+    }
+
+    const currentLineups = settings.lineups ?? [];
+    const exists = currentLineups.some(
+      (lineup) =>
+        lineup.id !== args.lineupId &&
+        lineup.name.toLowerCase() === lineupName.toLowerCase(),
+    );
+    if (exists) {
+      throw new Error("Lineup already exists");
+    }
+
+    const target = currentLineups.find((lineup) => lineup.id === args.lineupId);
+    if (!target) {
+      throw new Error("Lineup not found");
+    }
+
+    await ctx.db.patch(settings._id, {
+      lineups: currentLineups.map((lineup) =>
+        lineup.id === args.lineupId
+          ? {
+              ...lineup,
+              name: lineupName,
+              slots: args.slots,
+            }
+          : lineup,
+      ),
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Remove a lineup template.
+ */
+export const removeLineup = mutation({
+  args: {
+    leagueSlug: v.string(),
+    lineupId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+    const settings = await ctx.db
+      .query("leagueSettings")
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
+      .unique();
+
+    if (!settings) {
+      throw new Error("League settings not found");
+    }
+
+    await ctx.db.patch(settings._id, {
+      lineups: (settings.lineups ?? []).filter(
+        (lineup) => lineup.id !== args.lineupId,
       ),
     });
 

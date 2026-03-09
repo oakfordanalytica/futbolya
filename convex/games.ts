@@ -115,6 +115,7 @@ const playerStatsValidator = v.object({
   _id: v.id("gamePlayerStats"),
   playerId: v.id("players"),
   playerName: v.string(),
+  jerseyNumber: v.optional(v.number()),
   cometNumber: v.optional(v.string()),
   photoUrl: v.optional(v.string()),
   clubId: v.id("clubs"),
@@ -1122,6 +1123,7 @@ export const getGamePlayerStats = query({
                 player.secondLastName,
               )
             : "Unknown",
+          jerseyNumber: player?.jerseyNumber,
           cometNumber: player?.cometNumber,
           photoUrl: photoUrls.get(stat.playerId),
           clubId: stat.clubId,
@@ -1522,13 +1524,17 @@ export const remove = mutation({
 
     await requireGameAdminAccess(ctx, game.organizationId);
 
-    const [playerStats, teamStats] = await Promise.all([
+    const [playerStats, teamStats, lineups] = await Promise.all([
       ctx.db
         .query("gamePlayerStats")
         .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
         .collect(),
       ctx.db
         .query("gameTeamStats")
+        .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
+        .collect(),
+      ctx.db
+        .query("gameLineups")
         .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
         .collect(),
     ]);
@@ -1538,6 +1544,9 @@ export const remove = mutation({
     }
     for (const stat of teamStats) {
       await ctx.db.delete(stat._id);
+    }
+    for (const lineup of lineups) {
+      await ctx.db.delete(lineup._id);
     }
 
     await ctx.db.delete(args.gameId);

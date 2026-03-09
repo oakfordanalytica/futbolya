@@ -1,4 +1,4 @@
-import type { Player } from "@/lib/mocks/types";
+import type { FootballLineupPlayer } from "@/components/ui/football-field.types";
 import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
@@ -21,7 +21,7 @@ const playerChipVariants = cva(
 export interface PlayerChipProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof playerChipVariants> {
-  player: Player;
+  player: FootballLineupPlayer;
   showName?: "last" | "none";
 }
 
@@ -32,18 +32,18 @@ export function PlayerChip({
   showName = "last",
   ...props
 }: PlayerChipProps) {
-  const nameToShow =
-    showName === "last" ? player.name.split(" ").pop() : null;
+  const nameToShow = showName === "last" ? player.name.split(" ").pop() : null;
 
   return (
     <div
-      className={cn("flex flex-col items-center w-full max-w-[4.5em]", className)}
+      className={cn(
+        "flex flex-col items-center w-full max-w-[4.5em]",
+        className,
+      )}
       {...props}
     >
       {/* The Numbered Chip */}
-      <div className={cn(playerChipVariants({ variant }))}>
-        {player.number}
-      </div>
+      <div className={cn(playerChipVariants({ variant }))}>{player.number}</div>
 
       {/* The Name */}
       {nameToShow && (

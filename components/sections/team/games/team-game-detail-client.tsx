@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GameHeader } from "@/components/sections/shell/games/game-detail/game-header";
 import { GameStatsTable } from "@/components/sections/shell/games/game-detail/game-stats-table";
-import { GameBoxScore } from "@/components/sections/shell/games/game-detail/game-box-score";
+import { GameSummaryTab } from "@/components/sections/shell/games/game-detail/game-summary-tab";
 import { StatsEntryForm } from "./stats-entry-form";
 import { StatsConfirmView, WaitingForOpponent } from "./stats-confirm-view";
 import { Clock } from "lucide-react";
@@ -135,13 +135,18 @@ export function TeamGameDetailClient({
         </div>
       )}
 
-      <Tabs defaultValue="boxScore" className="w-full">
+      <Tabs defaultValue="summary" className="w-full">
         <TabsList className="w-full justify-start rounded-none py-2.5 bg-muted/50 px-4 md:px-6">
-          <TabsTrigger value="boxScore">{t("games.boxScore")}</TabsTrigger>
+          <TabsTrigger value="summary">{t("games.summary")}</TabsTrigger>
           <TabsTrigger value="stats">{t("games.stats")}</TabsTrigger>
         </TabsList>
-        <TabsContent value="boxScore" className="mt-4 px-4 md:px-6">
-          <GameBoxScore game={game} />
+        <TabsContent value="summary" className="mt-4 px-4 md:px-6">
+          <GameSummaryTab
+            game={game}
+            orgSlug={orgSlug}
+            routeScope="team"
+            currentClubSlug={clubSlug}
+          />
         </TabsContent>
         <TabsContent value="stats" className="mt-4 px-4 md:px-6">
           <GameStatsTable game={game} />

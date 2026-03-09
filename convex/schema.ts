@@ -70,6 +70,19 @@ const seasonValidator = v.object({
   endDate: v.string(),
 });
 
+const lineupTemplateValidator = v.object({
+  id: v.string(),
+  name: v.string(),
+  slots: v.array(
+    v.object({
+      id: v.string(),
+      x: v.number(),
+      y: v.number(),
+      role: v.union(v.literal("goalkeeper"), v.literal("outfield")),
+    }),
+  ),
+});
+
 // ============================================================================
 // CLERK SYNCED TABLES (from webhooks)
 // ============================================================================
@@ -241,6 +254,7 @@ export default defineSchema({
       }),
     ),
     positions: v.optional(v.array(positionValidator)),
+    lineups: v.optional(v.array(lineupTemplateValidator)),
     enabledGenders: v.array(gender),
     seasons: v.optional(v.array(seasonValidator)),
     horizontalDivisions: v.optional(
@@ -284,6 +298,34 @@ export default defineSchema({
     .index("byAwayClub", ["awayClubId"])
     .index("byDate", ["date"])
     .index("byStatus", ["status"]),
+
+  /**
+   * Game Lineups - Optional lineup configuration per team in a game.
+   */
+  gameLineups: defineTable({
+    gameId: v.id("games"),
+    clubId: v.id("clubs"),
+    lineupTemplateId: v.optional(v.string()),
+    formation: v.optional(v.string()),
+    slots: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          x: v.number(),
+          y: v.number(),
+          role: v.union(v.literal("goalkeeper"), v.literal("outfield")),
+          playerId: v.optional(v.id("players")),
+        }),
+      ),
+    ),
+    starterPlayerIds: v.array(v.id("players")),
+    substitutePlayerIds: v.array(v.id("players")),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  })
+    .index("byGame", ["gameId"])
+    .index("byClub", ["clubId"])
+    .index("byGameAndClub", ["gameId", "clubId"]),
 
   /**
    * Game Team Stats - Team-level match metrics recorded for a game.

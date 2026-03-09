@@ -18,6 +18,7 @@ interface PlayerProfileHeaderProps {
     secondLastName?: string;
     photoUrl?: string;
     dateOfBirth?: string;
+    jerseyNumber?: number;
     cometNumber?: string;
     height?: number;
     weight?: number;
@@ -184,7 +185,8 @@ export function PlayerProfileHeader({
   const weight = formatWeightDetailed(player.weight);
   const country = getCountryLabel(player.country) ?? "—";
   const category = player.categoryName ?? t("players.notAssigned");
-  const gamesPlayed = player.gamesPlayed > 0 ? `${player.gamesPlayed} PJ` : "—";
+  const jerseyNumber =
+    player.jerseyNumber !== undefined ? `${player.jerseyNumber}` : "—";
 
   const detailItems = [
     { label: t("players.height"), value: height },
@@ -197,7 +199,7 @@ export function PlayerProfileHeader({
     },
     { label: t("players.dateOfBirth"), value: birthdate },
     { label: t("players.cometNumber"), value: player.cometNumber ?? "—" },
-    { label: t("games.statsTableColumns.gp"), value: gamesPlayed },
+    { label: t("players.jerseyNumber"), value: jerseyNumber },
   ];
 
   return (
@@ -348,8 +350,8 @@ export function PlayerProfileHeader({
             />
             <DetailTile label={t("players.category")} value={category} />
             <DetailTile
-              label={t("games.statsTableColumns.gp")}
-              value={gamesPlayed}
+              label={t("players.jerseyNumber")}
+              value={jerseyNumber}
             />
           </div>
         </div>

@@ -100,6 +100,19 @@
         "abbreviationPlaceholder": "e.g. PG",
         "empty": "No positions configured"
       },
+      "lineups": {
+        "title": "Available Lineups",
+        "description": "Create and manage the base lineup templates available for the league.",
+        "empty": "No lineups configured",
+        "createTitle": "Create Lineup",
+        "editTitle": "Edit Lineup",
+        "baseFormation": "Base formation",
+        "name": "Name",
+        "namePlaceholder": "e.g. Offensive 4-3-3",
+        "preview": "Preview",
+        "created": "Lineup created successfully.",
+        "updated": "Lineup updated successfully."
+      },
       "enabledGenders": {
         "title": "Enabled Genders",
         "description": "Select which gender categories are available for {clubs}",

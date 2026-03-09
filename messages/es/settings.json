@@ -100,6 +100,19 @@
         "abbreviationPlaceholder": "ej. PG",
         "empty": "No hay posiciones configuradas"
       },
+      "lineups": {
+        "title": "Alineaciones Disponibles",
+        "description": "Crea y administra las alineaciones base disponibles para la liga.",
+        "empty": "No hay alineaciones configuradas",
+        "createTitle": "Crear Alineación",
+        "editTitle": "Editar Alineación",
+        "baseFormation": "Formación base",
+        "name": "Nombre",
+        "namePlaceholder": "ej. 4-3-3 ofensiva",
+        "preview": "Vista previa",
+        "created": "Alineación creada correctamente.",
+        "updated": "Alineación actualizada correctamente."
+      },
       "enabledGenders": {
         "title": "Géneros Habilitados",
         "description": "Selecciona qué categorías de género están disponibles para {clubs}",

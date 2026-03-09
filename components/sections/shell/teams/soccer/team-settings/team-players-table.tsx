@@ -45,6 +45,7 @@ interface PlayerRow {
   dateOfBirth?: string | null;
   documentNumber?: string | null;
   gender?: "male" | "female" | "mixed" | null;
+  jerseyNumber?: number | null;
   cometNumber?: string | null;
   fifaId?: string | null;
   position?: string | null;

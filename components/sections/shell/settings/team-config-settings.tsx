@@ -23,6 +23,7 @@ import SettingsItem from "./settings-item";
 import { SeasonsSettings } from "./seasons-settings";
 import { useSportTerminology } from "@/lib/sports";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
+import { LineupTemplateDialog } from "./lineup-template-dialog";
 
 type Gender = "male" | "female" | "mixed";
 type DivisionType = "alphabetic" | "greek" | "numeric";
@@ -84,6 +85,18 @@ export function TeamConfigSettings() {
   const [savingPositionId, setSavingPositionId] = useState<string | null>(null);
   const [showAllAgeCategories, setShowAllAgeCategories] = useState(false);
   const [showAllPositions, setShowAllPositions] = useState(false);
+  const [isLineupDialogOpen, setIsLineupDialogOpen] = useState(false);
+  const [editingLineup, setEditingLineup] = useState<{
+    id: string;
+    name: string;
+    slots: {
+      id: string;
+      x: number;
+      y: number;
+      role: "goalkeeper" | "outfield";
+    }[];
+  } | null>(null);
+  const [removingLineupId, setRemovingLineupId] = useState<string | null>(null);
 
   const teamConfig = useQuery(
     api.leagueSettings.getTeamConfig,
@@ -96,6 +109,7 @@ export function TeamConfigSettings() {
   const addPosition = useMutation(api.leagueSettings.addPosition);
   const removePosition = useMutation(api.leagueSettings.removePosition);
   const updatePosition = useMutation(api.leagueSettings.updatePosition);
+  const removeLineup = useMutation(api.leagueSettings.removeLineup);
   const updateEnabledGenders = useMutation(
     api.leagueSettings.updateEnabledGenders,
   );
@@ -125,6 +139,7 @@ export function TeamConfigSettings() {
 
   const ageCategories = teamConfig.ageCategories;
   const positions = teamConfig.positions ?? [];
+  const lineups = teamConfig.lineups ?? [];
   const visibleAgeCategories = showAllAgeCategories
     ? ageCategories
     : ageCategories.slice(0, MAX_VISIBLE_ITEMS);
@@ -269,6 +284,24 @@ export function TeamConfigSettings() {
       setEditingPosition(null);
     } finally {
       setSavingPositionId(null);
+    }
+  };
+
+  const handleStartEditLineup = (lineup: (typeof lineups)[number]) => {
+    setEditingLineup({
+      id: lineup.id,
+      name: lineup.name,
+      slots: lineup.slots,
+    });
+    setIsLineupDialogOpen(true);
+  };
+
+  const handleRemoveLineup = async (lineupId: string) => {
+    setRemovingLineupId(lineupId);
+    try {
+      await removeLineup({ leagueSlug, lineupId });
+    } finally {
+      setRemovingLineupId(null);
     }
   };
 
@@ -651,6 +684,59 @@ export function TeamConfigSettings() {
       </SettingsItem>
 
       <SettingsItem
+        title={t("lineups.title")}
+        description={t("lineups.description")}
+      >
+        <div className="flex flex-col gap-4">
+          {lineups.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("lineups.empty")}
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {lineups.map((lineup) => (
+                <li key={lineup.id} className="group">
+                  <span className="inline-flex items-center gap-1.5 text-sm text-primary">
+                    <span>{lineup.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
+                      onClick={() => handleStartEditLineup(lineup)}
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 text-destructive opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100 hover:text-destructive"
+                      onClick={() => handleRemoveLineup(lineup.id)}
+                      disabled={removingLineupId === lineup.id}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="pt-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setEditingLineup(null);
+                setIsLineupDialogOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+              {tCommon("actions.create")}
+            </Button>
+          </div>
+        </div>
+      </SettingsItem>
+
+      <SettingsItem
         title={tSeasons("title")}
         description={tSeasons("description")}
       >
@@ -730,6 +816,17 @@ export function TeamConfigSettings() {
           )}
         </div>
       </SettingsItem>
+      <LineupTemplateDialog
+        open={isLineupDialogOpen}
+        onOpenChange={(open) => {
+          setIsLineupDialogOpen(open);
+          if (!open) {
+            setEditingLineup(null);
+          }
+        }}
+        leagueSlug={leagueSlug}
+        lineup={editingLineup}
+      />
     </div>
   );
 }
