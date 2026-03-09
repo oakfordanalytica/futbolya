@@ -73,7 +73,7 @@ export default async function LocaleLayout({
         <Toaster position="bottom-right" richColors />
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

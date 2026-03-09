@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 
 export const landingMetadata: Metadata = {
   title: {
-    template: "%s - NISAA",
-    default: "NISAA",
+    template: "%s - FutbolYa",
+    default: "FutbolYa",
   },
-  description: "NISAA Basketball.",
+  description: "FutbolYa Soccer.",
 };

@@ -18,10 +18,10 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   transformTeamStats,
   emptyTeamTotals,
-  formatMadeAttempted,
+  formatPenaltySummary,
   type PlayerBoxScoreRow,
   type TeamGameTotals,
-} from "@/lib/sports/basketball/game-stats";
+} from "@/lib/sports/soccer/game-stats";
 
 interface Team {
   name: string;
@@ -56,60 +56,43 @@ function TeamBoxScore({
   const renderPlayerRow = (player: PlayerBoxScoreRow) => {
     return (
       <TableRow key={player.id}>
-        <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10">
-          <div className="flex items-center gap-1">
-            <span className="truncate max-w-[120px]">{player.name}</span>
-            {player.jerseyNumber && (
-              <span className="text-muted-foreground text-xs">
-                #{player.jerseyNumber}
+        <TableCell className="sticky left-0 z-10 bg-background font-medium whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            <span className="truncate max-w-[140px]">{player.name}</span>
+            {player.cometNumber ? (
+              <span className="text-xs text-muted-foreground">
+                {player.cometNumber}
               </span>
-            )}
+            ) : null}
           </div>
         </TableCell>
-        <TableCell className="text-center tabular-nums">
-          {player.minutes}
-        </TableCell>
         <TableCell className="text-center tabular-nums font-medium">
-          {player.points}
-        </TableCell>
-        <TableCell className="text-center tabular-nums">{player.fg}</TableCell>
-        <TableCell className="text-center tabular-nums">
-          {player.threePt}
-        </TableCell>
-        <TableCell className="text-center tabular-nums">{player.ft}</TableCell>
-        <TableCell className="text-center tabular-nums">
-          {player.rebounds}
+          {player.goals}
         </TableCell>
         <TableCell className="text-center tabular-nums">
-          {player.assists}
+          {player.yellowCards}
         </TableCell>
         <TableCell className="text-center tabular-nums">
-          {player.turnovers}
+          {player.redCards}
         </TableCell>
         <TableCell className="text-center tabular-nums">
-          {player.steals}
+          {formatPenaltySummary(
+            player.penaltiesScored,
+            player.penaltiesAttempted,
+          )}
         </TableCell>
         <TableCell className="text-center tabular-nums">
-          {player.blocks}
+          {player.substitutionsIn}
         </TableCell>
         <TableCell className="text-center tabular-nums">
-          {player.offReb}
-        </TableCell>
-        <TableCell className="text-center tabular-nums">
-          {player.defReb}
-        </TableCell>
-        <TableCell className="text-center tabular-nums">
-          {player.fouls}
-        </TableCell>
-        <TableCell className="text-center tabular-nums">
-          {player.plusMinus > 0 ? `+${player.plusMinus}` : player.plusMinus}
+          {player.substitutionsOut}
         </TableCell>
       </TableRow>
     );
   };
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="overflow-hidden rounded-md border">
       <div
         className="flex items-center gap-3 border-b p-3"
         style={{
@@ -127,7 +110,7 @@ function TeamBoxScore({
           />
         ) : (
           <div
-            className="size-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+            className="flex size-6 items-center justify-center rounded-full text-xs font-bold text-white"
             style={{ backgroundColor: primaryColor }}
           >
             {team.name.charAt(0)}
@@ -140,185 +123,86 @@ function TeamBoxScore({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="sticky left-0 bg-muted/50 z-10 min-w-[140px]">
+              <TableHead className="sticky left-0 z-10 min-w-[160px] bg-muted/50">
                 {t("games.boxScoreLabels.starters")}
               </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.min")}
+              <TableHead className="w-12 text-center">
+                {t("games.boxScoreLabels.goals")}
               </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.pts")}
+              <TableHead className="w-12 text-center">
+                {t("games.boxScoreLabels.yellowCards")}
               </TableHead>
-              <TableHead className="text-center w-14">
-                {t("games.boxScoreLabels.fg")}
+              <TableHead className="w-12 text-center">
+                {t("games.boxScoreLabels.redCards")}
               </TableHead>
-              <TableHead className="text-center w-14">
-                {t("games.boxScoreLabels.threePt")}
+              <TableHead className="w-16 text-center">
+                {t("games.boxScoreLabels.penalties")}
               </TableHead>
-              <TableHead className="text-center w-14">
-                {t("games.boxScoreLabels.ft")}
+              <TableHead className="w-16 text-center">
+                {t("games.boxScoreLabels.subIn")}
               </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.reb")}
-              </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.ast")}
-              </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.to")}
-              </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.stl")}
-              </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.blk")}
-              </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.oreb")}
-              </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.dreb")}
-              </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.pf")}
-              </TableHead>
-              <TableHead className="text-center w-12">
-                {t("games.boxScoreLabels.plusMinus")}
+              <TableHead className="w-16 text-center">
+                {t("games.boxScoreLabels.subOut")}
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {starters.map(renderPlayerRow)}
 
-            {bench.length > 0 && (
+            {bench.length > 0 ? (
               <>
                 <TableRow className="bg-muted/30">
-                  <TableCell className="sticky left-0 bg-muted/30 z-10 font-semibold text-xs uppercase text-muted-foreground">
+                  <TableCell className="sticky left-0 z-10 bg-muted/30 text-xs font-semibold uppercase text-muted-foreground">
                     {t("games.boxScoreLabels.bench")}
                   </TableCell>
                   <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.min")}
+                    {t("games.boxScoreLabels.goals")}
                   </TableCell>
                   <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.pts")}
+                    {t("games.boxScoreLabels.yellowCards")}
                   </TableCell>
                   <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.fg")}
+                    {t("games.boxScoreLabels.redCards")}
                   </TableCell>
                   <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.threePt")}
+                    {t("games.boxScoreLabels.penalties")}
                   </TableCell>
                   <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.ft")}
+                    {t("games.boxScoreLabels.subIn")}
                   </TableCell>
                   <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.reb")}
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.ast")}
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.to")}
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.stl")}
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.blk")}
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.oreb")}
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.dreb")}
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.pf")}
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {t("games.boxScoreLabels.plusMinus")}
+                    {t("games.boxScoreLabels.subOut")}
                   </TableCell>
                 </TableRow>
-
                 {bench.map(renderPlayerRow)}
               </>
-            )}
+            ) : null}
 
             <TableRow className="bg-muted/50 font-semibold">
-              <TableCell className="sticky left-0 bg-muted/50 z-10 uppercase text-xs">
+              <TableCell className="sticky left-0 z-10 bg-muted/50 text-xs uppercase">
                 {t("games.boxScoreLabels.team")}
               </TableCell>
-              <TableCell className="text-center"></TableCell>
               <TableCell className="text-center tabular-nums">
-                {totals.points}
+                {totals.goals}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {formatMadeAttempted(
-                  totals.fieldGoalsMade,
-                  totals.fieldGoalsAttempted,
+                {totals.yellowCards}
+              </TableCell>
+              <TableCell className="text-center tabular-nums">
+                {totals.redCards}
+              </TableCell>
+              <TableCell className="text-center tabular-nums">
+                {formatPenaltySummary(
+                  totals.penaltiesScored,
+                  totals.penaltiesAttempted,
                 )}
               </TableCell>
               <TableCell className="text-center tabular-nums">
-                {formatMadeAttempted(
-                  totals.threePointersMade,
-                  totals.threePointersAttempted,
-                )}
+                {totals.substitutions}
               </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {formatMadeAttempted(
-                  totals.freeThrowsMade,
-                  totals.freeThrowsAttempted,
-                )}
+              <TableCell className="text-center text-muted-foreground">
+                —
               </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.rebounds}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.assists}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.turnovers}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.steals}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.blocks}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.offensiveRebounds}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.defensiveRebounds}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.personalFouls}
-              </TableCell>
-              <TableCell className="text-center"></TableCell>
-            </TableRow>
-
-            <TableRow className="text-muted-foreground text-xs">
-              <TableCell className="sticky left-0 bg-background z-10"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.fieldGoalPct}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.threePointPct}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {totals.freeThrowPct}
-              </TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
-              <TableCell className="text-center"></TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -345,21 +229,22 @@ export function GameBoxScore({ game }: GameBoxScoreProps) {
     logoUrl: game.awayTeamLogo,
   };
 
-  // Transform stats using shared utility
-  const homeData = gameStats?.homeStats?.length
-    ? transformTeamStats(gameStats.homeStats)
+  const homeData = gameStats
+    ? transformTeamStats(gameStats.homeStats, gameStats.homeTeamStats)
     : { starters: [], bench: [], totals: emptyTeamTotals };
 
-  const awayData = gameStats?.awayStats?.length
-    ? transformTeamStats(gameStats.awayStats)
+  const awayData = gameStats
+    ? transformTeamStats(gameStats.awayStats, gameStats.awayTeamStats)
     : { starters: [], bench: [], totals: emptyTeamTotals };
 
   const hasStats =
     (gameStats?.homeStats?.length ?? 0) > 0 ||
-    (gameStats?.awayStats?.length ?? 0) > 0;
+    (gameStats?.awayStats?.length ?? 0) > 0 ||
+    Object.values(homeData.totals).some((value) => value > 0) ||
+    Object.values(awayData.totals).some((value) => value > 0);
 
   return (
-    <div className="pt-3 space-y-6">
+    <div className="space-y-6 pt-3">
       <TeamBoxScore
         team={homeTeam}
         starters={homeData.starters}
@@ -376,11 +261,11 @@ export function GameBoxScore({ game }: GameBoxScoreProps) {
         t={t}
       />
 
-      {!hasStats && (
+      {!hasStats ? (
         <p className="text-center text-xs text-muted-foreground">
           {t("games.boxScoreNote")}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

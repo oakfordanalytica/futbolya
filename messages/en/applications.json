@@ -30,7 +30,7 @@
     "denied": "Denied"
   },
   "programs": {
-    "basketball": "Basketball",
+    "basketball": "Soccer",
     "soccer": "Soccer",
     "volleyball": "Volleyball",
     "baseball": "Baseball",
@@ -39,7 +39,7 @@
     "softball": "Softball",
     "hr14Baseball": "HR14 Baseball",
     "volleyballClub": "Volleyball Club",
-    "pgBasketball": "PG Basketball"
+    "pgBasketball": "PG Soccer"
   },
   "tabs": {
     "application": "Application",

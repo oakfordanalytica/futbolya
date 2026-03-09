@@ -13,6 +13,16 @@ import {
 // ============================================================================
 
 const playerStatus = v.union(v.literal("active"), v.literal("inactive"));
+const playerGender = v.union(
+  v.literal("male"),
+  v.literal("female"),
+  v.literal("mixed"),
+);
+const dominantProfileValidator = v.union(
+  v.literal("left"),
+  v.literal("right"),
+  v.literal("both"),
+);
 const playerViewerAccessLevel = v.union(
   v.literal("superadmin"),
   v.literal("admin"),
@@ -36,24 +46,26 @@ const playerGameLogRowValidator = v.object({
   result: v.union(v.literal("W"), v.literal("L"), v.literal("—")),
   teamScore: v.optional(v.number()),
   opponentScore: v.optional(v.number()),
-  minutes: v.number(),
-  points: v.number(),
-  rebounds: v.number(),
-  assists: v.number(),
-  steals: v.number(),
-  blocks: v.number(),
-  plusMinus: v.number(),
+  goals: v.number(),
+  yellowCards: v.number(),
+  redCards: v.number(),
+  penaltiesScored: v.number(),
 });
 
-const basketballPlayerValidator = v.object({
+const soccerPlayerValidator = v.object({
   _id: v.id("players"),
   _creationTime: v.number(),
   firstName: v.string(),
   lastName: v.string(),
+  secondLastName: v.optional(v.string()),
   photoUrl: v.optional(v.string()),
   dateOfBirth: v.optional(v.string()),
-  jerseyNumber: v.optional(v.number()),
+  documentNumber: v.optional(v.string()),
+  gender: v.optional(playerGender),
+  cometNumber: v.optional(v.string()),
+  fifaId: v.optional(v.string()),
   position: v.optional(v.string()),
+  dominantProfile: v.optional(dominantProfileValidator),
   status: playerStatus,
   height: v.optional(v.number()),
   weight: v.optional(v.number()),
@@ -67,15 +79,20 @@ const basketballPlayerValidator = v.object({
   clubNickname: v.optional(v.string()),
 });
 
-const basketballPlayerDetailValidator = v.object({
+const soccerPlayerDetailValidator = v.object({
   _id: v.id("players"),
   _creationTime: v.number(),
   firstName: v.string(),
   lastName: v.string(),
+  secondLastName: v.optional(v.string()),
   photoUrl: v.optional(v.string()),
   dateOfBirth: v.optional(v.string()),
-  jerseyNumber: v.optional(v.number()),
+  documentNumber: v.optional(v.string()),
+  gender: v.optional(playerGender),
+  cometNumber: v.optional(v.string()),
+  fifaId: v.optional(v.string()),
   position: v.optional(v.string()),
+  dominantProfile: v.optional(dominantProfileValidator),
   status: playerStatus,
   height: v.optional(v.number()),
   weight: v.optional(v.number()),
@@ -91,14 +108,33 @@ const basketballPlayerDetailValidator = v.object({
   clubPrimaryColor: v.optional(v.string()),
   highlights: v.array(playerHighlightValidator),
   gamesPlayed: v.number(),
-  pointsPerGame: v.number(),
-  reboundsPerGame: v.number(),
-  assistsPerGame: v.number(),
+  goals: v.number(),
+  yellowCards: v.number(),
+  redCards: v.number(),
+  penaltiesScored: v.number(),
   viewerAccessLevel: playerViewerAccessLevel,
 });
 
-function roundToSingleDecimal(value: number): number {
-  return Number(value.toFixed(1));
+function didPlayerParticipate(stat: {
+  isStarter: boolean;
+  goals?: number;
+  yellowCards?: number;
+  redCards?: number;
+  penaltiesAttempted?: number;
+  penaltiesScored?: number;
+  substitutionsIn?: number;
+  substitutionsOut?: number;
+}): boolean {
+  return (
+    stat.isStarter ||
+    (stat.goals ?? 0) > 0 ||
+    (stat.yellowCards ?? 0) > 0 ||
+    (stat.redCards ?? 0) > 0 ||
+    (stat.penaltiesAttempted ?? 0) > 0 ||
+    (stat.penaltiesScored ?? 0) > 0 ||
+    (stat.substitutionsIn ?? 0) > 0 ||
+    (stat.substitutionsOut ?? 0) > 0
+  );
 }
 
 function extractYouTubeVideoId(rawUrl: string): string | null {
@@ -132,12 +168,12 @@ function extractYouTubeVideoId(rawUrl: string): string | null {
 // ============================================================================
 
 /**
- * List basketball players by club slug.
+ * List soccer players by club slug.
  * Returns data formatted for the players table/grid.
  */
-export const listBasketballPlayersByClubSlug = query({
+export const listSoccerPlayersByClubSlug = query({
   args: { clubSlug: v.string() },
-  returns: v.array(basketballPlayerValidator),
+  returns: v.array(soccerPlayerValidator),
   handler: async (ctx, args) => {
     const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
 
@@ -145,14 +181,12 @@ export const listBasketballPlayersByClubSlug = query({
       .query("players")
       .withIndex("byClub", (q) => q.eq("clubId", club._id))
       .collect();
-    const basketballPlayers = players.filter(
-      (player) => player.sportType === "basketball",
+    const soccerPlayers = players.filter(
+      (player) => player.sportType === "soccer",
     );
 
     // Batch fetch categories
-    const categoryIds = [
-      ...new Set(basketballPlayers.map((p) => p.categoryId)),
-    ];
+    const categoryIds = [...new Set(soccerPlayers.map((p) => p.categoryId))];
     const categories = await Promise.all(
       categoryIds.map((id) => ctx.db.get(id)),
     );
@@ -162,7 +196,7 @@ export const listBasketballPlayersByClubSlug = query({
 
     // Build result with photo URLs
     const result = await Promise.all(
-      basketballPlayers.map(async (player) => {
+      soccerPlayers.map(async (player) => {
         const category = categoryMap.get(player.categoryId);
         const photoUrl = player.photoStorageId
           ? await ctx.storage.getUrl(player.photoStorageId)
@@ -173,10 +207,15 @@ export const listBasketballPlayersByClubSlug = query({
           _creationTime: player._creationTime,
           firstName: player.firstName,
           lastName: player.lastName,
+          secondLastName: player.secondLastName,
           photoUrl: photoUrl ?? undefined,
           dateOfBirth: player.dateOfBirth,
-          jerseyNumber: player.jerseyNumber,
+          documentNumber: player.documentNumber,
+          gender: player.gender,
+          cometNumber: player.cometNumber,
+          fifaId: player.fifaId,
           position: player.position,
+          dominantProfile: player.dominantProfile,
           status: player.status,
           height: player.height,
           weight: player.weight,
@@ -195,12 +234,12 @@ export const listBasketballPlayersByClubSlug = query({
 });
 
 /**
- * List basketball players across all clubs in a league.
+ * List soccer players across all clubs in a league.
  * Used by org-level roster views.
  */
-export const listBasketballPlayersByLeagueSlug = query({
+export const listSoccerPlayersByLeagueSlug = query({
   args: { leagueSlug: v.string() },
-  returns: v.array(basketballPlayerValidator),
+  returns: v.array(soccerPlayerValidator),
   handler: async (ctx, args) => {
     const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
 
@@ -226,7 +265,7 @@ export const listBasketballPlayersByLeagueSlug = query({
     );
     const players = playersByClub
       .flat()
-      .filter((player) => player.sportType === "basketball")
+      .filter((player) => player.sportType === "soccer")
       .sort((a, b) =>
         `${a.lastName} ${a.firstName}`.localeCompare(
           `${b.lastName} ${b.firstName}`,
@@ -256,10 +295,15 @@ export const listBasketballPlayersByLeagueSlug = query({
           _creationTime: player._creationTime,
           firstName: player.firstName,
           lastName: player.lastName,
+          secondLastName: player.secondLastName,
           photoUrl: photoUrl ?? undefined,
           dateOfBirth: player.dateOfBirth,
-          jerseyNumber: player.jerseyNumber,
+          documentNumber: player.documentNumber,
+          gender: player.gender,
+          cometNumber: player.cometNumber,
+          fifaId: player.fifaId,
           position: player.position,
+          dominantProfile: player.dominantProfile,
           status: player.status,
           height: player.height,
           weight: player.weight,
@@ -280,15 +324,15 @@ export const listBasketballPlayersByLeagueSlug = query({
 });
 
 /**
- * Get basketball player details by player ID within a specific club slug.
+ * Get soccer player details by player ID within a specific club slug.
  * Returns null when player does not exist or does not belong to the provided club.
  */
-export const getBasketballPlayerDetailByClubSlug = query({
+export const getSoccerPlayerDetailByClubSlug = query({
   args: {
     clubSlug: v.string(),
     playerId: v.id("players"),
   },
-  returns: v.union(basketballPlayerDetailValidator, v.null()),
+  returns: v.union(soccerPlayerDetailValidator, v.null()),
   handler: async (ctx, args) => {
     const { club, accessLevel } = await requireClubAccessBySlug(
       ctx,
@@ -299,7 +343,7 @@ export const getBasketballPlayerDetailByClubSlug = query({
     if (
       !player ||
       player.clubId !== club._id ||
-      player.sportType !== "basketball"
+      player.sportType !== "soccer"
     ) {
       return null;
     }
@@ -315,9 +359,10 @@ export const getBasketballPlayerDetailByClubSlug = query({
     );
 
     let gamesPlayed = 0;
-    let points = 0;
-    let rebounds = 0;
-    let assists = 0;
+    let goals = 0;
+    let yellowCards = 0;
+    let redCards = 0;
+    let penaltiesScored = 0;
 
     for (let index = 0; index < playerStats.length; index += 1) {
       const stat = playerStats[index];
@@ -333,18 +378,16 @@ export const getBasketballPlayerDetailByClubSlug = query({
         continue;
       }
 
-      gamesPlayed += 1;
-      points += stat.points ?? 0;
-      rebounds += (stat.offensiveRebounds ?? 0) + (stat.defensiveRebounds ?? 0);
-      assists += stat.assists ?? 0;
-    }
+      if (!didPlayerParticipate(stat)) {
+        continue;
+      }
 
-    const pointsPerGame =
-      gamesPlayed > 0 ? roundToSingleDecimal(points / gamesPlayed) : 0;
-    const reboundsPerGame =
-      gamesPlayed > 0 ? roundToSingleDecimal(rebounds / gamesPlayed) : 0;
-    const assistsPerGame =
-      gamesPlayed > 0 ? roundToSingleDecimal(assists / gamesPlayed) : 0;
+      gamesPlayed += 1;
+      goals += stat.goals ?? 0;
+      yellowCards += stat.yellowCards ?? 0;
+      redCards += stat.redCards ?? 0;
+      penaltiesScored += stat.penaltiesScored ?? 0;
+    }
 
     const photoUrl = player.photoStorageId
       ? await ctx.storage.getUrl(player.photoStorageId)
@@ -358,10 +401,15 @@ export const getBasketballPlayerDetailByClubSlug = query({
       _creationTime: player._creationTime,
       firstName: player.firstName,
       lastName: player.lastName,
+      secondLastName: player.secondLastName,
       photoUrl: photoUrl ?? undefined,
       dateOfBirth: player.dateOfBirth,
-      jerseyNumber: player.jerseyNumber,
+      documentNumber: player.documentNumber,
+      gender: player.gender,
+      cometNumber: player.cometNumber,
+      fifaId: player.fifaId,
       position: player.position,
+      dominantProfile: player.dominantProfile,
       status: player.status,
       height: player.height,
       weight: player.weight,
@@ -377,19 +425,20 @@ export const getBasketballPlayerDetailByClubSlug = query({
       clubPrimaryColor: club.colors?.[0],
       highlights: player.highlights ?? [],
       gamesPlayed,
-      pointsPerGame,
-      reboundsPerGame,
-      assistsPerGame,
+      goals,
+      yellowCards,
+      redCards,
+      penaltiesScored,
       viewerAccessLevel: accessLevel,
     };
   },
 });
 
 /**
- * List recent game log rows for a basketball player.
+ * List recent game log rows for a soccer player.
  * Includes quick and season games with completed box score stats.
  */
-export const listBasketballPlayerGameLog = query({
+export const listSoccerPlayerGameLog = query({
   args: {
     playerId: v.id("players"),
     limit: v.optional(v.number()),
@@ -399,7 +448,7 @@ export const listBasketballPlayerGameLog = query({
     await getCurrentUser(ctx);
 
     const player = await ctx.db.get(args.playerId);
-    if (!player || player.sportType !== "basketball") {
+    if (!player || player.sportType !== "soccer") {
       return [];
     }
 
@@ -434,13 +483,10 @@ export const listBasketballPlayerGameLog = query({
       result: "W" | "L" | "—";
       teamScore?: number;
       opponentScore?: number;
-      minutes: number;
-      points: number;
-      rebounds: number;
-      assists: number;
-      steals: number;
-      blocks: number;
-      plusMinus: number;
+      goals: number;
+      yellowCards: number;
+      redCards: number;
+      penaltiesScored: number;
       sortKey: number;
     }> = [];
     const relatedClubIds = new Set<Id<"clubs">>();
@@ -453,6 +499,10 @@ export const listBasketballPlayerGameLog = query({
       }
 
       if (game.status !== "completed") {
+        continue;
+      }
+
+      if (!didPlayerParticipate(stat)) {
         continue;
       }
 
@@ -498,13 +548,10 @@ export const listBasketballPlayerGameLog = query({
         result,
         teamScore,
         opponentScore,
-        minutes: stat.minutes ?? 0,
-        points: stat.points ?? 0,
-        rebounds: (stat.offensiveRebounds ?? 0) + (stat.defensiveRebounds ?? 0),
-        assists: stat.assists ?? 0,
-        steals: stat.steals ?? 0,
-        blocks: stat.blocks ?? 0,
-        plusMinus: stat.plusMinus ?? 0,
+        goals: stat.goals ?? 0,
+        yellowCards: stat.yellowCards ?? 0,
+        redCards: stat.redCards ?? 0,
+        penaltiesScored: stat.penaltiesScored ?? 0,
         sortKey,
       });
     }
@@ -556,12 +603,16 @@ export const createPlayer = mutation({
   args: {
     firstName: v.string(),
     lastName: v.string(),
+    secondLastName: v.string(),
     photoStorageId: v.optional(v.id("_storage")),
-    dateOfBirth: v.optional(v.string()),
+    dateOfBirth: v.string(),
+    documentNumber: v.string(),
+    gender: playerGender,
     categoryId: v.id("categories"),
-    sportType: v.union(v.literal("basketball"), v.literal("soccer")),
-    jerseyNumber: v.optional(v.number()),
+    cometNumber: v.string(),
+    fifaId: v.optional(v.string()),
     position: v.optional(v.string()),
+    dominantProfile: dominantProfileValidator,
     height: v.optional(v.number()),
     weight: v.optional(v.number()),
     country: v.optional(v.string()),
@@ -581,13 +632,18 @@ export const createPlayer = mutation({
     const playerId = await ctx.db.insert("players", {
       firstName: args.firstName,
       lastName: args.lastName,
+      secondLastName: args.secondLastName,
       photoStorageId: args.photoStorageId,
       dateOfBirth: args.dateOfBirth,
+      documentNumber: args.documentNumber,
+      gender: args.gender,
       clubId: category.clubId,
       categoryId: args.categoryId,
-      sportType: args.sportType,
-      jerseyNumber: args.jerseyNumber,
+      sportType: "soccer",
+      cometNumber: args.cometNumber,
+      fifaId: args.fifaId,
       position: args.position,
+      dominantProfile: args.dominantProfile,
       height: args.height,
       weight: args.weight,
       country: args.country,
@@ -633,10 +689,15 @@ export const updatePlayer = mutation({
     playerId: v.id("players"),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
+    secondLastName: v.optional(v.string()),
     photoStorageId: v.optional(v.id("_storage")),
     dateOfBirth: v.optional(v.string()),
-    jerseyNumber: v.optional(v.number()),
+    documentNumber: v.optional(v.string()),
+    gender: v.optional(playerGender),
+    cometNumber: v.optional(v.string()),
+    fifaId: v.optional(v.string()),
     position: v.optional(v.string()),
+    dominantProfile: v.optional(dominantProfileValidator),
     height: v.optional(v.number()),
     weight: v.optional(v.number()),
     country: v.optional(v.string()),

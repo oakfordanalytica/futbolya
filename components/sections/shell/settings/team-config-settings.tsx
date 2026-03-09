@@ -21,7 +21,7 @@ import {
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import SettingsItem from "./settings-item";
 import { SeasonsSettings } from "./seasons-settings";
-import { useSportTerminology } from "@/components/providers/sport-provider";
+import { useSportTerminology } from "@/lib/sports";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 
 type Gender = "male" | "female" | "mixed";

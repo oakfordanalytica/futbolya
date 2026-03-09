@@ -27,20 +27,20 @@ interface StatsConfirmViewProps {
   onSuccess?: () => void;
 }
 
-const STAT_COLUMNS = [
-  { key: "minutes", label: "MIN" },
-  { key: "points", label: "PTS" },
-  { key: "fieldGoals", label: "FG" },
-  { key: "threePointers", label: "3PT" },
-  { key: "freeThrows", label: "FT" },
-  { key: "rebounds", label: "REB" },
-  { key: "assists", label: "AST" },
-  { key: "turnovers", label: "TO" },
-  { key: "steals", label: "STL" },
-  { key: "blocks", label: "BLK" },
-  { key: "fouls", label: "PF" },
-  { key: "plusMinus", label: "+/-" },
+const PLAYER_COLUMNS = [
+  { key: "goals", label: "G" },
+  { key: "yellowCards", label: "TA" },
+  { key: "redCards", label: "TR" },
+  { key: "penalties", label: "PEN" },
+  { key: "subIn", label: "ENTRA" },
+  { key: "subOut", label: "SALE" },
 ] as const;
+
+function formatPenaltySummary(scored?: number, attempted?: number) {
+  const safeAttempted = attempted ?? 0;
+  const safeScored = scored ?? 0;
+  return safeAttempted > 0 ? `${safeScored}/${safeAttempted}` : "—";
+}
 
 export function StatsConfirmView({
   gameId,
@@ -67,7 +67,9 @@ export function StatsConfirmView({
       setSuccess(true);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("games.statsEntry.confirmFailed"));
+      setError(
+        err instanceof Error ? err.message : t("games.statsEntry.confirmFailed"),
+      );
     } finally {
       setIsConfirming(false);
     }
@@ -81,11 +83,11 @@ export function StatsConfirmView({
     );
   }
 
-  // Get opponent stats (the stats that are NOT from our club)
-  const opponentStats =
-    gameStats.homeStats[0]?.clubId === clubId
-      ? gameStats.awayStats
-      : gameStats.homeStats;
+  const reviewingHome = gameStats.homeTeamStats.clubId !== clubId;
+  const opponentStats = reviewingHome ? gameStats.homeStats : gameStats.awayStats;
+  const opponentTeamStats = reviewingHome
+    ? gameStats.homeTeamStats
+    : gameStats.awayTeamStats;
 
   if (hasConfirmed || success) {
     return (
@@ -98,34 +100,41 @@ export function StatsConfirmView({
     );
   }
 
-  const starters = opponentStats.filter((s) => s.isStarter);
-  const bench = opponentStats.filter((s) => !s.isStarter);
+  const starters = opponentStats.filter((stat) => stat.isStarter);
+  const bench = opponentStats.filter((stat) => !stat.isStarter);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold">{t("games.statsEntry.reviewOpponent")}</h3>
-        <p className="text-sm text-muted-foreground">
-          {opponentName}
-        </p>
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-lg font-semibold">{t("games.statsEntry.reviewOpponent")}</h3>
+          <p className="text-sm text-muted-foreground">{opponentName}</p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard label={t("games.statsEntry.teamScore")} value={opponentTeamStats.goals} />
+          <SummaryCard label={t("games.gameStats.corners")} value={opponentTeamStats.corners} />
+          <SummaryCard label={t("games.gameStats.freeKicks")} value={opponentTeamStats.freeKicks} />
+          <SummaryCard label={t("games.gameStats.substitutions")} value={opponentTeamStats.substitutions} />
+        </div>
       </div>
 
-      {error && (
+      {error ? (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
+      ) : null}
 
-      <ScrollArea className="w-full">
+      <ScrollArea className="w-full rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="sticky left-0 bg-muted/50 z-10 min-w-[160px]">
+              <TableHead className="sticky left-0 z-10 min-w-[180px] bg-muted/50">
                 {t("games.boxScoreLabels.starters")}
               </TableHead>
-              {STAT_COLUMNS.map((col) => (
-                <TableHead key={col.key} className="text-center w-14">
+              {PLAYER_COLUMNS.map((col) => (
+                <TableHead key={col.key} className="w-16 text-center">
                   {col.label}
                 </TableHead>
               ))}
@@ -136,20 +145,23 @@ export function StatsConfirmView({
               <StatRow key={stat._id} stat={stat} />
             ))}
 
-            <TableRow className="bg-muted/30">
-              <TableCell className="sticky left-0 bg-muted/30 z-10 font-semibold text-xs uppercase text-muted-foreground">
-                {t("games.boxScoreLabels.bench")}
-              </TableCell>
-              {STAT_COLUMNS.map((col) => (
-                <TableCell key={col.key} className="text-center text-xs text-muted-foreground">
-                  {col.label}
-                </TableCell>
-              ))}
-            </TableRow>
-
-            {bench.map((stat) => (
-              <StatRow key={stat._id} stat={stat} />
-            ))}
+            {bench.length > 0 ? (
+              <>
+                <TableRow className="bg-muted/30">
+                  <TableCell className="sticky left-0 z-10 bg-muted/30 text-xs font-semibold uppercase text-muted-foreground">
+                    {t("games.boxScoreLabels.bench")}
+                  </TableCell>
+                  {PLAYER_COLUMNS.map((col) => (
+                    <TableCell key={col.key} className="text-center text-xs text-muted-foreground">
+                      {col.label}
+                    </TableCell>
+                  ))}
+                </TableRow>
+                {bench.map((stat) => (
+                  <StatRow key={stat._id} stat={stat} />
+                ))}
+              </>
+            ) : null}
           </TableBody>
         </Table>
         <ScrollBar orientation="horizontal" />
@@ -157,9 +169,22 @@ export function StatsConfirmView({
 
       <div className="flex justify-end">
         <Button onClick={handleConfirm} disabled={isConfirming}>
-          {isConfirming ? t("games.statsEntry.confirming") : t("games.statsEntry.confirmStats")}
+          {isConfirming
+            ? t("games.statsEntry.confirming")
+            : t("games.statsEntry.confirmStats")}
         </Button>
       </div>
+    </div>
+  );
+}
+
+function SummaryCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border bg-card p-3">
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-bold tabular-nums">{value}</div>
     </div>
   );
 }
@@ -168,56 +193,36 @@ interface StatRowProps {
   stat: {
     _id: string;
     playerName: string;
-    jerseyNumber?: number;
-    minutes?: number;
-    points?: number;
-    fieldGoalsMade?: number;
-    fieldGoalsAttempted?: number;
-    threePointersMade?: number;
-    threePointersAttempted?: number;
-    freeThrowsMade?: number;
-    freeThrowsAttempted?: number;
-    offensiveRebounds?: number;
-    defensiveRebounds?: number;
-    assists?: number;
-    turnovers?: number;
-    steals?: number;
-    blocks?: number;
-    personalFouls?: number;
-    plusMinus?: number;
+    cometNumber?: string;
+    goals?: number;
+    yellowCards?: number;
+    redCards?: number;
+    penaltiesAttempted?: number;
+    penaltiesScored?: number;
+    substitutionsIn?: number;
+    substitutionsOut?: number;
   };
 }
 
 function StatRow({ stat }: StatRowProps) {
-  const totalRebounds = (stat.offensiveRebounds || 0) + (stat.defensiveRebounds || 0);
-  const fieldGoals = `${stat.fieldGoalsMade || 0}-${stat.fieldGoalsAttempted || 0}`;
-  const threePointers = `${stat.threePointersMade || 0}-${stat.threePointersAttempted || 0}`;
-  const freeThrows = `${stat.freeThrowsMade || 0}-${stat.freeThrowsAttempted || 0}`;
-
   return (
     <TableRow>
-      <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10">
+      <TableCell className="sticky left-0 z-10 bg-background font-medium whitespace-nowrap">
         <div className="flex items-center gap-2">
-          <span className="truncate max-w-[120px]">{stat.playerName}</span>
-          {stat.jerseyNumber !== undefined && (
-            <span className="text-muted-foreground text-xs">#{stat.jerseyNumber}</span>
-          )}
+          <span className="truncate max-w-[140px]">{stat.playerName}</span>
+          {stat.cometNumber ? (
+            <span className="text-xs text-muted-foreground">{stat.cometNumber}</span>
+          ) : null}
         </div>
       </TableCell>
-      <TableCell className="text-center tabular-nums">{stat.minutes || 0}</TableCell>
-      <TableCell className="text-center tabular-nums font-medium">{stat.points || 0}</TableCell>
-      <TableCell className="text-center tabular-nums">{fieldGoals}</TableCell>
-      <TableCell className="text-center tabular-nums">{threePointers}</TableCell>
-      <TableCell className="text-center tabular-nums">{freeThrows}</TableCell>
-      <TableCell className="text-center tabular-nums">{totalRebounds}</TableCell>
-      <TableCell className="text-center tabular-nums">{stat.assists || 0}</TableCell>
-      <TableCell className="text-center tabular-nums">{stat.turnovers || 0}</TableCell>
-      <TableCell className="text-center tabular-nums">{stat.steals || 0}</TableCell>
-      <TableCell className="text-center tabular-nums">{stat.blocks || 0}</TableCell>
-      <TableCell className="text-center tabular-nums">{stat.personalFouls || 0}</TableCell>
+      <TableCell className="text-center tabular-nums">{stat.goals ?? 0}</TableCell>
+      <TableCell className="text-center tabular-nums">{stat.yellowCards ?? 0}</TableCell>
+      <TableCell className="text-center tabular-nums">{stat.redCards ?? 0}</TableCell>
       <TableCell className="text-center tabular-nums">
-        {(stat.plusMinus || 0) > 0 ? `+${stat.plusMinus}` : stat.plusMinus || 0}
+        {formatPenaltySummary(stat.penaltiesScored, stat.penaltiesAttempted)}
       </TableCell>
+      <TableCell className="text-center tabular-nums">{stat.substitutionsIn ?? 0}</TableCell>
+      <TableCell className="text-center tabular-nums">{stat.substitutionsOut ?? 0}</TableCell>
     </TableRow>
   );
 }

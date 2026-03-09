@@ -37,8 +37,8 @@ export function SidebarAdminNavbar() {
       <SidebarHeader>
         <Link href={ROUTES.admin.root} aria-label="Home">
           <Image
-            src="/logo_solid.png"
-            alt="NISAA"
+            src="/logo_solid.svg"
+            alt="FutbolYa"
             width={160}
             height={80}
             className="h-10 w-auto"
@@ -86,8 +86,8 @@ export function NavbarAdminNavbar() {
     <Navbar className="flex flex-row-reverse lg:flex-row">
       <Link href={ROUTES.admin.root} aria-label="Home">
         <Image
-          src="/logo_solid.png"
-          alt="NISAA"
+          src="/logo_solid.svg"
+          alt="FutbolYa"
           width={128}
           height={64}
           className="h-8 w-auto"

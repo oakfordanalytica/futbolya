@@ -2,7 +2,7 @@
 
 import { Preloaded, usePreloadedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { TeamStaffTable } from "@/components/sections/shell/teams/basketball/team-settings/team-staff-table";
+import { TeamStaffTable } from "@/components/sections/shell/teams/soccer/team-settings/team-staff-table";
 
 interface TeamStaffClientProps {
   preloadedStaff: Preloaded<typeof api.staff.listAllByClubSlug>;

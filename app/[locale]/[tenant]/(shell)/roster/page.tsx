@@ -14,7 +14,7 @@ export default async function OrgRosterPage({ params }: OrgRosterPageProps) {
   const token = await getAuthToken();
 
   const preloadedPlayers = await preloadQuery(
-    api.players.listBasketballPlayersByLeagueSlug,
+    api.players.listSoccerPlayersByLeagueSlug,
     {
       leagueSlug: tenant,
     },

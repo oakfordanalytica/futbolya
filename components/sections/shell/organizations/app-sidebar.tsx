@@ -76,8 +76,8 @@ export function SidebarAppSidebar() {
         {SINGLE_TENANT_MODE ? (
           <div className="w-full px-2">
             <Image
-              src="/logo_solid.png"
-              alt="NISAA"
+              src="/logo_solid.svg"
+              alt="FutbolYa"
               width={200}
               height={100}
               className="h-12 w-auto"

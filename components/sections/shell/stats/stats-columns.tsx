@@ -21,33 +21,17 @@ export interface SeasonPlayerStatsRow {
   clubNickname?: string;
   gamesPlayed: number;
   starts: number;
-  minutes: number;
-  minutesPerGame: number;
-  points: number;
-  pointsPerGame: number;
-  rebounds: number;
-  reboundsPerGame: number;
-  assists: number;
-  assistsPerGame: number;
-  steals: number;
-  stealsPerGame: number;
-  blocks: number;
-  blocksPerGame: number;
-  turnovers: number;
-  turnoversPerGame: number;
-  personalFouls: number;
-  personalFoulsPerGame: number;
-  plusMinus: number;
-  plusMinusPerGame: number;
-  fieldGoalsMade: number;
-  fieldGoalsAttempted: number;
-  fgPct: number;
-  threePointersMade: number;
-  threePointersAttempted: number;
-  threePct: number;
-  freeThrowsMade: number;
-  freeThrowsAttempted: number;
-  ftPct: number;
+  goals: number;
+  goalsPerGame: number;
+  yellowCards: number;
+  yellowCardsPerGame: number;
+  redCards: number;
+  redCardsPerGame: number;
+  penaltiesAttempted: number;
+  penaltiesScored: number;
+  penaltyConversionPct: number;
+  substitutionsIn: number;
+  substitutionsOut: number;
 }
 
 export interface SeasonTeamStatsRow {
@@ -56,33 +40,27 @@ export interface SeasonTeamStatsRow {
   clubNickname?: string;
   clubLogoUrl?: string;
   gamesPlayed: number;
-  statGamesPlayed: number;
   wins: number;
+  draws: number;
   losses: number;
-  winPct: number;
-  pointsFor: number;
-  pointsAgainst: number;
-  pointsForPerGame: number;
-  pointsAllowedPerGame: number;
-  rebounds: number;
-  reboundsPerGame: number;
-  assists: number;
-  assistsPerGame: number;
-  steals: number;
-  stealsPerGame: number;
-  blocks: number;
-  blocksPerGame: number;
-  turnovers: number;
-  turnoversPerGame: number;
-  fieldGoalsMade: number;
-  fieldGoalsAttempted: number;
-  fgPct: number;
-  threePointersMade: number;
-  threePointersAttempted: number;
-  threePct: number;
-  freeThrowsMade: number;
-  freeThrowsAttempted: number;
-  ftPct: number;
+  points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  cleanSheets: number;
+  corners: number;
+  cornersPerGame: number;
+  freeKicks: number;
+  freeKicksPerGame: number;
+  yellowCards: number;
+  yellowCardsPerGame: number;
+  redCards: number;
+  redCardsPerGame: number;
+  penaltiesAttempted: number;
+  penaltiesScored: number;
+  penaltyConversionPct: number;
+  substitutions: number;
+  substitutionsPerGame: number;
 }
 
 function formatNumber(value: number, digits = 1): string {
@@ -183,112 +161,62 @@ export function createSeasonPlayerStatsColumns(
           </span>
         );
       },
-      filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id));
-      },
+      filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
       accessorKey: "gamesPlayed",
       header: createStatsSortableHeader(t("games.statsTableColumns.gp")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.gamesPlayed} digits={0} />
-      ),
+      cell: ({ row }) => <NumericCell value={row.original.gamesPlayed} digits={0} />,
     },
     {
-      accessorKey: "minutesPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.min")),
-      cell: ({ row }) => <NumericCell value={row.original.minutesPerGame} />,
+      accessorKey: "starts",
+      header: createStatsSortableHeader(t("games.statsTableColumns.starts")),
+      cell: ({ row }) => <NumericCell value={row.original.starts} digits={0} />,
     },
     {
-      accessorKey: "pointsPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.ppg")),
-      cell: ({ row }) => <NumericCell value={row.original.pointsPerGame} />,
+      accessorKey: "goalsPerGame",
+      header: createStatsSortableHeader(t("games.statsTableColumns.goalsPerGame")),
+      cell: ({ row }) => <NumericCell value={row.original.goalsPerGame} />,
     },
     {
-      accessorKey: "reboundsPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.rpg")),
-      cell: ({ row }) => <NumericCell value={row.original.reboundsPerGame} />,
+      accessorKey: "goals",
+      header: createStatsSortableHeader(t("games.statsTableColumns.goals")),
+      cell: ({ row }) => <NumericCell value={row.original.goals} digits={0} />,
     },
     {
-      accessorKey: "assistsPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.apg")),
-      cell: ({ row }) => <NumericCell value={row.original.assistsPerGame} />,
+      accessorKey: "yellowCards",
+      header: createStatsSortableHeader(t("games.statsTableColumns.yellowCards")),
+      cell: ({ row }) => <NumericCell value={row.original.yellowCards} digits={0} />,
     },
     {
-      accessorKey: "stealsPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.spg")),
-      cell: ({ row }) => <NumericCell value={row.original.stealsPerGame} />,
+      accessorKey: "redCards",
+      header: createStatsSortableHeader(t("games.statsTableColumns.redCards")),
+      cell: ({ row }) => <NumericCell value={row.original.redCards} digits={0} />,
     },
     {
-      accessorKey: "blocksPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.bpg")),
-      cell: ({ row }) => <NumericCell value={row.original.blocksPerGame} />,
+      accessorKey: "penaltiesScored",
+      header: createStatsSortableHeader(t("games.statsTableColumns.penalties")),
+      cell: ({ row }) => <NumericCell value={row.original.penaltiesScored} digits={0} />,
     },
     {
-      accessorKey: "fgPct",
-      header: createStatsSortableHeader(t("games.statsTableColumns.fgPct")),
-      cell: ({ row }) => <NumericCell value={row.original.fgPct} suffix="%" />,
+      accessorKey: "penaltiesAttempted",
+      header: createStatsSortableHeader(t("games.statsTableColumns.penaltiesAttempted")),
+      cell: ({ row }) => <NumericCell value={row.original.penaltiesAttempted} digits={0} />,
     },
     {
-      accessorKey: "threePct",
-      header: createStatsSortableHeader(t("games.statsTableColumns.threePct")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.threePct} suffix="%" />
-      ),
+      accessorKey: "penaltyConversionPct",
+      header: createStatsSortableHeader(t("games.statsTableColumns.penaltyPct")),
+      cell: ({ row }) => <NumericCell value={row.original.penaltyConversionPct} suffix="%" />,
     },
     {
-      accessorKey: "ftPct",
-      header: createStatsSortableHeader(t("games.statsTableColumns.ftPct")),
-      cell: ({ row }) => <NumericCell value={row.original.ftPct} suffix="%" />,
+      accessorKey: "substitutionsIn",
+      header: createStatsSortableHeader(t("games.statsTableColumns.subIn")),
+      cell: ({ row }) => <NumericCell value={row.original.substitutionsIn} digits={0} />,
     },
     {
-      accessorKey: "points",
-      header: createStatsSortableHeader(
-        t("games.statsTableColumns.pointsTotal"),
-      ),
-      cell: ({ row }) => <NumericCell value={row.original.points} digits={0} />,
-    },
-    {
-      accessorKey: "fieldGoalsMade",
-      header: createStatsSortableHeader(t("games.statsTableColumns.fgm")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.fieldGoalsMade} digits={0} />
-      ),
-    },
-    {
-      accessorKey: "fieldGoalsAttempted",
-      header: createStatsSortableHeader(t("games.statsTableColumns.fga")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.fieldGoalsAttempted} digits={0} />
-      ),
-    },
-    {
-      accessorKey: "threePointersMade",
-      header: createStatsSortableHeader(t("games.statsTableColumns.threePm")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.threePointersMade} digits={0} />
-      ),
-    },
-    {
-      accessorKey: "threePointersAttempted",
-      header: createStatsSortableHeader(t("games.statsTableColumns.threePa")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.threePointersAttempted} digits={0} />
-      ),
-    },
-    {
-      accessorKey: "freeThrowsMade",
-      header: createStatsSortableHeader(t("games.statsTableColumns.ftm")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.freeThrowsMade} digits={0} />
-      ),
-    },
-    {
-      accessorKey: "freeThrowsAttempted",
-      header: createStatsSortableHeader(t("games.statsTableColumns.fta")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.freeThrowsAttempted} digits={0} />
-      ),
+      accessorKey: "substitutionsOut",
+      header: createStatsSortableHeader(t("games.statsTableColumns.subOut")),
+      cell: ({ row }) => <NumericCell value={row.original.substitutionsOut} digits={0} />,
     },
   ];
 }
@@ -312,16 +240,12 @@ export function createSeasonTeamStatsColumns(
           <span className="font-medium">{row.original.clubName}</span>
         </div>
       ),
-      filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id));
-      },
+      filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
       accessorKey: "gamesPlayed",
       header: createStatsSortableHeader(t("games.statsTableColumns.gp")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.gamesPlayed} digits={0} />
-      ),
+      cell: ({ row }) => <NumericCell value={row.original.gamesPlayed} digits={0} />,
     },
     {
       accessorKey: "wins",
@@ -329,81 +253,79 @@ export function createSeasonTeamStatsColumns(
       cell: ({ row }) => <NumericCell value={row.original.wins} digits={0} />,
     },
     {
+      accessorKey: "draws",
+      header: createStatsSortableHeader(t("games.statsTableColumns.d")),
+      cell: ({ row }) => <NumericCell value={row.original.draws} digits={0} />,
+    },
+    {
       accessorKey: "losses",
       header: createStatsSortableHeader(t("games.statsTableColumns.l")),
       cell: ({ row }) => <NumericCell value={row.original.losses} digits={0} />,
     },
     {
-      accessorKey: "winPct",
-      header: createStatsSortableHeader(t("games.statsTableColumns.winPct")),
-      cell: ({ row }) => <NumericCell value={row.original.winPct} suffix="%" />,
+      accessorKey: "goalsFor",
+      header: createStatsSortableHeader(t("games.statsTableColumns.gf")),
+      cell: ({ row }) => <NumericCell value={row.original.goalsFor} digits={0} />,
     },
     {
-      accessorKey: "pointsForPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.pfpg")),
-      cell: ({ row }) => <NumericCell value={row.original.pointsForPerGame} />,
+      accessorKey: "goalsAgainst",
+      header: createStatsSortableHeader(t("games.statsTableColumns.gc")),
+      cell: ({ row }) => <NumericCell value={row.original.goalsAgainst} digits={0} />,
     },
     {
-      accessorKey: "pointsAllowedPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.papg")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.pointsAllowedPerGame} />
-      ),
+      accessorKey: "goalDifference",
+      header: createStatsSortableHeader(t("games.statsTableColumns.diff")),
+      cell: ({ row }) => <NumericCell value={row.original.goalDifference} digits={0} />,
     },
     {
-      accessorKey: "reboundsPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.reb")),
-      cell: ({ row }) => <NumericCell value={row.original.reboundsPerGame} />,
+      accessorKey: "points",
+      header: createStatsSortableHeader(t("games.statsTableColumns.points")),
+      cell: ({ row }) => <NumericCell value={row.original.points} digits={0} />,
     },
     {
-      accessorKey: "assistsPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.ast")),
-      cell: ({ row }) => <NumericCell value={row.original.assistsPerGame} />,
+      accessorKey: "cleanSheets",
+      header: createStatsSortableHeader(t("games.statsTableColumns.cleanSheets")),
+      cell: ({ row }) => <NumericCell value={row.original.cleanSheets} digits={0} />,
     },
     {
-      accessorKey: "stealsPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.stl")),
-      cell: ({ row }) => <NumericCell value={row.original.stealsPerGame} />,
+      accessorKey: "cornersPerGame",
+      header: createStatsSortableHeader(t("games.statsTableColumns.cornersPerGame")),
+      cell: ({ row }) => <NumericCell value={row.original.cornersPerGame} />,
     },
     {
-      accessorKey: "blocksPerGame",
-      header: createStatsSortableHeader(t("games.statsTableColumns.blk")),
-      cell: ({ row }) => <NumericCell value={row.original.blocksPerGame} />,
+      accessorKey: "freeKicksPerGame",
+      header: createStatsSortableHeader(t("games.statsTableColumns.freeKicksPerGame")),
+      cell: ({ row }) => <NumericCell value={row.original.freeKicksPerGame} />,
     },
     {
-      accessorKey: "fgPct",
-      header: createStatsSortableHeader(t("games.statsTableColumns.fgPct")),
-      cell: ({ row }) => <NumericCell value={row.original.fgPct} suffix="%" />,
+      accessorKey: "yellowCardsPerGame",
+      header: createStatsSortableHeader(t("games.statsTableColumns.yellowCardsPerGame")),
+      cell: ({ row }) => <NumericCell value={row.original.yellowCardsPerGame} />,
     },
     {
-      accessorKey: "threePct",
-      header: createStatsSortableHeader(t("games.statsTableColumns.threePct")),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.threePct} suffix="%" />
-      ),
+      accessorKey: "redCardsPerGame",
+      header: createStatsSortableHeader(t("games.statsTableColumns.redCardsPerGame")),
+      cell: ({ row }) => <NumericCell value={row.original.redCardsPerGame} />,
     },
     {
-      accessorKey: "ftPct",
-      header: createStatsSortableHeader(t("games.statsTableColumns.ftPct")),
-      cell: ({ row }) => <NumericCell value={row.original.ftPct} suffix="%" />,
+      accessorKey: "penaltiesScored",
+      header: createStatsSortableHeader(t("games.statsTableColumns.penalties")),
+      cell: ({ row }) => <NumericCell value={row.original.penaltiesScored} digits={0} />,
     },
     {
-      accessorKey: "pointsFor",
-      header: createStatsSortableHeader(
-        t("games.statsTableColumns.pointsForTotal"),
-      ),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.pointsFor} digits={0} />
-      ),
+      accessorKey: "penaltiesAttempted",
+      header: createStatsSortableHeader(t("games.statsTableColumns.penaltiesAttempted")),
+      cell: ({ row }) => <NumericCell value={row.original.penaltiesAttempted} digits={0} />,
     },
     {
-      accessorKey: "pointsAgainst",
-      header: createStatsSortableHeader(
-        t("games.statsTableColumns.pointsAgainstTotal"),
-      ),
-      cell: ({ row }) => (
-        <NumericCell value={row.original.pointsAgainst} digits={0} />
-      ),
+      accessorKey: "penaltyConversionPct",
+      header: createStatsSortableHeader(t("games.statsTableColumns.penaltyPct")),
+      cell: ({ row }) => <NumericCell value={row.original.penaltyConversionPct} suffix="%" />,
+    },
+    {
+      accessorKey: "substitutionsPerGame",
+      header: createStatsSortableHeader(t("games.statsTableColumns.subsPerGame")),
+      cell: ({ row }) => <NumericCell value={row.original.substitutionsPerGame} />,
     },
   ];
 }

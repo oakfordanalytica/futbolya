@@ -34,6 +34,12 @@ const gender = v.union(
   v.literal("mixed"),
 );
 
+const dominantProfile = v.union(
+  v.literal("left"),
+  v.literal("right"),
+  v.literal("both"),
+);
+
 const gameStatus = v.union(
   v.literal("scheduled"),
   v.literal("awaiting_stats"),
@@ -42,7 +48,7 @@ const gameStatus = v.union(
   v.literal("cancelled"),
 );
 
-const sportType = v.union(v.literal("basketball"), v.literal("soccer"));
+const sportType = v.literal("soccer");
 
 const positionValidator = v.object({
   id: v.string(),
@@ -159,8 +165,11 @@ export default defineSchema({
     // Core identity
     firstName: v.string(),
     lastName: v.string(),
+    secondLastName: v.optional(v.string()),
     photoStorageId: v.optional(v.id("_storage")),
     dateOfBirth: v.optional(v.string()),
+    documentNumber: v.optional(v.string()),
+    gender: v.optional(gender),
 
     // Club relationship
     clubId: v.id("clubs"),
@@ -169,7 +178,10 @@ export default defineSchema({
     // Sport-specific data
     sportType: sportType,
     jerseyNumber: v.optional(v.number()),
+    cometNumber: v.optional(v.string()),
+    fifaId: v.optional(v.string()),
     position: v.optional(v.string()),
+    dominantProfile: v.optional(dominantProfile),
     height: v.optional(v.number()),
     weight: v.optional(v.number()),
     highlights: v.optional(v.array(playerHighlightValidator)),
@@ -274,29 +286,33 @@ export default defineSchema({
     .index("byStatus", ["status"]),
 
   /**
-   * Game Player Stats - Individual player statistics for a game.
+   * Game Team Stats - Team-level match metrics recorded for a game.
+   */
+  gameTeamStats: defineTable({
+    gameId: v.id("games"),
+    clubId: v.id("clubs"),
+    corners: v.optional(v.number()),
+    freeKicks: v.optional(v.number()),
+    substitutions: v.optional(v.number()),
+  })
+    .index("byGame", ["gameId"])
+    .index("byGameAndClub", ["gameId", "clubId"]),
+
+  /**
+   * Game Player Stats - Individual player statistics for a soccer game.
    */
   gamePlayerStats: defineTable({
     gameId: v.id("games"),
     playerId: v.id("players"),
     clubId: v.id("clubs"),
     isStarter: v.boolean(),
-    minutes: v.optional(v.number()),
-    points: v.optional(v.number()),
-    fieldGoalsMade: v.optional(v.number()),
-    fieldGoalsAttempted: v.optional(v.number()),
-    threePointersMade: v.optional(v.number()),
-    threePointersAttempted: v.optional(v.number()),
-    freeThrowsMade: v.optional(v.number()),
-    freeThrowsAttempted: v.optional(v.number()),
-    offensiveRebounds: v.optional(v.number()),
-    defensiveRebounds: v.optional(v.number()),
-    assists: v.optional(v.number()),
-    steals: v.optional(v.number()),
-    blocks: v.optional(v.number()),
-    turnovers: v.optional(v.number()),
-    personalFouls: v.optional(v.number()),
-    plusMinus: v.optional(v.number()),
+    goals: v.optional(v.number()),
+    yellowCards: v.optional(v.number()),
+    redCards: v.optional(v.number()),
+    penaltiesAttempted: v.optional(v.number()),
+    penaltiesScored: v.optional(v.number()),
+    substitutionsIn: v.optional(v.number()),
+    substitutionsOut: v.optional(v.number()),
   })
     .index("byGame", ["gameId"])
     .index("byPlayer", ["playerId"])

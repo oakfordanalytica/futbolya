@@ -9,25 +9,29 @@ import { Link } from "@/components/ui/link";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/navigation/routes";
 import { getCountryLabel } from "@/lib/countries/countries";
+import { buildPlayerFullName } from "@/lib/players/name";
 
 interface PlayerProfileHeaderProps {
   player: {
     firstName: string;
     lastName: string;
+    secondLastName?: string;
     photoUrl?: string;
     dateOfBirth?: string;
-    jerseyNumber?: number;
+    cometNumber?: string;
     height?: number;
     weight?: number;
     country?: string;
+    categoryName?: string;
     clubName: string;
     clubSlug: string;
     clubLogoUrl?: string;
     clubPrimaryColor?: string;
-    pointsPerGame: number;
-    reboundsPerGame: number;
-    assistsPerGame: number;
     gamesPlayed: number;
+    goals: number;
+    yellowCards: number;
+    redCards: number;
+    penaltiesScored: number;
   };
   orgSlug: string;
   positionName?: string;
@@ -103,11 +107,13 @@ function calculateAgeFromBirthdate(date?: string): number | undefined {
   return age >= 0 ? age : undefined;
 }
 
-function formatDecimal(value: number): string {
-  return Number.isFinite(value) ? value.toFixed(1) : "0.0";
-}
-
-function StatsTile({ label, value }: { label: string; value: string }) {
+function StatsTile({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
   return (
     <div className="flex min-h-[58px] flex-col items-center justify-center px-2 py-2 text-center sm:min-h-[62px]">
       <div className="text-[9px] font-semibold uppercase tracking-wide text-white/90 sm:text-[10px]">
@@ -157,13 +163,18 @@ export function PlayerProfileHeader({
   const t = useTranslations("Common");
 
   const firstName = player.firstName.trim().toUpperCase();
-  const lastName = player.lastName.trim().toUpperCase();
-  const primaryColor = player.clubPrimaryColor ?? "#552583";
+  const surname = buildPlayerFullName(
+    player.lastName.trim().toUpperCase(),
+    player.secondLastName?.trim().toUpperCase() ?? "",
+  ).trim();
+  const primaryColor = player.clubPrimaryColor ?? "#1b2a41";
   const hasColoredBg = Boolean(player.clubPrimaryColor);
 
   const metaBits = [
     player.clubName,
-    player.jerseyNumber !== undefined ? `#${player.jerseyNumber}` : undefined,
+    player.cometNumber
+      ? `${t("players.cometNumber")}: ${player.cometNumber}`
+      : undefined,
     positionName,
   ].filter(Boolean);
 
@@ -172,25 +183,26 @@ export function PlayerProfileHeader({
   const height = formatHeightDetailed(player.height);
   const weight = formatWeightDetailed(player.weight);
   const country = getCountryLabel(player.country) ?? "—";
-  const experience = player.gamesPlayed > 0 ? `${player.gamesPlayed} GP` : "—";
+  const category = player.categoryName ?? t("players.notAssigned");
+  const gamesPlayed = player.gamesPlayed > 0 ? `${player.gamesPlayed} PJ` : "—";
 
   const detailItems = [
     { label: t("players.height"), value: height },
     { label: t("players.weight"), value: weight },
     { label: t("playerCard.country"), value: country },
-    { label: "Last Attended", value: "—" },
+    { label: t("players.category"), value: category },
     {
       label: t("playerCard.age"),
-      value: age !== undefined ? `${age} years` : "—",
+      value: age !== undefined ? `${age}` : "—",
     },
-    { label: "Birthdate", value: birthdate },
-    { label: "Draft", value: "—" },
-    { label: "Experience", value: experience },
+    { label: t("players.dateOfBirth"), value: birthdate },
+    { label: t("players.cometNumber"), value: player.cometNumber ?? "—" },
+    { label: t("games.statsTableColumns.gp"), value: gamesPlayed },
   ];
 
   return (
     <section
-      className="relative w-full overflow-hidden text-white"
+      className="relative w-full overflow-hidden rounded-t-[var(--radius-lg)] rounded-b-none text-white"
       style={{ backgroundColor: primaryColor }}
     >
       <div className="relative h-[196px] sm:h-[230px] lg:h-[264px]">
@@ -205,7 +217,7 @@ export function PlayerProfileHeader({
                 alt=""
                 fill
                 sizes="100vw"
-                className="object-contain object-center scale-[2.5] md:scale-[3] translate-x-[8%]"
+                className="object-contain object-center translate-x-[8%] scale-[2.5] md:scale-[3]"
                 style={{ opacity: hasColoredBg ? 0.12 : 0.05 }}
               />
             </div>
@@ -216,7 +228,11 @@ export function PlayerProfileHeader({
           <div className="pointer-events-none absolute bottom-0 left-3 z-20 h-[172px] w-[172px] sm:left-8 sm:h-[182px] sm:w-[182px] lg:left-16 lg:h-[274px] lg:w-[274px]">
             <Image
               src={player.photoUrl}
-              alt={`${player.firstName} ${player.lastName}`}
+              alt={buildPlayerFullName(
+                player.firstName,
+                player.lastName,
+                player.secondLastName,
+              )}
               fill
               sizes="(max-width: 640px) 172px, (max-width: 1024px) 182px, 274px"
               className="object-contain object-bottom"
@@ -225,7 +241,7 @@ export function PlayerProfileHeader({
         ) : (
           <div className="pointer-events-none absolute bottom-1 left-6 z-20 flex size-[4.5rem] items-center justify-center rounded-full border border-white/25 bg-black/15 text-3xl font-black sm:size-24 lg:size-32">
             {firstName.charAt(0)}
-            {lastName.charAt(0)}
+            {surname.charAt(0)}
           </div>
         )}
 
@@ -266,7 +282,7 @@ export function PlayerProfileHeader({
               </p>
               <h1 className="mt-0.5 text-[30px] font-black uppercase leading-[0.92] tracking-tight sm:text-[38px] lg:text-[58px]">
                 <span className="block">{firstName}</span>
-                <span className="block">{lastName}</span>
+                <span className="block">{surname}</span>
               </h1>
             </div>
           </div>
@@ -283,20 +299,20 @@ export function PlayerProfileHeader({
           <div className="flex items-center justify-center divide-x divide-white/35 border-b border-white/40">
             <div className="w-1/3">
               <StatsTile
-                label="PPG"
-                value={formatDecimal(player.pointsPerGame)}
+                label={t("games.statsTableColumns.goals")}
+                value={player.goals}
               />
             </div>
             <div className="w-1/3">
               <StatsTile
-                label="RPG"
-                value={formatDecimal(player.reboundsPerGame)}
+                label={t("games.statsTableColumns.yellowCards")}
+                value={player.yellowCards}
               />
             </div>
             <div className="w-1/3">
               <StatsTile
-                label="APG"
-                value={formatDecimal(player.assistsPerGame)}
+                label={t("games.statsTableColumns.redCards")}
+                value={player.redCards}
               />
             </div>
           </div>
@@ -313,17 +329,10 @@ export function PlayerProfileHeader({
 
           <div className="grid grid-cols-2 divide-x divide-white/35 text-center sm:hidden">
             <div className="border-b border-white/40 px-3 py-3 text-[13px] font-semibold sm:text-sm">
-              {`${height} | ${weight} | ${
-                age !== undefined ? `${age} years` : "—"
-              }`}
+              {`${height} | ${weight} | ${age !== undefined ? age : "—"}`}
             </div>
             <DetailTile
-              label="Draft"
-              value="—"
-              className="border-b border-white/40"
-            />
-            <DetailTile
-              label="Birthdate"
+              label={t("players.dateOfBirth")}
               value={birthdate}
               className="border-b border-white/40"
             />
@@ -332,24 +341,32 @@ export function PlayerProfileHeader({
               value={country}
               className="border-b border-white/40"
             />
-            <DetailTile label="Last Attended" value="—" />
-            <DetailTile label="Experience" value={experience} />
+            <DetailTile
+              label={t("players.cometNumber")}
+              value={player.cometNumber ?? "—"}
+              className="border-b border-white/40"
+            />
+            <DetailTile label={t("players.category")} value={category} />
+            <DetailTile
+              label={t("games.statsTableColumns.gp")}
+              value={gamesPlayed}
+            />
           </div>
         </div>
 
         <div className="hidden lg:grid lg:grid-cols-12 lg:divide-x lg:divide-white/35">
           <div className="col-span-5 grid grid-cols-3 divide-x divide-white/35">
             <StatsTile
-              label="PPG"
-              value={formatDecimal(player.pointsPerGame)}
+              label={t("games.statsTableColumns.goals")}
+              value={player.goals}
             />
             <StatsTile
-              label="RPG"
-              value={formatDecimal(player.reboundsPerGame)}
+              label={t("games.statsTableColumns.yellowCards")}
+              value={player.yellowCards}
             />
             <StatsTile
-              label="APG"
-              value={formatDecimal(player.assistsPerGame)}
+              label={t("games.statsTableColumns.redCards")}
+              value={player.redCards}
             />
           </div>
 

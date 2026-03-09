@@ -70,7 +70,7 @@ export function TeamHeader({ team, orgSlug, routeScope }: TeamHeaderProps) {
   return (
     <section
       className={cn(
-        "relative w-full overflow-hidden",
+        "relative w-full overflow-hidden rounded-t-lg rounded-b-none",
         hasColoredBg && "text-white",
       )}
       style={{

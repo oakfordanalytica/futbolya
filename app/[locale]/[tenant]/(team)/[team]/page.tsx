@@ -1,4 +1,4 @@
-import { TeamDetailClient } from "@/components/sections/shell/teams/basketball/team-detail/team-detail-client";
+import { TeamDetailClient } from "@/components/sections/shell/teams/soccer/team-detail/team-detail-client";
 import { preloadQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { getAuthToken } from "@/lib/auth/auth";

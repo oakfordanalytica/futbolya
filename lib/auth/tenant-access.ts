@@ -47,19 +47,47 @@ export async function getTenantAccess(
   if (isSingleTenantMode()) {
     const authObject = await auth();
     const hasCanonicalTenant = tenant === DEFAULT_TENANT_SLUG;
-    const role = hasCanonicalTenant
-      ? roleFromSessionClaims(authObject.sessionClaims)
-      : null;
-    const hasAccess =
-      Boolean(authObject.userId) &&
-      hasCanonicalTenant &&
-      hasSingleTenantAccessFromSessionClaims(authObject.sessionClaims);
-    const isAdmin =
-      Boolean(authObject.userId) &&
-      hasCanonicalTenant &&
-      isAdminFromSessionClaims(authObject.sessionClaims);
+    if (!authObject.userId || !hasCanonicalTenant) {
+      return { hasAccess: false, isAdmin: false, role: null };
+    }
 
-    return { hasAccess, isAdmin, role };
+    const resolvedToken = token ?? (await getAuthToken());
+    if (resolvedToken) {
+      try {
+        const currentUser = await fetchQuery(
+          api.users.me,
+          {},
+          { token: resolvedToken },
+        );
+
+        if (currentUser?.isSuperAdmin) {
+          return { hasAccess: true, isAdmin: true, role: "superadmin" };
+        }
+
+        const membership = currentUser?.memberships.find(
+          (item) => item.organizationSlug === DEFAULT_TENANT_SLUG,
+        );
+        const role = normalizeMembershipRole(membership?.role);
+        if (role) {
+          return {
+            hasAccess: true,
+            isAdmin: role === "admin" || role === "superadmin",
+            role,
+          };
+        }
+      } catch {
+        // Fall back to Clerk session metadata while the Convex user record catches up.
+      }
+    }
+
+    const role = roleFromSessionClaims(authObject.sessionClaims);
+    return {
+      hasAccess: hasSingleTenantAccessFromSessionClaims(
+        authObject.sessionClaims,
+      ),
+      isAdmin: isAdminFromSessionClaims(authObject.sessionClaims),
+      role,
+    };
   }
 
   const resolvedToken = token ?? (await getAuthToken());

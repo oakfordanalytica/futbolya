@@ -1,4 +1,4 @@
-import { TeamSettingsClient } from "@/components/sections/shell/teams/basketball/team-settings/team-settings-client";
+import { TeamSettingsClient } from "@/components/sections/shell/teams/soccer/team-settings/team-settings-client";
 import { preloadQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { getAuthToken } from "@/lib/auth/auth";
@@ -24,7 +24,7 @@ export default async function TeamSettingsPage({
     { token },
   );
   const preloadedPlayers = await preloadQuery(
-    api.players.listBasketballPlayersByClubSlug,
+    api.players.listSoccerPlayersByClubSlug,
     {
       clubSlug: teamId,
     },

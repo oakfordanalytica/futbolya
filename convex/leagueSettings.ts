@@ -12,7 +12,7 @@ const gender = v.union(
   v.literal("mixed"),
 );
 
-const sportType = v.union(v.literal("basketball"), v.literal("soccer"));
+const sportType = v.literal("soccer");
 
 const ageCategoryValidator = v.object({
   id: v.string(),
@@ -88,7 +88,7 @@ export const getTeamConfig = query({
     if (!settings) {
       // Return default configuration
       return {
-        sportType: "basketball" as const,
+        sportType: "soccer" as const,
         ageCategories: [],
         positions: [],
         enabledGenders: ["male", "female"] as Array<
@@ -265,7 +265,7 @@ export const addAgeCategory = mutation({
       // Create settings with just this category
       await ctx.db.insert("leagueSettings", {
         organizationId: organization._id,
-        sportType: "basketball",
+        sportType: "soccer",
         ageCategories: [args.category],
         positions: [],
         enabledGenders: ["male", "female"],
@@ -411,7 +411,7 @@ export const updateEnabledGenders = mutation({
       // Create settings with enabled genders
       await ctx.db.insert("leagueSettings", {
         organizationId: organization._id,
-        sportType: "basketball",
+        sportType: "soccer",
         ageCategories: [],
         positions: [],
         enabledGenders: args.enabledGenders,
@@ -450,7 +450,7 @@ export const updateHorizontalDivisions = mutation({
       // Create settings with horizontal divisions
       await ctx.db.insert("leagueSettings", {
         organizationId: organization._id,
-        sportType: "basketball",
+        sportType: "soccer",
         ageCategories: [],
         positions: [],
         enabledGenders: ["male", "female"],
@@ -490,7 +490,7 @@ export const addPosition = mutation({
       // Create settings with just this position
       await ctx.db.insert("leagueSettings", {
         organizationId: organization._id,
-        sportType: "basketball",
+        sportType: "soccer",
         ageCategories: [],
         positions: [args.position],
         enabledGenders: ["male", "female"],
@@ -650,7 +650,7 @@ export const addSeason = mutation({
     if (!settings) {
       await ctx.db.insert("leagueSettings", {
         organizationId: organization._id,
-        sportType: "basketball",
+        sportType: "soccer",
         ageCategories: [],
         positions: [],
         enabledGenders: ["male", "female"],

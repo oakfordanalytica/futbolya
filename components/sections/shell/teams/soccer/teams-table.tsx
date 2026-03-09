@@ -7,39 +7,39 @@ import { Preloaded, usePreloadedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { DataTable } from "@/components/table/data-table";
 import {
-  createBasketballTeamColumns,
-  createBasketballTeamFilterConfigs,
-  type BasketballTeamRow,
-} from "@/components/sections/shell/teams/basketball/teams-columns";
-import { CreateTeamDialog } from "@/components/sections/shell/teams/basketball/create-team-dialog";
-import { TeamsGamesWeekStrip } from "@/components/sections/shell/teams/basketball/teams-games-week-strip";
+  createSoccerTeamColumns,
+  createSoccerTeamFilterConfigs,
+  type SoccerTeamRow,
+} from "@/components/sections/shell/teams/soccer/teams-columns";
+import { CreateTeamDialog } from "@/components/sections/shell/teams/soccer/create-team-dialog";
+import { TeamsGamesWeekStrip } from "@/components/sections/shell/teams/soccer/teams-games-week-strip";
 import { ROUTES } from "@/lib/navigation/routes";
 
-interface BasketballTeamsTableProps {
+interface SoccerTeamsTableProps {
   preloadedTeams: Preloaded<typeof api.clubs.listByLeague>;
   preloadedGames: Preloaded<typeof api.games.listByLeagueSlug>;
   orgSlug: string;
 }
 
-export function BasketballTeamsTable({
+export function SoccerTeamsTable({
   preloadedTeams,
   preloadedGames,
   orgSlug,
-}: BasketballTeamsTableProps) {
+}: SoccerTeamsTableProps) {
   const router = useRouter();
   const t = useTranslations("Common");
   const teams = usePreloadedQuery(preloadedTeams);
   const games = usePreloadedQuery(preloadedGames);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const handleRowClick = (team: BasketballTeamRow) => {
+  const handleRowClick = (team: SoccerTeamRow) => {
     if (team.nickname) {
       router.push(ROUTES.org.teams.detail(orgSlug, team.nickname));
     }
   };
 
-  const teamColumns = createBasketballTeamColumns(t);
-  const teamFilterConfigs = createBasketballTeamFilterConfigs(t);
+  const teamColumns = createSoccerTeamColumns(t);
+  const teamFilterConfigs = createSoccerTeamFilterConfigs(t);
 
   return (
     <div className="space-y-4 p-4 md:p-6">

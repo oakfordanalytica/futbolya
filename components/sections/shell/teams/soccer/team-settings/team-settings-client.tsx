@@ -17,7 +17,7 @@ import { TeamStaffClient } from "@/components/sections/shell/teams/team-staff-cl
 interface TeamSettingsClientProps {
   preloadedTeam: Preloaded<typeof api.clubs.getBySlug>;
   preloadedPlayers: Preloaded<
-    typeof api.players.listBasketballPlayersByClubSlug
+    typeof api.players.listSoccerPlayersByClubSlug
   >;
   preloadedCategories: Preloaded<
     typeof api.categories.listByClubSlugWithPlayerCount

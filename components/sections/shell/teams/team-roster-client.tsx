@@ -2,11 +2,11 @@
 
 import { Preloaded, usePreloadedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { TeamPlayersTable } from "@/components/sections/shell/teams/basketball/team-settings/team-players-table";
+import { TeamPlayersTable } from "@/components/sections/shell/teams/soccer/team-settings/team-players-table";
 
 interface TeamRosterClientProps {
   preloadedPlayers: Preloaded<
-    typeof api.players.listBasketballPlayersByClubSlug
+    typeof api.players.listSoccerPlayersByClubSlug
   >;
   clubSlug: string;
   orgSlug: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -21,28 +21,26 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Check } from "lucide-react";
+import { buildPlayerFullName } from "@/lib/players/name";
 
 interface PlayerStatEntry {
   playerId: Id<"players">;
   playerName: string;
-  jerseyNumber?: number;
+  cometNumber?: string;
   isStarter: boolean;
-  minutes: number;
-  points: number;
-  fieldGoalsMade: number;
-  fieldGoalsAttempted: number;
-  threePointersMade: number;
-  threePointersAttempted: number;
-  freeThrowsMade: number;
-  freeThrowsAttempted: number;
-  offensiveRebounds: number;
-  defensiveRebounds: number;
-  assists: number;
-  steals: number;
-  blocks: number;
-  turnovers: number;
-  personalFouls: number;
-  plusMinus: number;
+  goals: number;
+  yellowCards: number;
+  redCards: number;
+  penaltiesAttempted: number;
+  penaltiesScored: number;
+  substitutionsIn: number;
+  substitutionsOut: number;
+}
+
+interface TeamStatEntry {
+  corners: number;
+  freeKicks: number;
+  substitutions: number;
 }
 
 interface StatsEntryFormProps {
@@ -52,26 +50,25 @@ interface StatsEntryFormProps {
   onSuccess?: () => void;
 }
 
-const STAT_FIELDS = [
-  { key: "minutes", label: "MIN", width: "w-14" },
-  { key: "points", label: "PTS", width: "w-14" },
-  { key: "fieldGoalsMade", label: "FGM", width: "w-14" },
-  { key: "fieldGoalsAttempted", label: "FGA", width: "w-14" },
-  { key: "threePointersMade", label: "3PM", width: "w-14" },
-  { key: "threePointersAttempted", label: "3PA", width: "w-14" },
-  { key: "freeThrowsMade", label: "FTM", width: "w-14" },
-  { key: "freeThrowsAttempted", label: "FTA", width: "w-14" },
-  { key: "offensiveRebounds", label: "OREB", width: "w-14" },
-  { key: "defensiveRebounds", label: "DREB", width: "w-14" },
-  { key: "assists", label: "AST", width: "w-14" },
-  { key: "steals", label: "STL", width: "w-14" },
-  { key: "blocks", label: "BLK", width: "w-14" },
-  { key: "turnovers", label: "TO", width: "w-14" },
-  { key: "personalFouls", label: "PF", width: "w-14" },
-  { key: "plusMinus", label: "+/-", width: "w-14" },
+const PLAYER_STAT_FIELDS = [
+  { key: "goals", label: "G", width: "w-14" },
+  { key: "yellowCards", label: "TA", width: "w-14" },
+  { key: "redCards", label: "TR", width: "w-14" },
+  { key: "penaltiesAttempted", label: "PEN A", width: "w-16" },
+  { key: "penaltiesScored", label: "PEN C", width: "w-16" },
+  { key: "substitutionsIn", label: "ENTRA", width: "w-16" },
+  { key: "substitutionsOut", label: "SALE", width: "w-16" },
 ] as const;
 
-type StatKey = (typeof STAT_FIELDS)[number]["key"];
+type PlayerStatKey = (typeof PLAYER_STAT_FIELDS)[number]["key"];
+
+const TEAM_STAT_FIELDS = [
+  { key: "corners", labelKey: "games.gameStats.corners" },
+  { key: "freeKicks", labelKey: "games.gameStats.freeKicks" },
+  { key: "substitutions", labelKey: "games.gameStats.substitutions" },
+] as const;
+
+type TeamStatKey = (typeof TEAM_STAT_FIELDS)[number]["key"];
 
 export function StatsEntryForm({
   gameId,
@@ -81,59 +78,63 @@ export function StatsEntryForm({
 }: StatsEntryFormProps) {
   const t = useTranslations("Common");
 
-  const players = useQuery(api.players.listBasketballPlayersByClubSlug, {
+  const players = useQuery(api.players.listSoccerPlayersByClubSlug, {
     clubSlug,
   });
 
   const submitStats = useMutation(api.games.submitTeamStats);
 
-  const [teamScore, setTeamScore] = useState<number>(0);
+  const [teamScore, setTeamScore] = useState(0);
+  const [teamStats, setTeamStats] = useState<TeamStatEntry>({
+    corners: 0,
+    freeKicks: 0,
+    substitutions: 0,
+  });
   const [playerStats, setPlayerStats] = useState<PlayerStatEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Initialize player stats when players load
-  if (players && playerStats.length === 0 && players.length > 0) {
-    const initialStats: PlayerStatEntry[] = players.map((player, index) => ({
-      playerId: player._id as Id<"players">,
-      playerName: `${player.firstName} ${player.lastName}`,
-      jerseyNumber: player.jerseyNumber,
-      isStarter: index < 5,
-      minutes: 0,
-      points: 0,
-      fieldGoalsMade: 0,
-      fieldGoalsAttempted: 0,
-      threePointersMade: 0,
-      threePointersAttempted: 0,
-      freeThrowsMade: 0,
-      freeThrowsAttempted: 0,
-      offensiveRebounds: 0,
-      defensiveRebounds: 0,
-      assists: 0,
-      steals: 0,
-      blocks: 0,
-      turnovers: 0,
-      personalFouls: 0,
-      plusMinus: 0,
-    }));
-    setPlayerStats(initialStats);
-  }
+  useEffect(() => {
+    if (!players || players.length === 0 || playerStats.length > 0) {
+      return;
+    }
+
+    setPlayerStats(
+      players.map((player, index) => ({
+        playerId: player._id as Id<"players">,
+        playerName: buildPlayerFullName(
+          player.firstName,
+          player.lastName,
+          player.secondLastName,
+        ),
+        cometNumber: player.cometNumber,
+        isStarter: index < 11,
+        goals: 0,
+        yellowCards: 0,
+        redCards: 0,
+        penaltiesAttempted: 0,
+        penaltiesScored: 0,
+        substitutionsIn: 0,
+        substitutionsOut: 0,
+      })),
+    );
+  }, [playerStats.length, players]);
 
   const updatePlayerStat = (
     playerId: Id<"players">,
-    field: StatKey | "isStarter",
-    value: number | boolean
+    field: PlayerStatKey | "isStarter",
+    value: number | boolean,
   ) => {
     setPlayerStats((prev) =>
       prev.map((stat) =>
-        stat.playerId === playerId ? { ...stat, [field]: value } : stat
-      )
+        stat.playerId === playerId ? { ...stat, [field]: value } : stat,
+      ),
     );
   };
 
-  const calculateTotalPoints = () => {
-    return playerStats.reduce((sum, stat) => sum + (stat.points || 0), 0);
+  const updateTeamStat = (field: TeamStatKey, value: number) => {
+    setTeamStats((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
@@ -141,39 +142,34 @@ export function StatsEntryForm({
     setIsSubmitting(true);
 
     try {
-      // Use calculated total if teamScore is 0
-      const finalScore = teamScore || calculateTotalPoints();
-
       await submitStats({
         gameId,
         clubId,
-        teamScore: finalScore,
+        teamScore,
+        teamStats: {
+          corners: teamStats.corners || undefined,
+          freeKicks: teamStats.freeKicks || undefined,
+          substitutions: teamStats.substitutions || undefined,
+        },
         playerStats: playerStats.map((stat) => ({
           playerId: stat.playerId,
           isStarter: stat.isStarter,
-          minutes: stat.minutes || undefined,
-          points: stat.points || undefined,
-          fieldGoalsMade: stat.fieldGoalsMade || undefined,
-          fieldGoalsAttempted: stat.fieldGoalsAttempted || undefined,
-          threePointersMade: stat.threePointersMade || undefined,
-          threePointersAttempted: stat.threePointersAttempted || undefined,
-          freeThrowsMade: stat.freeThrowsMade || undefined,
-          freeThrowsAttempted: stat.freeThrowsAttempted || undefined,
-          offensiveRebounds: stat.offensiveRebounds || undefined,
-          defensiveRebounds: stat.defensiveRebounds || undefined,
-          assists: stat.assists || undefined,
-          steals: stat.steals || undefined,
-          blocks: stat.blocks || undefined,
-          turnovers: stat.turnovers || undefined,
-          personalFouls: stat.personalFouls || undefined,
-          plusMinus: stat.plusMinus || undefined,
+          goals: stat.goals || undefined,
+          yellowCards: stat.yellowCards || undefined,
+          redCards: stat.redCards || undefined,
+          penaltiesAttempted: stat.penaltiesAttempted || undefined,
+          penaltiesScored: stat.penaltiesScored || undefined,
+          substitutionsIn: stat.substitutionsIn || undefined,
+          substitutionsOut: stat.substitutionsOut || undefined,
         })),
       });
 
       setSuccess(true);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("games.statsEntry.submitFailed"));
+      setError(
+        err instanceof Error ? err.message : t("games.statsEntry.submitFailed"),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -207,49 +203,69 @@ export function StatsEntryForm({
     );
   }
 
-  const starters = playerStats.filter((p) => p.isStarter);
-  const bench = playerStats.filter((p) => !p.isStarter);
+  const starters = playerStats.filter((player) => player.isStarter);
+  const bench = playerStats.filter((player) => !player.isStarter);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="space-y-3">
         <div>
           <h3 className="text-lg font-semibold">{t("games.statsEntry.title")}</h3>
           <p className="text-sm text-muted-foreground">
             {t("games.statsEntry.description")}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <FieldLabel>{t("games.statsEntry.teamScore")}</FieldLabel>
-          <Input
-            type="number"
-            min={0}
-            value={teamScore || calculateTotalPoints()}
-            onChange={(e) => setTeamScore(parseInt(e.target.value) || 0)}
-            className="w-20"
-          />
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="space-y-2 rounded-md border bg-card p-3">
+            <FieldLabel>{t("games.statsEntry.teamScore")}</FieldLabel>
+            <Input
+              type="number"
+              min={0}
+              value={teamScore}
+              onChange={(event) => setTeamScore(parseInt(event.target.value, 10) || 0)}
+            />
+          </div>
+
+          {TEAM_STAT_FIELDS.map((field) => (
+            <div key={field.key} className="space-y-2 rounded-md border bg-card p-3">
+              <FieldLabel>{t(field.labelKey)}</FieldLabel>
+              <Input
+                type="number"
+                min={0}
+                value={teamStats[field.key]}
+                onChange={(event) =>
+                  updateTeamStat(
+                    field.key,
+                    parseInt(event.target.value, 10) || 0,
+                  )
+                }
+              />
+            </div>
+          ))}
         </div>
       </div>
 
-      {error && (
+      {error ? (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
+      ) : null}
 
-      <ScrollArea className="w-full">
+      <ScrollArea className="w-full rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="sticky left-0 bg-muted/50 z-10 min-w-[160px]">
+              <TableHead className="sticky left-0 z-10 min-w-[180px] bg-muted/50">
                 {t("games.boxScoreLabels.starters")}
               </TableHead>
-              <TableHead className="text-center w-12">
-                <span className="text-xs">5</span>
-              </TableHead>
-              {STAT_FIELDS.map((field) => (
-                <TableHead key={field.key} className={`text-center ${field.width}`}>
+              <TableHead className="w-12 text-center">XI</TableHead>
+              {PLAYER_STAT_FIELDS.map((field) => (
+                <TableHead
+                  key={field.key}
+                  className={`text-center ${field.width}`}
+                >
                   {field.label}
                 </TableHead>
               ))}
@@ -260,29 +276,41 @@ export function StatsEntryForm({
               <PlayerStatRow
                 key={stat.playerId}
                 stat={stat}
-                onUpdate={(field, value) => updatePlayerStat(stat.playerId, field, value)}
+                onUpdate={(field, value) =>
+                  updatePlayerStat(stat.playerId, field, value)
+                }
               />
             ))}
 
-            <TableRow className="bg-muted/30">
-              <TableCell className="sticky left-0 bg-muted/30 z-10 font-semibold text-xs uppercase text-muted-foreground">
-                {t("games.boxScoreLabels.bench")}
-              </TableCell>
-              <TableCell />
-              {STAT_FIELDS.map((field) => (
-                <TableCell key={field.key} className="text-center text-xs text-muted-foreground">
-                  {field.label}
-                </TableCell>
-              ))}
-            </TableRow>
-
-            {bench.map((stat) => (
-              <PlayerStatRow
-                key={stat.playerId}
-                stat={stat}
-                onUpdate={(field, value) => updatePlayerStat(stat.playerId, field, value)}
-              />
-            ))}
+            {bench.length > 0 ? (
+              <>
+                <TableRow className="bg-muted/30">
+                  <TableCell className="sticky left-0 z-10 bg-muted/30 text-xs font-semibold uppercase text-muted-foreground">
+                    {t("games.boxScoreLabels.bench")}
+                  </TableCell>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    XI
+                  </TableCell>
+                  {PLAYER_STAT_FIELDS.map((field) => (
+                    <TableCell
+                      key={field.key}
+                      className="text-center text-xs text-muted-foreground"
+                    >
+                      {field.label}
+                    </TableCell>
+                  ))}
+                </TableRow>
+                {bench.map((stat) => (
+                  <PlayerStatRow
+                    key={stat.playerId}
+                    stat={stat}
+                    onUpdate={(field, value) =>
+                      updatePlayerStat(stat.playerId, field, value)
+                    }
+                  />
+                ))}
+              </>
+            ) : null}
           </TableBody>
         </Table>
         <ScrollBar orientation="horizontal" />
@@ -290,7 +318,9 @@ export function StatsEntryForm({
 
       <div className="flex justify-end">
         <Button onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? t("games.statsEntry.submitting") : t("games.statsEntry.submitStats")}
+          {isSubmitting
+            ? t("games.statsEntry.submitting")
+            : t("games.statsEntry.submitStats")}
         </Button>
       </div>
     </div>
@@ -299,34 +329,37 @@ export function StatsEntryForm({
 
 interface PlayerStatRowProps {
   stat: PlayerStatEntry;
-  onUpdate: (field: StatKey | "isStarter", value: number | boolean) => void;
+  onUpdate: (field: PlayerStatKey | "isStarter", value: number | boolean) => void;
 }
 
 function PlayerStatRow({ stat, onUpdate }: PlayerStatRowProps) {
   return (
     <TableRow>
-      <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10">
+      <TableCell className="sticky left-0 z-10 bg-background font-medium whitespace-nowrap">
         <div className="flex items-center gap-2">
-          <span className="truncate max-w-[120px]">{stat.playerName}</span>
-          {stat.jerseyNumber !== undefined && (
-            <span className="text-muted-foreground text-xs">#{stat.jerseyNumber}</span>
-          )}
+          <span className="truncate max-w-[140px]">{stat.playerName}</span>
+          {stat.cometNumber ? (
+            <span className="text-xs text-muted-foreground">{stat.cometNumber}</span>
+          ) : null}
         </div>
       </TableCell>
       <TableCell className="text-center">
         <Checkbox
           checked={stat.isStarter}
-          onCheckedChange={(checked) => onUpdate("isStarter", checked === true)}
+          onCheckedChange={(checked) => onUpdate("isStarter", !!checked)}
+          className="mx-auto"
         />
       </TableCell>
-      {STAT_FIELDS.map((field) => (
-        <TableCell key={field.key} className="p-1">
+      {PLAYER_STAT_FIELDS.map((field) => (
+        <TableCell key={field.key} className="p-1.5">
           <Input
             type="number"
-            min={field.key === "plusMinus" ? undefined : 0}
-            value={stat[field.key] || ""}
-            onChange={(e) => onUpdate(field.key, parseInt(e.target.value) || 0)}
-            className="h-8 w-full text-center text-sm p-1"
+            min={0}
+            value={stat[field.key]}
+            onChange={(event) =>
+              onUpdate(field.key, parseInt(event.target.value, 10) || 0)
+            }
+            className="h-8 text-center tabular-nums"
           />
         </TableCell>
       ))}

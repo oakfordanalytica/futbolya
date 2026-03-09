@@ -1,23 +1,4 @@
 {
-  "basketball": {
-    "terminology": {
-      "team": "Equipo",
-      "teams": "Equipos",
-      "match": "Juego",
-      "matches": "Juegos",
-      "score": "Puntuación",
-      "division": "División",
-      "divisions": "Divisiones",
-      "club": "Club",
-      "clubs": "Clubes",
-      "tournament": "Torneo",
-      "tournaments": "Torneos",
-      "player": "Jugador",
-      "players": "Jugadores",
-      "group": "Categoría",
-      "groups": "Categorías"
-    }
-  },
   "soccer": {
     "terminology": {
       "team": "Equipo",

@@ -6,7 +6,7 @@ import {
 import type { FilterConfig } from "@/lib/table/types";
 import { Avatar } from "@/components/ui/avatar";
 
-export interface BasketballTeamRow {
+export interface SoccerTeamRow {
   _id: string;
   name: string;
   nickname: string;
@@ -19,18 +19,18 @@ export interface BasketballTeamRow {
 
 type Translator = (key: string) => string;
 
-const STATUS_STYLES: Record<BasketballTeamRow["status"], string> = {
+const STATUS_STYLES: Record<SoccerTeamRow["status"], string> = {
   affiliated:
     "text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950",
   invited: "text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
   suspended: "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950",
 };
 
-export function createBasketballTeamColumns(
+export function createSoccerTeamColumns(
   t: Translator,
-): ColumnDef<BasketballTeamRow>[] {
+): ColumnDef<SoccerTeamRow>[] {
   return [
-    createSearchColumn<BasketballTeamRow>(["name", "nickname"]),
+    createSearchColumn<SoccerTeamRow>(["name", "nickname"]),
 
     {
       accessorKey: "name",
@@ -99,7 +99,7 @@ export function createBasketballTeamColumns(
   ];
 }
 
-export function createBasketballTeamFilterConfigs(
+export function createSoccerTeamFilterConfigs(
   t: Translator,
 ): FilterConfig[] {
   return [

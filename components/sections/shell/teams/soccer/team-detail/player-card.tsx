@@ -8,15 +8,17 @@ import {
   formatHeight,
   formatWeight,
   calculateAge,
-} from "@/lib/sports/basketball/types";
+} from "@/lib/sports/soccer/player-utils";
+import { buildPlayerFullName, buildPlayerInitials } from "@/lib/players/name";
 
 interface PlayerCardProps {
   player: {
     firstName: string;
     lastName: string;
+    secondLastName?: string;
     photoUrl?: string;
     dateOfBirth?: string;
-    jerseyNumber?: number;
+    cometNumber?: string;
     position?: string;
     height?: number;
     weight?: number;
@@ -34,7 +36,15 @@ export function PlayerCard({
 }: PlayerCardProps) {
   const t = useTranslations("Common");
 
-  const fullName = `${player.firstName} ${player.lastName}`;
+  const fullName = buildPlayerFullName(
+    player.firstName,
+    player.lastName,
+    player.secondLastName,
+  );
+  const surnames = buildPlayerFullName(
+    player.lastName,
+    player.secondLastName ?? "",
+  );
   const age = player.dateOfBirth ? calculateAge(player.dateOfBirth) : undefined;
 
   const props = [
@@ -69,34 +79,35 @@ export function PlayerCard({
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
+      {player.cometNumber && (
+        <span className="absolute top-3 right-3 z-20 text-[0.72rem] font-semibold tracking-wide text-muted-foreground/80 tabular-nums">
+          {player.cometNumber}
+        </span>
+      )}
+
       {player.photoUrl && (
         <Image
           src={player.photoUrl}
           alt={fullName}
           width={290}
           height={0}
-          className="absolute bottom-0"
+          className="absolute bottom-0 z-10"
           style={{ left: "40%" }}
         />
       )}
 
-      <div className="grid grid-cols-2">
+      <div className="relative z-10 grid grid-cols-2">
         <div className="p-4 flex flex-col">
           <div className="mb-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground font-medium">
                 {player.firstName}
               </p>
-              <h3 className="font-bold leading-tight">{player.lastName}</h3>
-              {positionLabel && (
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-0.5">
-                  {positionLabel}
-                </p>
-              )}
+              <h3 className="font-bold leading-tight">{surnames}</h3>
             </div>
-            {player.jerseyNumber !== undefined && (
+            {positionLabel && (
               <span className="shrink-0 text-[2.1rem] leading-[2.1rem] font-black text-foreground/25 tabular-nums select-none">
-                {player.jerseyNumber}
+                {positionLabel}
               </span>
             )}
           </div>
@@ -131,7 +142,11 @@ export function PlayerCard({
           {!player.photoUrl && (
             <div className="h-24 w-full flex items-center justify-center">
               <span className="text-4xl font-bold text-muted-foreground/30">
-                {`${player.firstName.charAt(0)}${player.lastName.charAt(0)}`}
+                {buildPlayerInitials(
+                  player.firstName,
+                  player.lastName,
+                  player.secondLastName,
+                )}
               </span>
             </div>
           )}

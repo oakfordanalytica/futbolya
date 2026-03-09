@@ -5,7 +5,6 @@ import {
 import { CoachTeamResolver } from "@/components/sections/shell/organizations/coach-team-resolver";
 import { SidebarLayout } from "@/components/layouts/sidebar-layout";
 import { OrgMismatchError } from "@/components/sections/shell/organizations/org-mismatch-error";
-import { SportProvider } from "@/components/providers/sport-provider";
 import { getTenantAccess } from "@/lib/auth/tenant-access";
 import { getPrimaryTeamSlug } from "@/lib/auth/team-access";
 import { TEAM_ROUTES } from "@/lib/navigation/routes";
@@ -37,14 +36,12 @@ export default async function OrgLayout({ children, params }: LayoutProps) {
   }
 
   return (
-    <SportProvider sportType="basketball">
-      <SidebarLayout
-        fullWidth
-        navbar={<NavbarAppSidebar />}
-        sidebar={<SidebarAppSidebar />}
-      >
-        <main className="flex-1">{children}</main>
-      </SidebarLayout>
-    </SportProvider>
+    <SidebarLayout
+      fullWidth
+      navbar={<NavbarAppSidebar />}
+      sidebar={<SidebarAppSidebar />}
+    >
+      <main className="flex-1">{children}</main>
+    </SidebarLayout>
   );
 }

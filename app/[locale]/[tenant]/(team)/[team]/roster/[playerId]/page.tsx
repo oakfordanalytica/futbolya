@@ -20,7 +20,7 @@ export default async function TeamRosterPlayerDetailPage({
   const token = await getAuthToken();
 
   const preloadedPlayer = await preloadQuery(
-    api.players.getBasketballPlayerDetailByClubSlug,
+    api.players.getSoccerPlayerDetailByClubSlug,
     {
       clubSlug: team,
       playerId: playerId as Id<"players">,

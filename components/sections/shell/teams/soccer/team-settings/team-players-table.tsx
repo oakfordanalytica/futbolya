@@ -34,15 +34,21 @@ import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { PlayerFormDialog } from "./player-form-dialog";
 import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
 import { getCountryLabel } from "@/lib/countries/countries";
+import { buildPlayerFullName, buildPlayerInitials } from "@/lib/players/name";
 
 interface PlayerRow {
   _id: string;
   firstName: string;
   lastName: string;
+  secondLastName?: string | null;
   photoUrl?: string | null;
   dateOfBirth?: string | null;
-  jerseyNumber?: number | null;
+  documentNumber?: string | null;
+  gender?: "male" | "female" | "mixed" | null;
+  cometNumber?: string | null;
+  fifaId?: string | null;
   position?: string | null;
+  dominantProfile?: "left" | "right" | "both" | null;
   status: "active" | "inactive";
   height?: number | null;
   weight?: number | null;
@@ -114,8 +120,11 @@ export function TeamPlayersTable({
     createSearchColumn<PlayerRow>([
       "firstName",
       "lastName",
+      "secondLastName",
       "position",
       "country",
+      "documentNumber",
+      "cometNumber",
       "clubName",
       "clubNickname",
     ]),
@@ -124,9 +133,16 @@ export function TeamPlayersTable({
       accessorKey: "firstName",
       header: createSortableHeader(t("players.name")),
       cell: ({ row }) => {
-        const fullName = `${row.original.firstName} ${row.original.lastName}`;
-        const initials =
-          `${row.original.firstName.charAt(0)}${row.original.lastName.charAt(0)}`.toUpperCase();
+        const fullName = buildPlayerFullName(
+          row.original.firstName,
+          row.original.lastName,
+          row.original.secondLastName,
+        );
+        const initials = buildPlayerInitials(
+          row.original.firstName,
+          row.original.lastName,
+          row.original.secondLastName,
+        );
         const photoUrl = row.original.photoUrl;
 
         return (
@@ -161,11 +177,11 @@ export function TeamPlayersTable({
       : []),
 
     {
-      accessorKey: "jerseyNumber",
-      header: createSortableHeader("#"),
+      accessorKey: "cometNumber",
+      header: createSortableHeader(t("players.cometNumber")),
       cell: ({ row }) => (
         <span className="text-sm font-medium">
-          {row.original.jerseyNumber ?? "—"}
+          {row.original.cometNumber ?? "—"}
         </span>
       ),
     },
@@ -325,7 +341,11 @@ export function TeamPlayersTable({
             <AlertDialogDescription>
               {t("players.deleteDescription", {
                 name: playerToDelete
-                  ? `${playerToDelete.firstName} ${playerToDelete.lastName}`
+                  ? buildPlayerFullName(
+                      playerToDelete.firstName,
+                      playerToDelete.lastName,
+                      playerToDelete.secondLastName,
+                    )
                   : "",
               })}
             </AlertDialogDescription>

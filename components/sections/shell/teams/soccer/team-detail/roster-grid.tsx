@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useQuery } from "convex/react";
-import { useOrganization } from "@clerk/nextjs";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/convex/_generated/api";
 import { PlayerCard, PlayerCardSkeleton } from "./player-card";
@@ -14,7 +13,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Dribbble } from "lucide-react";
+import { Goal } from "lucide-react";
 import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
 import type { TeamRouteScope } from "./types";
 
@@ -27,16 +26,14 @@ interface RosterGridProps {
 export function RosterGrid({ clubSlug, orgSlug, routeScope }: RosterGridProps) {
   const router = useRouter();
   const t = useTranslations("Common");
-  const { organization } = useOrganization();
 
-  const data = useQuery(api.players.listBasketballPlayersByClubSlug, {
+  const data = useQuery(api.players.listSoccerPlayersByClubSlug, {
     clubSlug,
   });
 
-  const teamConfig = useQuery(
-    api.leagueSettings.getTeamConfig,
-    organization?.slug ? { leagueSlug: organization.slug } : "skip",
-  );
+  const teamConfig = useQuery(api.leagueSettings.getTeamConfig, {
+    leagueSlug: orgSlug,
+  });
 
   const positionMap = useMemo(() => {
     const map = new Map<string, { name: string; abbreviation: string }>();
@@ -58,7 +55,7 @@ export function RosterGrid({ clubSlug, orgSlug, routeScope }: RosterGridProps) {
         <EmptyHeader>
           <EmptyMedia variant="default">
             <div className="flex size-20 items-center justify-center rounded-full bg-orange-500/10 ring-8 ring-orange-500/5">
-              <Dribbble className="size-10 text-orange-500" />
+              <Goal className="size-10 text-orange-500" />
             </div>
           </EmptyMedia>
           <EmptyTitle>{t("players.emptyTitle")}</EmptyTitle>

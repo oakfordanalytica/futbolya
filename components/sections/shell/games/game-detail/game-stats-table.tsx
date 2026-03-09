@@ -15,11 +15,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  calculateTeamTotals,
   emptyTeamTotals,
-  formatMadeAttempted,
   type TeamGameTotals,
-} from "@/lib/sports/basketball/game-stats";
+} from "@/lib/sports/soccer/game-stats";
 
 interface Team {
   name: string;
@@ -40,7 +38,6 @@ interface StatRow {
   label: string;
   home: string | number;
   away: string | number;
-  isSubRow?: boolean;
 }
 
 function TeamLogo({ team, size = 32 }: { team: Team; size?: number }) {
@@ -56,212 +53,71 @@ function TeamLogo({ team, size = 32 }: { team: Team; size?: number }) {
     );
   }
 
-  const bgColor = "#6b7280";
-  const initial = team.name.charAt(0).toUpperCase();
-
   return (
     <div
-      className="rounded-full flex items-center justify-center text-white font-bold"
+      className="flex items-center justify-center rounded-full text-white font-bold"
       style={{
-        backgroundColor: bgColor,
+        backgroundColor: "#6b7280",
         width: size,
         height: size,
         fontSize: size * 0.5,
       }}
     >
-      {initial}
+      {team.name.charAt(0).toUpperCase()}
     </div>
   );
 }
 
-function StatsSection({
-  title,
-  stats,
-  homeTeam,
-  awayTeam,
-}: {
-  title: string;
-  stats: StatRow[];
-  homeTeam: Team;
-  awayTeam: Team;
-}) {
-  return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead className="w-1/2 font-semibold uppercase text-xs tracking-wide">
-              {title}
-            </TableHead>
-            <TableHead className="w-1/4 text-center">
-              <div className="flex justify-center">
-                <TeamLogo team={homeTeam} size={28} />
-              </div>
-            </TableHead>
-            <TableHead className="w-1/4 text-center">
-              <div className="flex justify-center">
-                <TeamLogo team={awayTeam} size={28} />
-              </div>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {stats.map((stat, index) => (
-            <TableRow key={index}>
-              <TableCell
-                className={`font-medium ${stat.isSubRow ? "pl-8 text-muted-foreground" : ""}`}
-              >
-                {stat.label}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {stat.home}
-              </TableCell>
-              <TableCell className="text-center tabular-nums">
-                {stat.away}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
+function formatPenaltySummary(scored: number, attempted: number) {
+  return attempted > 0 ? `${scored}/${attempted}` : "—";
 }
 
-function buildShootingStats(
+function buildStatsRows(
   homeTotals: TeamGameTotals,
   awayTotals: TeamGameTotals,
   t: (key: string) => string,
 ): StatRow[] {
   return [
     {
-      label: t("games.gameStats.points"),
-      home: homeTotals.points,
-      away: awayTotals.points,
+      label: t("games.gameStats.goals"),
+      home: homeTotals.goals,
+      away: awayTotals.goals,
     },
     {
-      label: t("games.gameStats.fieldGoals"),
-      home: formatMadeAttempted(
-        homeTotals.fieldGoalsMade,
-        homeTotals.fieldGoalsAttempted,
-      ),
-      away: formatMadeAttempted(
-        awayTotals.fieldGoalsMade,
-        awayTotals.fieldGoalsAttempted,
-      ),
+      label: t("games.gameStats.corners"),
+      home: homeTotals.corners,
+      away: awayTotals.corners,
     },
     {
-      label: t("games.gameStats.fieldGoalPct"),
-      home: homeTotals.fieldGoalPct,
-      away: awayTotals.fieldGoalPct,
-      isSubRow: true,
+      label: t("games.gameStats.freeKicks"),
+      home: homeTotals.freeKicks,
+      away: awayTotals.freeKicks,
     },
     {
-      label: t("games.gameStats.threePointers"),
-      home: formatMadeAttempted(
-        homeTotals.threePointersMade,
-        homeTotals.threePointersAttempted,
-      ),
-      away: formatMadeAttempted(
-        awayTotals.threePointersMade,
-        awayTotals.threePointersAttempted,
-      ),
+      label: t("games.gameStats.yellowCards"),
+      home: homeTotals.yellowCards,
+      away: awayTotals.yellowCards,
     },
     {
-      label: t("games.gameStats.threePointPct"),
-      home: homeTotals.threePointPct,
-      away: awayTotals.threePointPct,
-      isSubRow: true,
+      label: t("games.gameStats.redCards"),
+      home: homeTotals.redCards,
+      away: awayTotals.redCards,
     },
     {
-      label: t("games.gameStats.freeThrows"),
-      home: formatMadeAttempted(
-        homeTotals.freeThrowsMade,
-        homeTotals.freeThrowsAttempted,
+      label: t("games.gameStats.penaltiesScored"),
+      home: formatPenaltySummary(
+        homeTotals.penaltiesScored,
+        homeTotals.penaltiesAttempted,
       ),
-      away: formatMadeAttempted(
-        awayTotals.freeThrowsMade,
-        awayTotals.freeThrowsAttempted,
+      away: formatPenaltySummary(
+        awayTotals.penaltiesScored,
+        awayTotals.penaltiesAttempted,
       ),
     },
     {
-      label: t("games.gameStats.freeThrowPct"),
-      home: homeTotals.freeThrowPct,
-      away: awayTotals.freeThrowPct,
-      isSubRow: true,
-    },
-  ];
-}
-
-function buildReboundingStats(
-  homeTotals: TeamGameTotals,
-  awayTotals: TeamGameTotals,
-  t: (key: string) => string,
-): StatRow[] {
-  return [
-    {
-      label: t("games.gameStats.totalRebounds"),
-      home: homeTotals.rebounds,
-      away: awayTotals.rebounds,
-    },
-    {
-      label: t("games.gameStats.offensiveRebounds"),
-      home: homeTotals.offensiveRebounds,
-      away: awayTotals.offensiveRebounds,
-      isSubRow: true,
-    },
-    {
-      label: t("games.gameStats.defensiveRebounds"),
-      home: homeTotals.defensiveRebounds,
-      away: awayTotals.defensiveRebounds,
-      isSubRow: true,
-    },
-  ];
-}
-
-function buildPlaymakingStats(
-  homeTotals: TeamGameTotals,
-  awayTotals: TeamGameTotals,
-  t: (key: string) => string,
-): StatRow[] {
-  return [
-    {
-      label: t("games.gameStats.assists"),
-      home: homeTotals.assists,
-      away: awayTotals.assists,
-    },
-    {
-      label: t("games.gameStats.turnovers"),
-      home: homeTotals.turnovers,
-      away: awayTotals.turnovers,
-    },
-    {
-      label: t("games.gameStats.assistTurnoverRatio"),
-      home: homeTotals.assistToTurnoverRatio,
-      away: awayTotals.assistToTurnoverRatio,
-    },
-  ];
-}
-
-function buildDefenseStats(
-  homeTotals: TeamGameTotals,
-  awayTotals: TeamGameTotals,
-  t: (key: string) => string,
-): StatRow[] {
-  return [
-    {
-      label: t("games.gameStats.steals"),
-      home: homeTotals.steals,
-      away: awayTotals.steals,
-    },
-    {
-      label: t("games.gameStats.blocks"),
-      home: homeTotals.blocks,
-      away: awayTotals.blocks,
-    },
-    {
-      label: t("games.gameStats.personalFouls"),
-      home: homeTotals.personalFouls,
-      away: awayTotals.personalFouls,
+      label: t("games.gameStats.substitutions"),
+      home: homeTotals.substitutions,
+      away: awayTotals.substitutions,
     },
   ];
 }
@@ -283,63 +139,63 @@ export function GameStatsTable({ game }: GameStatsTableProps) {
     logoUrl: game.awayTeamLogo,
   };
 
-  // Calculate totals from player stats
-  const homeTotals = gameStats?.homeStats?.length
-    ? calculateTeamTotals(gameStats.homeStats)
-    : emptyTeamTotals;
-
-  const awayTotals = gameStats?.awayStats?.length
-    ? calculateTeamTotals(gameStats.awayStats)
-    : emptyTeamTotals;
+  const homeTotals = gameStats?.homeTeamStats ?? emptyTeamTotals;
+  const awayTotals = gameStats?.awayTeamStats ?? emptyTeamTotals;
 
   const hasStats =
     (gameStats?.homeStats?.length ?? 0) > 0 ||
-    (gameStats?.awayStats?.length ?? 0) > 0;
+    (gameStats?.awayStats?.length ?? 0) > 0 ||
+    Object.values(homeTotals).some((value) => value > 0) ||
+    Object.values(awayTotals).some((value) => value > 0);
 
-  const shootingStats = buildShootingStats(homeTotals, awayTotals, t);
-  const reboundingStats = buildReboundingStats(homeTotals, awayTotals, t);
-  const playmakingStats = buildPlaymakingStats(homeTotals, awayTotals, t);
-  const defenseStats = buildDefenseStats(homeTotals, awayTotals, t);
+  const rows = buildStatsRows(homeTotals, awayTotals, t);
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-6">
+    <div className="space-y-6">
+      <section className="space-y-4">
         <Heading level={3}>{t("games.statsHeaders.team")}</Heading>
 
-        <StatsSection
-          title={t("games.gameStats.shooting")}
-          stats={shootingStats}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-        />
-
-        <StatsSection
-          title={t("games.gameStats.rebounding")}
-          stats={reboundingStats}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-        />
-
-        <StatsSection
-          title={t("games.gameStats.playmaking")}
-          stats={playmakingStats}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-        />
-
-        <StatsSection
-          title={t("games.gameStats.defense")}
-          stats={defenseStats}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-        />
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-1/2 font-semibold uppercase text-xs tracking-wide">
+                  {t("games.statsHeaders.team")}
+                </TableHead>
+                <TableHead className="w-1/4 text-center">
+                  <div className="flex justify-center">
+                    <TeamLogo team={homeTeam} size={28} />
+                  </div>
+                </TableHead>
+                <TableHead className="w-1/4 text-center">
+                  <div className="flex justify-center">
+                    <TeamLogo team={awayTeam} size={28} />
+                  </div>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={row.label}>
+                  <TableCell className="font-medium">{row.label}</TableCell>
+                  <TableCell className="text-center tabular-nums">
+                    {row.home}
+                  </TableCell>
+                  <TableCell className="text-center tabular-nums">
+                    {row.away}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </section>
 
-      {!hasStats && (
+      {!hasStats ? (
         <p className="text-center text-sm text-muted-foreground">
           {t("games.statsComingSoon")}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

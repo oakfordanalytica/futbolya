@@ -28,13 +28,10 @@ export interface PlayerGameLogRow {
   result: "W" | "L" | "—";
   teamScore?: number;
   opponentScore?: number;
-  minutes: number;
-  points: number;
-  rebounds: number;
-  assists: number;
-  steals: number;
-  blocks: number;
-  plusMinus: number;
+  goals: number;
+  yellowCards: number;
+  redCards: number;
+  penaltiesScored: number;
 }
 
 function formatDateOnly(date: string, locale: string): string {
@@ -151,34 +148,24 @@ export function createPlayerGameLogColumns(
       },
     },
     {
-      accessorKey: "points",
-      header: createStatsSortableHeader("PTS"),
-      cell: ({ row }) => <NumericCell value={row.original.points} />,
+      accessorKey: "goals",
+      header: createStatsSortableHeader(t("games.statsTableColumns.goals")),
+      cell: ({ row }) => <NumericCell value={row.original.goals} />,
     },
     {
-      accessorKey: "rebounds",
-      header: createStatsSortableHeader("REB"),
-      cell: ({ row }) => <NumericCell value={row.original.rebounds} />,
+      accessorKey: "penaltiesScored",
+      header: createStatsSortableHeader(t("games.statsTableColumns.penalties")),
+      cell: ({ row }) => <NumericCell value={row.original.penaltiesScored} />,
     },
     {
-      accessorKey: "assists",
-      header: createStatsSortableHeader("AST"),
-      cell: ({ row }) => <NumericCell value={row.original.assists} />,
+      accessorKey: "yellowCards",
+      header: createStatsSortableHeader(t("games.statsTableColumns.yellowCards")),
+      cell: ({ row }) => <NumericCell value={row.original.yellowCards} />,
     },
     {
-      accessorKey: "steals",
-      header: createStatsSortableHeader("STL"),
-      cell: ({ row }) => <NumericCell value={row.original.steals} />,
-    },
-    {
-      accessorKey: "blocks",
-      header: createStatsSortableHeader("BLK"),
-      cell: ({ row }) => <NumericCell value={row.original.blocks} />,
-    },
-    {
-      accessorKey: "minutes",
-      header: createStatsSortableHeader(t("games.statsTableColumns.min")),
-      cell: ({ row }) => <NumericCell value={row.original.minutes} />,
+      accessorKey: "redCards",
+      header: createStatsSortableHeader(t("games.statsTableColumns.redCards")),
+      cell: ({ row }) => <NumericCell value={row.original.redCards} />,
     },
   ];
 }
@@ -219,9 +206,15 @@ export function PlayerRecentStatsPreview({
                 <TableHead>{t("games.date")}</TableHead>
                 <TableHead>{t("games.statsTableColumns.team")}</TableHead>
                 <TableHead>{t("games.opponent")}</TableHead>
-                <TableHead className="text-right">PTS</TableHead>
-                <TableHead className="text-right">REB</TableHead>
-                <TableHead className="text-right">AST</TableHead>
+                <TableHead className="text-right">
+                  {t("games.statsTableColumns.goals")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("games.statsTableColumns.yellowCards")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("games.statsTableColumns.redCards")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -241,13 +234,13 @@ export function PlayerRecentStatsPreview({
                       : row.opponentName}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {row.points}
+                    {row.goals}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {row.rebounds}
+                    {row.yellowCards}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {row.assists}
+                    {row.redCards}
                   </TableCell>
                 </TableRow>
               ))}

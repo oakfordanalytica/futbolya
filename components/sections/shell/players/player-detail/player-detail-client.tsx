@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { COMPACT_STATS_TABLE_CLASS } from "@/components/sections/shell/stats/stats-columns";
 import { darkenHex } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/use-is-admin";
-import { PlayerFormDialog } from "@/components/sections/shell/teams/basketball/team-settings/player-form-dialog";
+import { PlayerFormDialog } from "@/components/sections/shell/teams/soccer/team-settings/player-form-dialog";
 import { PlayerBioDialog } from "./player-bio-dialog";
 import { PlayerHighlightDialog } from "./player-highlight-dialog";
 import { PlayerHighlightsStrip } from "./player-highlights-strip";
@@ -24,7 +24,7 @@ import { PlayerProfileHeader } from "./player-profile-header";
 
 interface PlayerDetailClientProps {
   preloadedPlayer: Preloaded<
-    typeof api.players.getBasketballPlayerDetailByClubSlug
+    typeof api.players.getSoccerPlayerDetailByClubSlug
   >;
   orgSlug: string;
 }
@@ -51,7 +51,7 @@ export function PlayerDetailClient({
     leagueSlug: orgSlug,
   });
   const playerGameLog = useQuery(
-    api.players.listBasketballPlayerGameLog,
+    api.players.listSoccerPlayerGameLog,
     player
       ? {
           playerId: player._id,
@@ -127,10 +127,15 @@ export function PlayerDetailClient({
           _id: player._id,
           firstName: player.firstName,
           lastName: player.lastName,
+          secondLastName: player.secondLastName ?? null,
           photoUrl: player.photoUrl ?? null,
           dateOfBirth: player.dateOfBirth ?? null,
-          jerseyNumber: player.jerseyNumber ?? null,
+          documentNumber: player.documentNumber ?? null,
+          gender: player.gender ?? null,
+          cometNumber: player.cometNumber ?? null,
+          fifaId: player.fifaId ?? null,
           position: player.position ?? null,
+          dominantProfile: player.dominantProfile ?? null,
           height: player.height ?? null,
           weight: player.weight ?? null,
           country: player.country ?? null,

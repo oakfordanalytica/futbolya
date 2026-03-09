@@ -18,8 +18,8 @@ export function SlimLayout({ children }: { children: React.ReactNode }) {
           width={1000}
           height={6000}
           className="absolute inset-0 h-full w-full object-cover"
-          src={"/nisaa_img_background-login.png"}
-          alt="NISAA Basketball Background"
+          src={"/background-auth.jpg"}
+          alt="FutbolYa Soccer Background"
           unoptimized
         />
       </div>

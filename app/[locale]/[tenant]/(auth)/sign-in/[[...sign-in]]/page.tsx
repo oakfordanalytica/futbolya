@@ -14,8 +14,8 @@ export default async function TenantSignInPage({ params }: PageProps) {
   return (
     <div className="flex flex-col items-center gap-8">
       <Image
-        src="/logo_color.png"
-        alt="NISAA"
+        src="/logo_solid.svg"
+        alt="FutbolYa"
         width={280}
         height={140}
         className="h-auto w-56"
