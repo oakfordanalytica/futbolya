@@ -1,7 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { isAdminFromSessionClaims } from "@/lib/auth/roles";
 import { locales, routing, type Locale } from "@/i18n/routing";
+import { getTenantAccess } from "@/lib/auth/tenant-access";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 import { isEnabledStaffRole } from "@/lib/staff/roles";
 
@@ -59,15 +59,16 @@ export async function POST(request: NextRequest) {
     const locale = resolveLocale(body.locale);
 
     if (isSingleTenantMode()) {
-      if (!isAdminFromSessionClaims(authObject.sessionClaims)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-
       if (tenant && tenant !== DEFAULT_TENANT_SLUG) {
         return NextResponse.json(
           { error: "Organization not found" },
           { status: 404 },
         );
+      }
+
+      const tenantAccess = await getTenantAccess(DEFAULT_TENANT_SLUG);
+      if (!tenantAccess.hasAccess || !tenantAccess.isAdmin) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
       const localePrefix = locale === routing.defaultLocale ? "" : `/${locale}`;

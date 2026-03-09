@@ -1,11 +1,12 @@
 "use client";
 
 import { FormEvent, useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,7 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@//components/ui/dialog";
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import AvatarUpload from "@/components/ui/avatar-upload";
@@ -34,7 +35,7 @@ interface TeamColor {
   name: string;
 }
 
-interface DelegateState {
+interface HeadCoachState {
   email: string;
 }
 
@@ -42,10 +43,10 @@ interface FormState {
   name: string;
   nickname: string;
   colors: TeamColor[];
-  delegate: DelegateState;
+  headCoach: HeadCoachState;
 }
 
-const INITIAL_DELEGATE_STATE: DelegateState = {
+const INITIAL_HEAD_COACH_STATE: HeadCoachState = {
   email: "",
 };
 
@@ -53,7 +54,7 @@ const INITIAL_FORM_STATE: FormState = {
   name: "",
   nickname: "",
   colors: [],
-  delegate: INITIAL_DELEGATE_STATE,
+  headCoach: INITIAL_HEAD_COACH_STATE,
 };
 
 export function CreateTeamDialog({
@@ -62,6 +63,7 @@ export function CreateTeamDialog({
   orgSlug,
 }: CreateTeamDialogProps) {
   const t = useTranslations("Common");
+  const locale = useLocale();
   const terminology = useSportTerminology();
   const createTeamWithDelegate = useMutation(api.clubs.createWithDelegate);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
@@ -143,11 +145,10 @@ export function CreateTeamDialog({
     try {
       const logoStorageId = await uploadLogo();
       const colorsToSave = formState.colors.length > 0 ? formState.colors : [];
+      const headCoachEmail =
+        formState.headCoach.email.trim().toLowerCase() || undefined;
 
-      // Prepare delegate email if provided
-      const delegateEmail = formState.delegate.email.trim() || undefined;
-
-      await createTeamWithDelegate({
+      const result = await createTeamWithDelegate({
         name: formState.name,
         nickname: formState.nickname,
         orgSlug: orgSlug,
@@ -159,12 +160,55 @@ export function CreateTeamDialog({
           colorsToSave.length > 0
             ? colorsToSave.map((c) => c.name).filter(Boolean)
             : undefined,
-        delegateEmail,
+        headCoachEmail,
       });
 
-      onOpenChange(false);
+      let headCoachInviteError = false;
+
+      if (headCoachEmail && result.headCoachStatus === "invite_required") {
+        const response = await fetch("/api/staff/invite", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            emailAddress: headCoachEmail,
+            staffRole: "head_coach",
+            clubId: result.clubId,
+            locale,
+            tenant: orgSlug,
+          }),
+        });
+
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+
+        if (!response.ok) {
+          headCoachInviteError = true;
+          console.error(
+            "[CreateTeam] Team created but head coach invitation failed:",
+            payload?.error,
+          );
+        } else {
+          toast.success(t("teams.headCoachInvitationSent"));
+        }
+      } else if (headCoachEmail && result.headCoachStatus === "assigned") {
+        toast.success(t("teams.headCoachAssigned"));
+      }
+
+      if (headCoachInviteError) {
+        toast.error(t("teams.headCoachInviteFailed"));
+      } else {
+        toast.success(t("teams.created"));
+      }
+
+      handleOpenChange(false);
     } catch (error) {
       console.error("[CreateTeam] Failed to create team:", error);
+      toast.error(
+        error instanceof Error ? error.message : t("teams.createFailed"),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -190,13 +234,13 @@ export function CreateTeamDialog({
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateDelegateField = <K extends keyof DelegateState>(
+  const updateHeadCoachField = <K extends keyof HeadCoachState>(
     field: K,
-    value: DelegateState[K],
+    value: HeadCoachState[K],
   ) => {
     setFormState((prev) => ({
       ...prev,
-      delegate: { ...prev.delegate, [field]: value },
+      headCoach: { ...prev.headCoach, [field]: value },
     }));
   };
 
@@ -247,7 +291,10 @@ export function CreateTeamDialog({
     }
   };
 
-  const isDelegateValid = true;
+  const trimmedHeadCoachEmail = formState.headCoach.email.trim();
+  const isHeadCoachValid =
+    trimmedHeadCoachEmail.length === 0 ||
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedHeadCoachEmail);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -405,16 +452,16 @@ export function CreateTeamDialog({
             </div>
           </FieldGroup>
 
-          {/* Delegate Section */}
+          {/* Head coach section */}
           <Field>
             <FieldLabel>
               {t("teams.headCoach")} ({t("actions.optional")})
             </FieldLabel>
             <Input
               type="email"
-              value={formState.delegate.email}
-              onChange={(e) => updateDelegateField("email", e.target.value)}
-              placeholder="delegate@example.com"
+              value={formState.headCoach.email}
+              onChange={(e) => updateHeadCoachField("email", e.target.value)}
+              placeholder="coach@example.com"
             />
             <p className="text-xs text-muted-foreground mt-1">
               {t("teams.headCoachDescription")}
@@ -425,12 +472,12 @@ export function CreateTeamDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={isSubmitting}
             >
               {t("actions.cancel")}
             </Button>
-            <Button type="submit" disabled={isSubmitting || !isDelegateValid}>
+            <Button type="submit" disabled={isSubmitting || !isHeadCoachValid}>
               {isSubmitting ? t("actions.loading") : t("actions.create")}
             </Button>
           </DialogFooter>

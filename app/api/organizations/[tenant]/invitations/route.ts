@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { isAdminFromSessionClaims } from "@/lib/auth/roles";
 import { locales, routing, type Locale } from "@/i18n/routing";
+import { getTenantAccess } from "@/lib/auth/tenant-access";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 
 const MULTI_TENANT_INVITABLE_ROLES = ["org:admin"] as const;
@@ -101,7 +101,9 @@ async function requireInvitationAccess(
     if (tenant !== DEFAULT_TENANT_SLUG) {
       throw new InvitationAccessError(404, "Organization not found");
     }
-    if (!isAdminFromSessionClaims(authObject.sessionClaims)) {
+
+    const tenantAccess = await getTenantAccess(tenant);
+    if (!tenantAccess.hasAccess || !tenantAccess.isAdmin) {
       throw new InvitationAccessError(403, "Forbidden");
     }
 

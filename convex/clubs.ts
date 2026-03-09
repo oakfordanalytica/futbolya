@@ -39,6 +39,17 @@ const clubListItemValidator = v.object({
   status: clubStatus,
 });
 
+const headCoachAssignmentStatus = v.union(
+  v.literal("none"),
+  v.literal("assigned"),
+  v.literal("invite_required"),
+);
+
+const createClubResultValidator = v.object({
+  clubId: v.id("clubs"),
+  headCoachStatus: headCoachAssignmentStatus,
+});
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -208,11 +219,12 @@ export const createWithDelegate = mutation({
     logoStorageId: v.optional(v.id("_storage")),
     colors: v.optional(v.array(v.string())),
     colorNames: v.optional(v.array(v.string())),
-    delegateEmail: v.optional(v.string()),
+    headCoachEmail: v.optional(v.string()),
   },
-  returns: v.id("clubs"),
+  returns: createClubResultValidator,
   handler: async (ctx, args) => {
     const { organization } = await requireOrgAdmin(ctx, args.orgSlug);
+    const normalizedHeadCoachEmail = args.headCoachEmail?.trim().toLowerCase();
 
     // Use nickname as slug if provided, otherwise generate from name
     const slug = args.nickname
@@ -241,16 +253,21 @@ export const createWithDelegate = mutation({
       throw new Error(`Club with slug "${slug}" already exists in this league`);
     }
 
-    // Find delegate by email if provided
+    // Assign head coach directly if the user already exists.
     let delegateUserId: Id<"users"> | undefined;
-    if (args.delegateEmail) {
+    let headCoachStatus: "none" | "assigned" | "invite_required" = "none";
+
+    if (normalizedHeadCoachEmail) {
       const delegateUser = await ctx.db
         .query("users")
-        .withIndex("byEmail", (q) => q.eq("email", args.delegateEmail!))
+        .withIndex("byEmail", (q) => q.eq("email", normalizedHeadCoachEmail))
         .unique();
 
       if (delegateUser) {
         delegateUserId = delegateUser._id;
+        headCoachStatus = "assigned";
+      } else {
+        headCoachStatus = "invite_required";
       }
     }
 
@@ -266,7 +283,18 @@ export const createWithDelegate = mutation({
       delegateUserId,
     });
 
-    return clubId;
+    if (delegateUserId) {
+      await ctx.db.insert("staff", {
+        userId: delegateUserId,
+        clubId,
+        role: "head_coach",
+      });
+    }
+
+    return {
+      clubId,
+      headCoachStatus,
+    };
   },
 });
 
