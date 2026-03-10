@@ -409,6 +409,72 @@ function didPlayerParticipate(stat: {
   );
 }
 
+function buildSubstitutionCountsFromEvents(args: {
+  events: Array<{
+    _creationTime: number;
+    clubId: Id<"clubs">;
+    eventType: string;
+    playerId: Id<"players">;
+    relatedPlayerId?: Id<"players">;
+    minute: number;
+  }>;
+  initialOnFieldByClub: Map<Id<"clubs">, Set<Id<"players">>>;
+}) {
+  const counts = new Map<
+    Id<"players">,
+    { substitutionsIn: number; substitutionsOut: number }
+  >();
+
+  const increment = (
+    playerId: Id<"players">,
+    field: "substitutionsIn" | "substitutionsOut",
+  ) => {
+    const current = counts.get(playerId) ?? {
+      substitutionsIn: 0,
+      substitutionsOut: 0,
+    };
+    current[field] += 1;
+    counts.set(playerId, current);
+  };
+
+  const sortedEvents = [...args.events].sort((left, right) => {
+    if (left.minute !== right.minute) {
+      return left.minute - right.minute;
+    }
+    return left._creationTime - right._creationTime;
+  });
+
+  for (const event of sortedEvents) {
+    if (event.eventType !== "substitution" || !event.relatedPlayerId) {
+      continue;
+    }
+
+    const currentOnField =
+      args.initialOnFieldByClub.get(event.clubId) ?? new Set<Id<"players">>();
+
+    const playerOnField = currentOnField.has(event.playerId);
+    const relatedPlayerOnField = currentOnField.has(event.relatedPlayerId);
+
+    let outgoingPlayerId = event.playerId;
+    let incomingPlayerId = event.relatedPlayerId;
+
+    // Support both the current substitution semantics and older inverted events.
+    if (!playerOnField && relatedPlayerOnField) {
+      outgoingPlayerId = event.relatedPlayerId;
+      incomingPlayerId = event.playerId;
+    }
+
+    increment(outgoingPlayerId, "substitutionsOut");
+    increment(incomingPlayerId, "substitutionsIn");
+
+    currentOnField.delete(outgoingPlayerId);
+    currentOnField.add(incomingPlayerId);
+    args.initialOnFieldByClub.set(event.clubId, currentOnField);
+  }
+
+  return counts;
+}
+
 async function requireGameAccess(ctx: PermissionCtx, game: GameDoc) {
   const user = await getCurrentUser(ctx);
   if (user.isSuperAdmin) {
@@ -1080,7 +1146,7 @@ export const getGamePlayerStats = query({
 
     await requireGameAccess(ctx, game);
 
-    const [allPlayerStats, teamStatsRows] = await Promise.all([
+    const [allPlayerStats, teamStatsRows, gameEvents] = await Promise.all([
       ctx.db
         .query("gamePlayerStats")
         .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
@@ -1089,7 +1155,35 @@ export const getGamePlayerStats = query({
         .query("gameTeamStats")
         .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
         .collect(),
+      ctx.db
+        .query("gameEvents")
+        .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
+        .collect(),
     ]);
+
+    const initialOnFieldByClub = new Map<Id<"clubs">, Set<Id<"players">>>([
+      [
+        game.homeClubId,
+        new Set(
+          allPlayerStats
+            .filter((stat) => stat.clubId === game.homeClubId && stat.isStarter)
+            .map((stat) => stat.playerId),
+        ),
+      ],
+      [
+        game.awayClubId,
+        new Set(
+          allPlayerStats
+            .filter((stat) => stat.clubId === game.awayClubId && stat.isStarter)
+            .map((stat) => stat.playerId),
+        ),
+      ],
+    ]);
+
+    const substitutionCounts = buildSubstitutionCountsFromEvents({
+      events: gameEvents,
+      initialOnFieldByClub,
+    });
 
     const playerIds = [...new Set(allPlayerStats.map((stat) => stat.playerId))];
     const players = await Promise.all(playerIds.map((id) => ctx.db.get(id)));
@@ -1113,6 +1207,7 @@ export const getGamePlayerStats = query({
     const mapStats = (stats: typeof allPlayerStats) =>
       stats.filter(didPlayerParticipate).map((stat) => {
         const player = playerMap.get(stat.playerId);
+        const substitutions = substitutionCounts.get(stat.playerId);
         return {
           _id: stat._id,
           playerId: stat.playerId,
@@ -1133,8 +1228,10 @@ export const getGamePlayerStats = query({
           redCards: stat.redCards,
           penaltiesAttempted: stat.penaltiesAttempted,
           penaltiesScored: stat.penaltiesScored,
-          substitutionsIn: stat.substitutionsIn,
-          substitutionsOut: stat.substitutionsOut,
+          substitutionsIn:
+            substitutions?.substitutionsIn ?? stat.substitutionsIn,
+          substitutionsOut:
+            substitutions?.substitutionsOut ?? stat.substitutionsOut,
         };
       });
 

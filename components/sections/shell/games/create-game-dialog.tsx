@@ -69,8 +69,8 @@ interface Club {
   logoUrl?: string;
 }
 
-function TeamLogo({ club, size = 20 }: { club: Club; size?: number }) {
-  if (club.logoUrl) {
+function TeamLogo({ club, size = 20 }: { club?: Club | null; size?: number }) {
+  if (club?.logoUrl) {
     return (
       <Image
         src={club.logoUrl}
@@ -87,7 +87,7 @@ function TeamLogo({ club, size = 20 }: { club: Club; size?: number }) {
       className="rounded-full bg-muted flex items-center justify-center text-muted-foreground font-medium"
       style={{ width: size, height: size, fontSize: size * 0.5 }}
     >
-      {club.name.charAt(0).toUpperCase()}
+      {club?.name?.charAt(0).toUpperCase() ?? "?"}
     </div>
   );
 }
@@ -391,6 +391,14 @@ export function CreateGameDialog({
   const availableHomeTeams = affiliatedClubs.filter(
     (club) => club._id !== formState.awayTeamId,
   );
+  const selectedHomeTeam =
+    availableHomeTeams.find((club) => club._id === formState.homeTeamId) ??
+    clubs?.find((club) => club._id === formState.homeTeamId) ??
+    null;
+  const selectedAwayTeam =
+    availableAwayTeams.find((club) => club._id === formState.awayTeamId) ??
+    clubs?.find((club) => club._id === formState.awayTeamId) ??
+    null;
   const selectedSeason = (activeSeasons || []).find(
     (season) => season.id === formState.seasonId,
   );
@@ -555,23 +563,15 @@ export function CreateGameDialog({
                                     "text-muted-foreground",
                                 )}
                               >
-                                {formState.homeTeamId ? (
+                                {selectedHomeTeam ? (
                                   <span className="flex min-w-0 items-center gap-2">
-                                    <TeamLogo
-                                      club={
-                                        availableHomeTeams.find(
-                                          (c) => c._id === formState.homeTeamId,
-                                        )!
-                                      }
-                                    />
+                                    <TeamLogo club={selectedHomeTeam} />
                                     <span className="truncate">
-                                      {
-                                        availableHomeTeams.find(
-                                          (c) => c._id === formState.homeTeamId,
-                                        )?.name
-                                      }
+                                      {selectedHomeTeam.name}
                                     </span>
                                   </span>
+                                ) : formState.homeTeamId ? (
+                                  t("actions.loading")
                                 ) : (
                                   t("games.selectTeam")
                                 )}
@@ -639,23 +639,15 @@ export function CreateGameDialog({
                                   "text-muted-foreground",
                               )}
                             >
-                              {formState.awayTeamId ? (
+                              {selectedAwayTeam ? (
                                 <span className="flex min-w-0 items-center gap-2">
-                                  <TeamLogo
-                                    club={
-                                      availableAwayTeams.find(
-                                        (c) => c._id === formState.awayTeamId,
-                                      )!
-                                    }
-                                  />
+                                  <TeamLogo club={selectedAwayTeam} />
                                   <span className="truncate">
-                                    {
-                                      availableAwayTeams.find(
-                                        (c) => c._id === formState.awayTeamId,
-                                      )?.name
-                                    }
+                                    {selectedAwayTeam.name}
                                   </span>
                                 </span>
+                              ) : formState.awayTeamId ? (
+                                t("actions.loading")
                               ) : (
                                 t("games.selectTeam")
                               )}

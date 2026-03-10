@@ -26,6 +26,7 @@ import {
 interface Team {
   name: string;
   logoUrl?: string;
+  primaryColor?: string;
 }
 
 interface GameBoxScoreProps {
@@ -35,6 +36,8 @@ interface GameBoxScoreProps {
     awayTeamName: string;
     homeTeamLogo?: string;
     awayTeamLogo?: string;
+    homeTeamColor?: string;
+    awayTeamColor?: string;
   };
 }
 
@@ -51,40 +54,33 @@ function TeamBoxScore({
   totals: TeamGameTotals;
   t: (key: string) => string;
 }) {
-  const primaryColor = "#6b7280";
+  const primaryColor = team.primaryColor?.trim() || "#6b7280";
 
   const renderPlayerRow = (player: PlayerBoxScoreRow) => {
     return (
-      <TableRow key={player.id}>
-        <TableCell className="sticky left-0 z-10 bg-background font-medium whitespace-nowrap">
-          <div className="flex items-center gap-2">
-            <span className="truncate max-w-[140px]">{player.name}</span>
-            {player.cometNumber ? (
-              <span className="text-xs text-muted-foreground">
-                {player.cometNumber}
-              </span>
-            ) : null}
-          </div>
+      <TableRow key={player.id} className="text-[11px] sm:text-xs">
+        <TableCell className="sticky left-0 z-10 bg-background py-2 font-medium whitespace-nowrap">
+          <span className="truncate max-w-[140px]">{player.name}</span>
         </TableCell>
-        <TableCell className="text-center tabular-nums font-medium">
+        <TableCell className="py-2 text-center tabular-nums font-medium">
           {player.goals}
         </TableCell>
-        <TableCell className="text-center tabular-nums">
+        <TableCell className="py-2 text-center tabular-nums">
           {player.yellowCards}
         </TableCell>
-        <TableCell className="text-center tabular-nums">
+        <TableCell className="py-2 text-center tabular-nums">
           {player.redCards}
         </TableCell>
-        <TableCell className="text-center tabular-nums">
+        <TableCell className="py-2 text-center tabular-nums">
           {formatPenaltySummary(
             player.penaltiesScored,
             player.penaltiesAttempted,
           )}
         </TableCell>
-        <TableCell className="text-center tabular-nums">
+        <TableCell className="py-2 text-center tabular-nums">
           {player.substitutionsIn}
         </TableCell>
-        <TableCell className="text-center tabular-nums">
+        <TableCell className="py-2 text-center tabular-nums">
           {player.substitutionsOut}
         </TableCell>
       </TableRow>
@@ -123,25 +119,25 @@ function TeamBoxScore({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="sticky left-0 z-10 min-w-[160px] bg-muted/50">
+              <TableHead className="sticky left-0 z-10 min-w-[160px] bg-muted/50 py-2 text-[10px] sm:text-[11px]">
                 {t("games.boxScoreLabels.starters")}
               </TableHead>
-              <TableHead className="w-12 text-center">
+              <TableHead className="w-12 py-2 text-center text-[10px] sm:text-[11px]">
                 {t("games.boxScoreLabels.goals")}
               </TableHead>
-              <TableHead className="w-12 text-center">
+              <TableHead className="w-12 py-2 text-center text-[10px] sm:text-[11px]">
                 {t("games.boxScoreLabels.yellowCards")}
               </TableHead>
-              <TableHead className="w-12 text-center">
+              <TableHead className="w-12 py-2 text-center text-[10px] sm:text-[11px]">
                 {t("games.boxScoreLabels.redCards")}
               </TableHead>
-              <TableHead className="w-16 text-center">
+              <TableHead className="w-16 py-2 text-center text-[10px] sm:text-[11px]">
                 {t("games.boxScoreLabels.penalties")}
               </TableHead>
-              <TableHead className="w-16 text-center">
+              <TableHead className="w-16 py-2 text-center text-[10px] sm:text-[11px]">
                 {t("games.boxScoreLabels.subIn")}
               </TableHead>
-              <TableHead className="w-16 text-center">
+              <TableHead className="w-16 py-2 text-center text-[10px] sm:text-[11px]">
                 {t("games.boxScoreLabels.subOut")}
               </TableHead>
             </TableRow>
@@ -152,25 +148,25 @@ function TeamBoxScore({
             {bench.length > 0 ? (
               <>
                 <TableRow className="bg-muted/30">
-                  <TableCell className="sticky left-0 z-10 bg-muted/30 text-xs font-semibold uppercase text-muted-foreground">
+                  <TableCell className="sticky left-0 z-10 bg-muted/30 py-2 text-[10px] font-semibold uppercase text-muted-foreground sm:text-[11px]">
                     {t("games.boxScoreLabels.bench")}
                   </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
+                  <TableCell className="py-2 text-center text-[10px] text-muted-foreground sm:text-[11px]">
                     {t("games.boxScoreLabels.goals")}
                   </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
+                  <TableCell className="py-2 text-center text-[10px] text-muted-foreground sm:text-[11px]">
                     {t("games.boxScoreLabels.yellowCards")}
                   </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
+                  <TableCell className="py-2 text-center text-[10px] text-muted-foreground sm:text-[11px]">
                     {t("games.boxScoreLabels.redCards")}
                   </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
+                  <TableCell className="py-2 text-center text-[10px] text-muted-foreground sm:text-[11px]">
                     {t("games.boxScoreLabels.penalties")}
                   </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
+                  <TableCell className="py-2 text-center text-[10px] text-muted-foreground sm:text-[11px]">
                     {t("games.boxScoreLabels.subIn")}
                   </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
+                  <TableCell className="py-2 text-center text-[10px] text-muted-foreground sm:text-[11px]">
                     {t("games.boxScoreLabels.subOut")}
                   </TableCell>
                 </TableRow>
@@ -179,28 +175,28 @@ function TeamBoxScore({
             ) : null}
 
             <TableRow className="bg-muted/50 font-semibold">
-              <TableCell className="sticky left-0 z-10 bg-muted/50 text-xs uppercase">
+              <TableCell className="sticky left-0 z-10 bg-muted/50 py-2 text-[10px] uppercase sm:text-[11px]">
                 {t("games.boxScoreLabels.team")}
               </TableCell>
-              <TableCell className="text-center tabular-nums">
+              <TableCell className="py-2 text-center tabular-nums text-[11px] sm:text-xs">
                 {totals.goals}
               </TableCell>
-              <TableCell className="text-center tabular-nums">
+              <TableCell className="py-2 text-center tabular-nums text-[11px] sm:text-xs">
                 {totals.yellowCards}
               </TableCell>
-              <TableCell className="text-center tabular-nums">
+              <TableCell className="py-2 text-center tabular-nums text-[11px] sm:text-xs">
                 {totals.redCards}
               </TableCell>
-              <TableCell className="text-center tabular-nums">
+              <TableCell className="py-2 text-center tabular-nums text-[11px] sm:text-xs">
                 {formatPenaltySummary(
                   totals.penaltiesScored,
                   totals.penaltiesAttempted,
                 )}
               </TableCell>
-              <TableCell className="text-center tabular-nums">
+              <TableCell className="py-2 text-center tabular-nums text-[11px] sm:text-xs">
                 {totals.substitutions}
               </TableCell>
-              <TableCell className="text-center text-muted-foreground">
+              <TableCell className="py-2 text-center text-[11px] text-muted-foreground sm:text-xs">
                 —
               </TableCell>
             </TableRow>
@@ -222,11 +218,13 @@ export function GameBoxScore({ game }: GameBoxScoreProps) {
   const homeTeam: Team = {
     name: game.homeTeamName,
     logoUrl: game.homeTeamLogo,
+    primaryColor: game.homeTeamColor,
   };
 
   const awayTeam: Team = {
     name: game.awayTeamName,
     logoUrl: game.awayTeamLogo,
+    primaryColor: game.awayTeamColor,
   };
 
   const homeData = gameStats
