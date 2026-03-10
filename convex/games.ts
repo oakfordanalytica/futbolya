@@ -1625,8 +1625,14 @@ export const update = mutation({
 
     await requireGameAdminAccess(ctx, game.organizationId);
 
-    if (game.status === "in_progress" || game.status === "halftime") {
-      throw new Error("Games in progress cannot be edited");
+    if (
+      game.status === "in_progress" ||
+      game.status === "halftime" ||
+      game.status === "completed"
+    ) {
+      throw new Error(
+        "Games that are in progress or completed cannot be edited",
+      );
     }
 
     const { gameId, ...updates } = args;

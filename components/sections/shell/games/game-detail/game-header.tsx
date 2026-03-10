@@ -134,8 +134,10 @@ export function GameHeader({
   ].filter((stat) => stat.value);
 
   const canManageGame = isLoaded && isAdmin;
-  const isGameInProgress =
-    game.status === "in_progress" || game.status === "halftime";
+  const isGameLocked =
+    game.status === "in_progress" ||
+    game.status === "halftime" ||
+    game.status === "completed";
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -205,9 +207,9 @@ export function GameHeader({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      disabled={isGameInProgress}
+                      disabled={isGameLocked}
                       onClick={() => {
-                        if (isGameInProgress) {
+                        if (isGameLocked) {
                           return;
                         }
                         setIsEditOpen(true);
