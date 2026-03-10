@@ -13,6 +13,7 @@ interface GameSummaryTabProps {
     status:
       | "scheduled"
       | "in_progress"
+      | "halftime"
       | "awaiting_stats"
       | "pending_review"
       | "completed"

@@ -27,6 +27,7 @@ const gender = v.union(
 const gameStatus = v.union(
   v.literal("scheduled"),
   v.literal("in_progress"),
+  v.literal("halftime"),
   v.literal("awaiting_stats"),
   v.literal("pending_review"),
   v.literal("completed"),
@@ -34,6 +35,13 @@ const gameStatus = v.union(
 );
 
 const gameType = v.union(v.literal("quick"), v.literal("season"));
+
+const gameMatchPhase = v.union(
+  v.literal("first_half"),
+  v.literal("halftime"),
+  v.literal("second_half"),
+  v.literal("finished"),
+);
 
 const gameValidator = v.object({
   _id: v.id("games"),
@@ -61,6 +69,13 @@ const gameValidator = v.object({
   awayScore: v.optional(v.number()),
   matchStartedAt: v.optional(v.number()),
   matchEndedAt: v.optional(v.number()),
+  matchPhase: v.optional(gameMatchPhase),
+  firstHalfStartedAt: v.optional(v.number()),
+  firstHalfEndedAt: v.optional(v.number()),
+  secondHalfStartedAt: v.optional(v.number()),
+  secondHalfEndedAt: v.optional(v.number()),
+  firstHalfAddedMinutes: v.optional(v.number()),
+  secondHalfAddedMinutes: v.optional(v.number()),
   homeStatsSubmittedAt: v.optional(v.number()),
   awayStatsSubmittedAt: v.optional(v.number()),
   homeStatsConfirmed: v.optional(v.boolean()),
@@ -351,6 +366,7 @@ type GameDoc = {
   status:
     | "scheduled"
     | "in_progress"
+    | "halftime"
     | "awaiting_stats"
     | "pending_review"
     | "completed"
@@ -1494,6 +1510,13 @@ export const getById = query({
       awayScore: game.awayScore,
       matchStartedAt: game.matchStartedAt,
       matchEndedAt: game.matchEndedAt,
+      matchPhase: game.matchPhase,
+      firstHalfStartedAt: game.firstHalfStartedAt,
+      firstHalfEndedAt: game.firstHalfEndedAt,
+      secondHalfStartedAt: game.secondHalfStartedAt,
+      secondHalfEndedAt: game.secondHalfEndedAt,
+      firstHalfAddedMinutes: game.firstHalfAddedMinutes,
+      secondHalfAddedMinutes: game.secondHalfAddedMinutes,
       homeStatsSubmittedAt: game.homeStatsSubmittedAt,
       awayStatsSubmittedAt: game.awayStatsSubmittedAt,
       homeStatsConfirmed: game.homeStatsConfirmed,
@@ -1602,7 +1625,7 @@ export const update = mutation({
 
     await requireGameAdminAccess(ctx, game.organizationId);
 
-    if (game.status === "in_progress") {
+    if (game.status === "in_progress" || game.status === "halftime") {
       throw new Error("Games in progress cannot be edited");
     }
 

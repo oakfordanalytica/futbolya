@@ -43,6 +43,7 @@ const dominantProfile = v.union(
 const gameStatus = v.union(
   v.literal("scheduled"),
   v.literal("in_progress"),
+  v.literal("halftime"),
   v.literal("awaiting_stats"),
   v.literal("pending_review"),
   v.literal("completed"),
@@ -56,6 +57,13 @@ const gameEventType = v.union(
   v.literal("substitution"),
   v.literal("penalty_scored"),
   v.literal("penalty_missed"),
+);
+
+const gameMatchPhase = v.union(
+  v.literal("first_half"),
+  v.literal("halftime"),
+  v.literal("second_half"),
+  v.literal("finished"),
 );
 
 const sportType = v.literal("soccer");
@@ -298,6 +306,13 @@ export default defineSchema({
     awayScore: v.optional(v.number()),
     matchStartedAt: v.optional(v.number()),
     matchEndedAt: v.optional(v.number()),
+    matchPhase: v.optional(gameMatchPhase),
+    firstHalfStartedAt: v.optional(v.number()),
+    firstHalfEndedAt: v.optional(v.number()),
+    secondHalfStartedAt: v.optional(v.number()),
+    secondHalfEndedAt: v.optional(v.number()),
+    firstHalfAddedMinutes: v.optional(v.number()),
+    secondHalfAddedMinutes: v.optional(v.number()),
     // Stats submission tracking
     homeStatsSubmittedAt: v.optional(v.number()),
     awayStatsSubmittedAt: v.optional(v.number()),

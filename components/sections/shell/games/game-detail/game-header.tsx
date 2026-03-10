@@ -61,6 +61,7 @@ interface GameHeaderProps {
     status:
       | "scheduled"
       | "in_progress"
+      | "halftime"
       | "awaiting_stats"
       | "pending_review"
       | "completed"
@@ -77,6 +78,8 @@ const STATUS_STYLES: Record<string, string> = {
   scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400",
   in_progress:
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
+  halftime:
+    "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-400",
   awaiting_stats:
     "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
   pending_review:
@@ -114,6 +117,7 @@ export function GameHeader({
     game.status !== "cancelled" &&
     (hasRecordedScore ||
       game.status === "in_progress" ||
+      game.status === "halftime" ||
       game.status === "awaiting_stats" ||
       game.status === "pending_review" ||
       game.status === "completed");
@@ -130,7 +134,8 @@ export function GameHeader({
   ].filter((stat) => stat.value);
 
   const canManageGame = isLoaded && isAdmin;
-  const isGameInProgress = game.status === "in_progress";
+  const isGameInProgress =
+    game.status === "in_progress" || game.status === "halftime";
 
   const handleDelete = async () => {
     setIsDeleting(true);

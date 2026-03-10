@@ -21,7 +21,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Heading } from "@/components/ui/heading";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FootballField } from "@/components/ui/football-field";
 import type {
@@ -46,6 +55,12 @@ interface GameCenterClientProps {
 }
 
 type CenterTeamKey = "home" | "away";
+type MatchPhase =
+  | "not_started"
+  | "first_half"
+  | "halftime"
+  | "second_half"
+  | "finished";
 
 type TimelineEvent = {
   id: string;
@@ -285,6 +300,40 @@ function TeamBadge({
   );
 }
 
+function resolveMatchPhase(game: {
+  matchPhase?: "first_half" | "halftime" | "second_half" | "finished";
+  matchStartedAt?: number;
+  matchEndedAt?: number;
+  firstHalfEndedAt?: number;
+  secondHalfStartedAt?: number;
+}): MatchPhase {
+  if (game.matchPhase) {
+    return game.matchPhase;
+  }
+  if (game.matchEndedAt) {
+    return "finished";
+  }
+  if (game.secondHalfStartedAt) {
+    return "second_half";
+  }
+  if (game.firstHalfEndedAt) {
+    return "halftime";
+  }
+  if (game.matchStartedAt) {
+    return "first_half";
+  }
+  return "not_started";
+}
+
+function getElapsedSeconds(startAt?: number, endAt?: number, nowMs?: number) {
+  if (!startAt) {
+    return 0;
+  }
+
+  const resolvedEndAt = endAt ?? nowMs ?? startAt;
+  return Math.max(0, Math.floor((resolvedEndAt - startAt) / 1000));
+}
+
 export function GameCenterClient({
   preloadedGame,
   orgSlug,
@@ -301,7 +350,10 @@ export function GameCenterClient({
     game ? { gameId: game._id as Id<"games"> } : "skip",
   );
   const startMatch = useMutation(api.gameCenter.startMatch);
+  const endFirstHalf = useMutation(api.gameCenter.endFirstHalf);
+  const startSecondHalf = useMutation(api.gameCenter.startSecondHalf);
   const finishMatch = useMutation(api.gameCenter.finishMatch);
+  const addStoppageTime = useMutation(api.gameCenter.addStoppageTime);
   const registerBatch = useMutation(api.gameEvents.registerBatch);
 
   const [activeTeam, setActiveTeam] = useState<CenterTeamKey>("home");
@@ -311,6 +363,8 @@ export function GameCenterClient({
   const [incomingPlayerId, setIncomingPlayerId] = useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStoppageDialogOpen, setIsStoppageDialogOpen] = useState(false);
+  const [stoppageMinutes, setStoppageMinutes] = useState("1");
 
   useEffect(() => {
     if (game?.matchEndedAt) {
@@ -519,26 +573,50 @@ export function GameCenterClient({
     return parseLocalDateTime(game.date, game.startTime);
   }, [game]);
 
-  const hasStarted = Boolean(game?.matchStartedAt);
-  const hasEnded = Boolean(game?.matchEndedAt);
+  const matchPhase = resolveMatchPhase(game ?? {});
+  const hasStarted = matchPhase !== "not_started";
+  const hasEnded = matchPhase === "finished";
   const canStart =
     Boolean(game) &&
     !hasStarted &&
     !hasEnded &&
     Boolean(scheduledDateTime) &&
     nowMs >= (scheduledDateTime?.getTime() ?? Number.POSITIVE_INFINITY);
-  const isLive = hasStarted && !hasEnded;
+  const isLive = matchPhase === "first_half" || matchPhase === "second_half";
 
-  const elapsedSeconds = game?.matchStartedAt
-    ? Math.max(
-        0,
-        Math.floor(((game.matchEndedAt ?? nowMs) - game.matchStartedAt) / 1000),
-      )
-    : 0;
+  const firstHalfStartAt = game?.firstHalfStartedAt ?? game?.matchStartedAt;
+  const firstHalfEndAt =
+    game?.firstHalfEndedAt ?? game?.secondHalfStartedAt ?? game?.matchEndedAt;
+  const secondHalfStartAt = game?.secondHalfStartedAt;
+  const secondHalfEndAt = game?.secondHalfEndedAt ?? game?.matchEndedAt;
+
+  const firstHalfElapsedSeconds =
+    matchPhase === "first_half"
+      ? getElapsedSeconds(firstHalfStartAt, undefined, nowMs)
+      : getElapsedSeconds(firstHalfStartAt, firstHalfEndAt, nowMs);
+  const secondHalfElapsedSeconds =
+    matchPhase === "second_half"
+      ? getElapsedSeconds(secondHalfStartAt, undefined, nowMs)
+      : getElapsedSeconds(secondHalfStartAt, secondHalfEndAt, nowMs);
+  const elapsedSeconds = firstHalfElapsedSeconds + secondHalfElapsedSeconds;
   const liveMinute = Math.max(
     1,
     Math.min(130, Math.floor(elapsedSeconds / 60) + 1),
   );
+  const currentHalfAddedMinutes =
+    matchPhase === "first_half"
+      ? (game?.firstHalfAddedMinutes ?? 0)
+      : matchPhase === "second_half"
+        ? (game?.secondHalfAddedMinutes ?? 0)
+        : 0;
+
+  useEffect(() => {
+    if (!isLive) {
+      setSelectedSlotId(null);
+      setSelectedEventType(null);
+      setIncomingPlayerId("");
+    }
+  }, [isLive]);
 
   if (game === null) {
     return (
@@ -610,8 +688,8 @@ export function GameCenterClient({
 
     return (
       <div className="space-y-3">
-        <div className="rounded-lg border bg-muted/20 px-3 py-3">
-          <div className="flex items-center gap-3">
+        <div className="rounded-lg border bg-muted/20 px-2.5 py-2.5 sm:px-3 sm:py-3">
+          <div className="flex items-center gap-2.5">
             <Avatar
               src={slot.player.photoUrl}
               initials={
@@ -626,10 +704,10 @@ export function GameCenterClient({
               )}
             />
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold">
+              <div className="truncate text-[13px] font-semibold sm:text-sm">
                 {slot.player.name}
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">
+              <div className="mt-1 text-[11px] text-muted-foreground">
                 {t("games.center.currentMinute", {
                   minute: liveMinute,
                 })}
@@ -651,7 +729,7 @@ export function GameCenterClient({
                 type="button"
                 variant={isSelected ? "default" : "outline"}
                 className={cn(
-                  "h-auto min-h-11 flex-col gap-1 px-2 py-2 text-[11px]",
+                  "h-auto min-h-10 flex-col gap-1 px-2 py-2 text-[11px]",
                   isSelected && "ring-2 ring-offset-2",
                 )}
                 disabled={substitutionDisabled || isSubmitting}
@@ -674,18 +752,16 @@ export function GameCenterClient({
         </div>
 
         {selectedEventType === "substitution" ? (
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("games.events.incomingPlayer")}
-            </p>
+          <div>
             <PlayerPicker
               players={offFieldPlayers}
               value={incomingPlayerId}
               onChange={setIncomingPlayerId}
-              placeholder={t("games.events.incomingPlayerPlaceholder")}
-              searchPlaceholder={t("games.events.incomingPlayerSearch")}
+              placeholder=""
+              searchPlaceholder=""
               emptyMessage={t("games.events.incomingPlayerEmpty")}
               disabled={isSubmitting}
+              anchor="top"
             />
           </div>
         ) : null}
@@ -737,6 +813,37 @@ export function GameCenterClient({
     }
   };
 
+  const handleEndFirstHalf = async () => {
+    setIsSubmitting(true);
+    try {
+      await endFirstHalf({ gameId: game._id as Id<"games"> });
+      toast.success(t("games.center.firstHalfEnded"));
+      setSelectedSlotId(null);
+      setSelectedEventType(null);
+      setIncomingPlayerId("");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("errors.generic");
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStartSecondHalf = async () => {
+    setIsSubmitting(true);
+    try {
+      await startSecondHalf({ gameId: game._id as Id<"games"> });
+      toast.success(t("games.center.secondHalfStarted"));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("errors.generic");
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleFinishMatch = async () => {
     setIsSubmitting(true);
     try {
@@ -745,6 +852,35 @@ export function GameCenterClient({
       setSelectedSlotId(null);
       setSelectedEventType(null);
       setIncomingPlayerId("");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("errors.generic");
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddStoppageTime = async () => {
+    const minutes = Number.parseInt(stoppageMinutes, 10);
+    if (!Number.isInteger(minutes) || minutes <= 0) {
+      toast.error(t("games.center.stoppageInvalid"));
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addStoppageTime({
+        gameId: game._id as Id<"games">,
+        minutes,
+      });
+      toast.success(
+        t("games.center.stoppageAdded", {
+          minutes,
+        }),
+      );
+      setIsStoppageDialogOpen(false);
+      setStoppageMinutes("1");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : t("errors.generic");
@@ -810,12 +946,27 @@ export function GameCenterClient({
                   {formatClock(elapsedSeconds)}
                 </div>
                 <div className="text-[11px] font-medium text-muted-foreground">
-                  {hasEnded
+                  {matchPhase === "finished"
                     ? t("games.center.endedState")
-                    : isLive
-                      ? t("games.center.liveState", { minute: liveMinute })
-                      : t("games.center.waitingState")}
+                    : matchPhase === "second_half"
+                      ? t("games.center.secondHalfState", {
+                          minute: liveMinute,
+                        })
+                      : matchPhase === "halftime"
+                        ? t("games.center.halftimeState")
+                        : matchPhase === "first_half"
+                          ? t("games.center.firstHalfState", {
+                              minute: liveMinute,
+                            })
+                          : t("games.center.waitingState")}
                 </div>
+                {currentHalfAddedMinutes > 0 ? (
+                  <div className="text-[11px] font-medium text-muted-foreground">
+                    {t("games.center.stoppageActive", {
+                      minutes: currentHalfAddedMinutes,
+                    })}
+                  </div>
+                ) : null}
               </div>
 
               <div className="flex min-w-0 flex-col items-center gap-2 text-center">
@@ -850,17 +1001,61 @@ export function GameCenterClient({
                     ? t("actions.loading")
                     : t("games.center.start")}
                 </Button>
-              ) : !hasEnded ? (
+              ) : matchPhase === "first_half" ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setIsStoppageDialogOpen(true)}
+                    disabled={isSubmitting}
+                  >
+                    {t("games.center.addStoppage")}
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={handleEndFirstHalf}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting
+                      ? t("actions.loading")
+                      : t("games.center.endFirstHalf")}
+                  </Button>
+                </>
+              ) : matchPhase === "halftime" ? (
                 <Button
                   type="button"
                   className="flex-1"
-                  onClick={handleFinishMatch}
+                  onClick={handleStartSecondHalf}
                   disabled={isSubmitting}
                 >
                   {isSubmitting
                     ? t("actions.loading")
-                    : t("games.center.finish")}
+                    : t("games.center.startSecondHalf")}
                 </Button>
+              ) : matchPhase === "second_half" ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setIsStoppageDialogOpen(true)}
+                    disabled={isSubmitting}
+                  >
+                    {t("games.center.addStoppage")}
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={handleFinishMatch}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting
+                      ? t("actions.loading")
+                      : t("games.center.endSecondHalf")}
+                  </Button>
+                </>
               ) : (
                 <Button type="button" className="flex-1" disabled>
                   {t("games.center.finished")}
@@ -980,6 +1175,48 @@ export function GameCenterClient({
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={isStoppageDialogOpen}
+        onOpenChange={setIsStoppageDialogOpen}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("games.center.stoppageDialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("games.center.stoppageDialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              type="number"
+              min={1}
+              max={30}
+              step={1}
+              value={stoppageMinutes}
+              onChange={(event) => setStoppageMinutes(event.target.value)}
+              placeholder="3"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsStoppageDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              {t("actions.cancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleAddStoppageTime}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? t("actions.loading") : t("actions.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

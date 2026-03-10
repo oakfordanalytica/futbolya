@@ -27,6 +27,7 @@ export interface GameRow {
   status:
     | "scheduled"
     | "in_progress"
+    | "halftime"
     | "awaiting_stats"
     | "pending_review"
     | "completed"
@@ -41,6 +42,8 @@ const STATUS_STYLES: Record<string, string> = {
   scheduled: "text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
   in_progress:
     "text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950",
+  halftime:
+    "text-violet-700 bg-violet-50 dark:text-violet-400 dark:bg-violet-950",
   awaiting_stats:
     "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950",
   pending_review:
@@ -216,6 +219,7 @@ export function createGameFilterConfigs(t: Translator): FilterConfig[] {
           value: "in_progress",
           label: t("games.statusOptions.in_progress"),
         },
+        { value: "halftime", label: t("games.statusOptions.halftime") },
         {
           value: "awaiting_stats",
           label: t("games.statusOptions.awaiting_stats"),

@@ -144,6 +144,7 @@ function shouldIncludePlayerStatGame(game: {
   status:
     | "scheduled"
     | "in_progress"
+    | "halftime"
     | "awaiting_stats"
     | "pending_review"
     | "completed"

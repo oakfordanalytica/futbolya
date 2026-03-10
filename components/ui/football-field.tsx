@@ -178,8 +178,8 @@ function TemplateSlotChip({
         side={popoverSide}
         align={popoverAlign}
         sideOffset={8}
-        collisionPadding={8}
-        className="z-[90] w-[210px] max-w-[calc(100vw-1rem)] rounded-xl p-2 sm:w-[240px]"
+        collisionPadding={12}
+        className="z-[90] w-[240px] max-w-[calc(100vw-1rem)] overflow-visible rounded-xl p-2"
       >
         {renderPopoverContent}
       </PopoverContent>
