@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useState, useMemo } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation } from "convex/react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,18 @@ interface CreateGameDialogProps {
   onOpenChange: (open: boolean) => void;
   orgSlug: string;
   preselectedClubId?: string;
+  gameToEdit?: {
+    _id: string;
+    seasonId?: string;
+    homeClubId: string;
+    awayClubId: string;
+    date: string;
+    startTime: string;
+    category: string;
+    gender: Gender;
+    locationName?: string;
+    locationCoordinates?: number[];
+  };
 }
 
 interface GameFormState {
@@ -127,6 +140,7 @@ export function CreateGameDialog({
   onOpenChange,
   orgSlug,
   preselectedClubId,
+  gameToEdit,
 }: CreateGameDialogProps) {
   const t = useTranslations("Common");
 
@@ -141,16 +155,47 @@ export function CreateGameDialog({
   });
 
   const createGame = useMutation(api.games.create);
+  const updateGame = useMutation(api.games.update);
+  const isEditMode = Boolean(gameToEdit);
 
-  const initialFormState: GameFormState = {
-    ...INITIAL_FORM_STATE,
-    homeTeamId: preselectedClubId || "",
-  };
+  const buildInitialFormState = (): GameFormState => ({
+    seasonId: gameToEdit?.seasonId ?? "",
+    homeTeamId: gameToEdit?.homeClubId ?? preselectedClubId ?? "",
+    awayTeamId: gameToEdit?.awayClubId ?? "",
+    date: gameToEdit?.date
+      ? new Date(`${gameToEdit.date}T12:00:00`)
+      : undefined,
+    startTime: gameToEdit?.startTime ?? INITIAL_FORM_STATE.startTime,
+    category: gameToEdit?.category ?? "",
+    gender: gameToEdit?.gender ?? INITIAL_FORM_STATE.gender,
+    locationName: gameToEdit?.locationName ?? "",
+    locationCoordinates:
+      gameToEdit?.locationCoordinates &&
+      gameToEdit.locationCoordinates.length === 2
+        ? ([
+            gameToEdit.locationCoordinates[0],
+            gameToEdit.locationCoordinates[1],
+          ] as [number, number])
+        : null,
+  });
 
-  const [gameType, setGameType] = useState<GameType>(null);
-  const [formState, setFormState] = useState<GameFormState>(initialFormState);
+  const [gameType, setGameType] = useState<GameType>(
+    gameToEdit ? (gameToEdit.seasonId ? "season" : "quick") : null,
+  );
+  const [formState, setFormState] = useState<GameFormState>(
+    buildInitialFormState,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lineupsGameId, setLineupsGameId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setGameType(gameToEdit ? (gameToEdit.seasonId ? "season" : "quick") : null);
+    setFormState(buildInitialFormState());
+  }, [open, gameToEdit, preselectedClubId]);
 
   const hasPreselectedClub = Boolean(preselectedClubId);
 
@@ -213,15 +258,20 @@ export function CreateGameDialog({
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      setGameType(null);
-      setFormState(initialFormState);
+      setGameType(
+        gameToEdit ? (gameToEdit.seasonId ? "season" : "quick") : null,
+      );
+      setFormState(buildInitialFormState());
     }
     onOpenChange(newOpen);
   };
 
   const handleBack = () => {
+    if (isEditMode) {
+      return;
+    }
     setGameType(null);
-    setFormState(initialFormState);
+    setFormState(buildInitialFormState());
   };
 
   const updateField = <K extends keyof GameFormState>(
@@ -255,23 +305,37 @@ export function CreateGameDialog({
     try {
       const dateString = format(formState.date, "yyyy-MM-dd");
 
-      const createdGameId = await createGame({
-        orgSlug,
-        seasonId: gameType === "season" ? formState.seasonId : undefined,
-        homeClubId: formState.homeTeamId as Id<"clubs">,
-        awayClubId: formState.awayTeamId as Id<"clubs">,
-        date: dateString,
-        startTime: formState.startTime,
-        category: formState.category,
-        gender: formState.gender,
-        locationName: formState.locationName || undefined,
-        locationCoordinates: formState.locationCoordinates || undefined,
-      });
+      if (gameToEdit) {
+        await updateGame({
+          gameId: gameToEdit._id as Id<"games">,
+          date: dateString,
+          startTime: formState.startTime,
+          category: formState.category,
+          gender: formState.gender,
+          locationName: formState.locationName || undefined,
+          locationCoordinates: formState.locationCoordinates || undefined,
+        });
+        toast.success(t("games.updated"));
+        onOpenChange(false);
+      } else {
+        const createdGameId = await createGame({
+          orgSlug,
+          seasonId: gameType === "season" ? formState.seasonId : undefined,
+          homeClubId: formState.homeTeamId as Id<"clubs">,
+          awayClubId: formState.awayTeamId as Id<"clubs">,
+          date: dateString,
+          startTime: formState.startTime,
+          category: formState.category,
+          gender: formState.gender,
+          locationName: formState.locationName || undefined,
+          locationCoordinates: formState.locationCoordinates || undefined,
+        });
 
-      setFormState(initialFormState);
-      setGameType(null);
-      onOpenChange(false);
-      setLineupsGameId(createdGameId);
+        setFormState(buildInitialFormState());
+        setGameType(null);
+        onOpenChange(false);
+        setLineupsGameId(createdGameId);
+      }
     } catch (error) {
       console.error("[CreateGameDialog] Failed to create game:", error);
     } finally {
@@ -320,7 +384,7 @@ export function CreateGameDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <>
         <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-          {gameType === null ? (
+          {!isEditMode && gameType === null ? (
             <>
               <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
                 <DialogTitle className="text-left">
@@ -418,13 +482,16 @@ export function CreateGameDialog({
                     size="icon"
                     onClick={handleBack}
                     className="h-8 w-8"
+                    disabled={isEditMode}
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <DialogTitle className="text-left">
-                    {gameType === "season"
-                      ? t("games.seasonGame")
-                      : t("games.quickGame")}
+                    {isEditMode
+                      ? t("games.editTitle")
+                      : gameType === "season"
+                        ? t("games.seasonGame")
+                        : t("games.quickGame")}
                   </DialogTitle>
                 </div>
               </DialogHeader>
@@ -466,6 +533,7 @@ export function CreateGameDialog({
                               <Button
                                 variant="outline"
                                 role="combobox"
+                                disabled={isEditMode}
                                 className={cn(
                                   "mt-2 w-full min-w-0 justify-between",
                                   !formState.homeTeamId &&
@@ -512,7 +580,11 @@ export function CreateGameDialog({
                                       <CommandItem
                                         key={club._id}
                                         value={club.name}
+                                        disabled={isEditMode}
                                         onSelect={() => {
+                                          if (isEditMode) {
+                                            return;
+                                          }
                                           updateField("homeTeamId", club._id);
                                         }}
                                       >
@@ -545,6 +617,7 @@ export function CreateGameDialog({
                             <Button
                               variant="outline"
                               role="combobox"
+                              disabled={isEditMode}
                               className={cn(
                                 "mt-2 w-full min-w-0 justify-between",
                                 !formState.awayTeamId &&
@@ -589,7 +662,11 @@ export function CreateGameDialog({
                                     <CommandItem
                                       key={club._id}
                                       value={club.name}
+                                      disabled={isEditMode}
                                       onSelect={() => {
+                                        if (isEditMode) {
+                                          return;
+                                        }
                                         updateField("awayTeamId", club._id);
                                       }}
                                     >
@@ -628,10 +705,11 @@ export function CreateGameDialog({
                             <Button
                               variant="outline"
                               role="combobox"
-                              disabled={!hasActiveSeasons}
+                              disabled={!hasActiveSeasons || isEditMode}
                               className={cn(
                                 "mt-2 w-full min-w-0 justify-between",
                                 !formState.seasonId && "text-muted-foreground",
+                                isEditMode && "cursor-not-allowed opacity-70",
                               )}
                             >
                               {formState.seasonId && selectedSeason ? (
@@ -661,7 +739,11 @@ export function CreateGameDialog({
                                     <CommandItem
                                       key={season.id}
                                       value={season.name}
+                                      disabled={isEditMode}
                                       onSelect={() => {
+                                        if (isEditMode) {
+                                          return;
+                                        }
                                         updateField("seasonId", season.id);
                                       }}
                                     >
@@ -808,6 +890,15 @@ export function CreateGameDialog({
                       <FieldLabel>{t("games.location")}</FieldLabel>
                       <div className="mt-2 h-48 overflow-hidden rounded-md border">
                         <LocationPicker
+                          initialLocation={
+                            formState.locationCoordinates &&
+                            formState.locationCoordinates.length === 2
+                              ? {
+                                  position: formState.locationCoordinates,
+                                  name: formState.locationName,
+                                }
+                              : null
+                          }
                           onLocationChange={(location) => {
                             if (location) {
                               updateField(
@@ -833,7 +924,11 @@ export function CreateGameDialog({
                     {t("actions.cancel")}
                   </Button>
                   <Button type="submit" disabled={isSubmitting || !isFormValid}>
-                    {isSubmitting ? t("actions.loading") : t("actions.create")}
+                    {isSubmitting
+                      ? t("actions.loading")
+                      : isEditMode
+                        ? t("actions.save")
+                        : t("actions.create")}
                   </Button>
                 </DialogFooter>
               </form>

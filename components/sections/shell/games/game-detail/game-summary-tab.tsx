@@ -28,10 +28,10 @@ export function GameSummaryTab({
   currentClubSlug,
 }: GameSummaryTabProps) {
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-6">
       <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start">
         <MatchLineups
-          className="xl:row-span-2"
+          className="min-w-0 xl:row-span-2"
           gameId={game._id}
           orgSlug={orgSlug}
           routeScope={routeScope}
@@ -50,8 +50,6 @@ export function GameSummaryTab({
           }}
         />
 
-        <GameBoxScore game={game} />
-
         <MatchTimeline
           homeTeam={{
             name: game.homeTeamName,
@@ -63,6 +61,8 @@ export function GameSummaryTab({
           }}
           events={[]}
         />
+
+        <GameBoxScore game={game} />
       </div>
     </div>
   );

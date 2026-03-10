@@ -7,7 +7,7 @@ import {
   MapTileLayer,
 } from "@/components/ui/map";
 import type { LatLngExpression } from "leaflet";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMap } from "react-leaflet";
 
 const DEFAULT_CENTER = [4.711, -74.0721] satisfies LatLngExpression;
@@ -16,31 +16,50 @@ type LocationData = { position: LatLngExpression; name: string };
 
 interface LocationPickerProps {
   onLocationChange?: (location: LocationData | null) => void;
+  initialLocation?: LocationData | null;
 }
 
-export function LocationPicker({ onLocationChange }: LocationPickerProps) {
+export function LocationPicker({
+  onLocationChange,
+  initialLocation = null,
+}: LocationPickerProps) {
   const callbackRef = useRef(onLocationChange);
   callbackRef.current = onLocationChange;
 
   return (
-    <Map center={DEFAULT_CENTER}>
+    <Map center={initialLocation?.position ?? DEFAULT_CENTER}>
       <MapTileLayer />
-      <SearchControlWithMarker callbackRef={callbackRef} />
+      <SearchControlWithMarker
+        callbackRef={callbackRef}
+        initialLocation={initialLocation}
+      />
     </Map>
   );
 }
 
 function SearchControlWithMarker({
   callbackRef,
+  initialLocation,
 }: {
   callbackRef: React.RefObject<
     ((location: LocationData | null) => void) | undefined
   >;
+  initialLocation?: LocationData | null;
 }) {
   const map = useMap();
   const [markerPosition, setMarkerPosition] = useState<LatLngExpression | null>(
-    null,
+    initialLocation?.position ?? null,
   );
+
+  useEffect(() => {
+    if (!initialLocation?.position) {
+      setMarkerPosition(null);
+      return;
+    }
+
+    setMarkerPosition(initialLocation.position);
+    map.setView(initialLocation.position, map.getZoom(), { animate: false });
+  }, [initialLocation, map]);
 
   return (
     <>

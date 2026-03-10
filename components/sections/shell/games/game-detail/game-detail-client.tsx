@@ -30,8 +30,8 @@ export function GameDetailClient({
   }
 
   return (
-    <div className="space-y-0">
-      <GameHeader game={game} orgSlug={orgSlug} />
+    <div className="w-full max-w-full space-y-0">
+      <GameHeader game={game} orgSlug={orgSlug} routeScope="org" />
 
       <Tabs defaultValue="summary" className="w-full">
         <div className="w-full overflow-x-auto overflow-y-hidden bg-muted/50 shadow-xs">
@@ -44,10 +44,10 @@ export function GameDetailClient({
             </TabsTrigger>
           </TabsList>
         </div>
-        <TabsContent value="summary" className="mt-4 px-4 md:px-6">
+        <TabsContent value="summary" className="mt-4 min-w-0 px-4 md:px-6">
           <GameSummaryTab game={game} orgSlug={orgSlug} routeScope="org" />
         </TabsContent>
-        <TabsContent value="stats" className="mt-4 px-4 md:px-6">
+        <TabsContent value="stats" className="mt-4 min-w-0 px-4 md:px-6">
           <GameStatsTable game={game} />
         </TabsContent>
       </Tabs>

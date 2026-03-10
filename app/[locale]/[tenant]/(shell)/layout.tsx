@@ -41,7 +41,7 @@ export default async function OrgLayout({ children, params }: LayoutProps) {
       navbar={<NavbarAppSidebar />}
       sidebar={<SidebarAppSidebar />}
     >
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 min-w-0 w-full max-w-full">{children}</main>
     </SidebarLayout>
   );
 }

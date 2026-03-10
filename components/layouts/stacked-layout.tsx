@@ -97,7 +97,7 @@ export function StackedLayout({
           <div
             className={clsx(
               "flex flex-1 flex-col",
-              fullWidth ? "w-full" : "mx-auto max-w-6xl w-full",
+              fullWidth ? "w-full max-w-full" : "mx-auto max-w-6xl w-full",
             )}
           >
             {children}

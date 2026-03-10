@@ -91,8 +91,13 @@ export function TeamGameDetailClient({
     game.status === "pending_review";
 
   return (
-    <div className="space-y-0">
-      <GameHeader game={game} orgSlug={orgSlug} />
+    <div className="w-full max-w-full space-y-0">
+      <GameHeader
+        game={game}
+        orgSlug={orgSlug}
+        routeScope="team"
+        currentClubSlug={clubSlug}
+      />
 
       {/* Stats Entry Section - Only for team view */}
       {isParticipant && (
@@ -140,7 +145,7 @@ export function TeamGameDetailClient({
           <TabsTrigger value="summary">{t("games.summary")}</TabsTrigger>
           <TabsTrigger value="stats">{t("games.stats")}</TabsTrigger>
         </TabsList>
-        <TabsContent value="summary" className="mt-4 px-4 md:px-6">
+        <TabsContent value="summary" className="mt-4 min-w-0 px-4 md:px-6">
           <GameSummaryTab
             game={game}
             orgSlug={orgSlug}
@@ -148,7 +153,7 @@ export function TeamGameDetailClient({
             currentClubSlug={clubSlug}
           />
         </TabsContent>
-        <TabsContent value="stats" className="mt-4 px-4 md:px-6">
+        <TabsContent value="stats" className="mt-4 min-w-0 px-4 md:px-6">
           <GameStatsTable game={game} />
         </TabsContent>
       </Tabs>

@@ -155,21 +155,21 @@ function buildDisplayLineup(
 
 function TeamBadge({ team, label }: { team: MatchLineupsTeam; label: string }) {
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
       {team.logoUrl ? (
         <Image
           src={team.logoUrl}
           alt={team.name}
           width={18}
           height={18}
-          className="size-[18px] object-contain"
+          className="size-4 object-contain sm:size-[18px]"
         />
       ) : (
-        <div className="flex size-[18px] items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+        <div className="flex size-4 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground sm:size-[18px] sm:text-[10px]">
           {team.name.charAt(0).toUpperCase()}
         </div>
       )}
-      <span className="truncate font-semibold">{label}</span>
+      <span className="truncate text-xs font-semibold sm:text-sm">{label}</span>
     </div>
   );
 }
@@ -360,7 +360,10 @@ function LineupTabPanel({
   return (
     <div className="space-y-4">
       {lineup.formation ? (
-        <FootballField lineup={lineup} />
+        <FootballField
+          lineup={lineup}
+          className="mx-auto max-w-[272px] sm:max-w-[320px]"
+        />
       ) : (
         <FieldPlaceholder
           title={lineup.teamName}
@@ -420,29 +423,39 @@ export function MatchLineups({
 
   return (
     <>
-      <Card className={cn("gap-0 rounded-xl pt-2 pb-0", className)}>
+      <Card
+        className={cn(
+          "w-full max-w-full min-w-0 overflow-hidden gap-0 rounded-xl pt-2 pb-0",
+          className,
+        )}
+      >
         {canEditLineups ? (
-          <CardHeader className="grid-rows-[auto] gap-0 border-b px-4 pt-0 pb-2 md:px-5 [.border-b]:pb-2">
+          <CardHeader className="grid-rows-[auto] gap-0 border-b px-3 pt-0 pb-2 md:px-5 [.border-b]:pb-2">
             <CardAction>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 px-2.5 text-xs"
+                className="h-7 max-w-full px-2 text-[11px] sm:px-2.5 sm:text-xs"
                 onClick={() => setIsEditorOpen(true)}
               >
-                {t("games.lineups.configure")}
+                <span className="sm:hidden">
+                  {t("games.lineups.configureShort")}
+                </span>
+                <span className="hidden sm:inline">
+                  {t("games.lineups.configure")}
+                </span>
               </Button>
             </CardAction>
           </CardHeader>
         ) : null}
         <CardContent
           className={cn(
-            "px-4 py-4 md:px-5 md:py-5",
+            "min-w-0 px-3 py-3 md:px-5 md:py-5",
             canEditLineups && "pt-2 md:pt-3",
           )}
         >
-          <Tabs defaultValue="home" className="w-full">
+          <Tabs defaultValue="home" className="min-w-0 w-full">
             <TabsList
               className="grid h-auto w-full grid-cols-2 rounded-full border bg-muted/30 px-1 pt-1 pb-0"
               style={
@@ -453,7 +466,7 @@ export function MatchLineups({
             >
               <TabsTrigger
                 value="home"
-                className="mr-0 min-w-0 rounded-full px-3 pt-1.5 pb-2 text-sm"
+                className="mr-0 min-w-0 rounded-full px-2 pt-1.5 pb-2 text-xs sm:px-3 sm:text-sm"
               >
                 <TeamBadge
                   team={homeTeam}
@@ -462,7 +475,7 @@ export function MatchLineups({
               </TabsTrigger>
               <TabsTrigger
                 value="away"
-                className="mr-0 min-w-0 rounded-full px-3 pt-1.5 pb-2 text-sm"
+                className="mr-0 min-w-0 rounded-full px-2 pt-1.5 pb-2 text-xs sm:px-3 sm:text-sm"
               >
                 <TeamBadge
                   team={awayTeam}
@@ -471,7 +484,7 @@ export function MatchLineups({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="home" className="mt-4">
+            <TabsContent value="home" className="mt-4 w-full min-w-0">
               <LineupTabPanel
                 lineup={homeLineup}
                 orgSlug={orgSlug}
@@ -489,7 +502,7 @@ export function MatchLineups({
               />
             </TabsContent>
 
-            <TabsContent value="away" className="mt-4">
+            <TabsContent value="away" className="mt-4 w-full min-w-0">
               <LineupTabPanel
                 lineup={awayLineup}
                 orgSlug={orgSlug}

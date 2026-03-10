@@ -244,7 +244,7 @@ export function GameBoxScore({ game }: GameBoxScoreProps) {
     Object.values(awayData.totals).some((value) => value > 0);
 
   return (
-    <div className="space-y-6 pt-3">
+    <div className="w-full min-w-0 space-y-6 pt-3">
       <TeamBoxScore
         team={homeTeam}
         starters={homeData.starters}
