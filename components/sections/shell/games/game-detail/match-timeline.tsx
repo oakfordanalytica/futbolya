@@ -437,7 +437,7 @@ export function MatchTimeline({
                 </div>
               </div>
 
-              <div className="absolute inset-x-0 top-[58px] h-8 sm:top-[74px]">
+              <div className="absolute inset-x-0 top-[72px] h-8 sm:top-[88px]">
                 {awayGroups.map((group) => (
                   <EventCluster
                     key={group.key}
