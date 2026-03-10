@@ -23,7 +23,7 @@ export default async function TenantSignInPage({ params }: PageProps) {
       />
       <SignIn
         signUpUrl={`${localePrefix}${ROUTES.tenant.auth.signUp(tenant)}`}
-        forceRedirectUrl={`${localePrefix}${ROUTES.org.teams.list(tenant)}`}
+        forceRedirectUrl={`${localePrefix}${ROUTES.org.root(tenant)}`}
       />
     </div>
   );

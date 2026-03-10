@@ -75,6 +75,11 @@ type EventDraft = {
   relatedPlayerId: string;
 };
 
+type ClubState = {
+  clubId: string;
+  onFieldPlayerIds: string[];
+};
+
 const EVENT_TYPES: EventType[] = [
   "goal",
   "yellow_card",
@@ -108,6 +113,42 @@ function createEventDraft(): EventDraft {
     playerId: "",
     relatedPlayerId: "",
   };
+}
+
+function buildEffectiveOnFieldState(
+  baseClubStates: ClubState[],
+  draftEvents: EventDraft[],
+  draftIndex: number,
+) {
+  const clubStateMap = new Map<string, Set<string>>(
+    baseClubStates.map((clubState) => [
+      clubState.clubId,
+      new Set(clubState.onFieldPlayerIds),
+    ]),
+  );
+
+  for (const draft of draftEvents.slice(0, draftIndex)) {
+    if (
+      draft.eventType !== "substitution" ||
+      !draft.playerId ||
+      !draft.relatedPlayerId
+    ) {
+      continue;
+    }
+
+    for (const onFieldIds of clubStateMap.values()) {
+      if (
+        onFieldIds.has(draft.playerId) ||
+        onFieldIds.has(draft.relatedPlayerId)
+      ) {
+        onFieldIds.delete(draft.playerId);
+        onFieldIds.add(draft.relatedPlayerId);
+        break;
+      }
+    }
+  }
+
+  return clubStateMap;
 }
 
 function PlayerPicker({
@@ -218,6 +259,7 @@ function EventDraftFields({
   draft,
   index,
   players,
+  clubStates,
   onChange,
   onRemove,
   canRemove,
@@ -227,6 +269,7 @@ function EventDraftFields({
   draft: EventDraft;
   index: number;
   players: EditorPlayer[];
+  clubStates: ClubState[];
   onChange: (nextDraft: EventDraft) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -234,9 +277,30 @@ function EventDraftFields({
   t: (key: string, values?: Record<string, string | number | Date>) => string;
 }) {
   const isSubstitution = draft.eventType === "substitution";
+  const onFieldPlayerIds = useMemo(
+    () =>
+      new Set(clubStates.flatMap((clubState) => clubState.onFieldPlayerIds)),
+    [clubStates],
+  );
+  const selectablePlayers = useMemo(() => {
+    return players.filter((player) => {
+      const clubState = clubStates.find(
+        (candidate) => candidate.clubId === player.clubId,
+      );
+
+      if (!clubState || clubState.onFieldPlayerIds.length === 0) {
+        return true;
+      }
+
+      return onFieldPlayerIds.has(player._id);
+    });
+  }, [clubStates, onFieldPlayerIds, players]);
   const selectedPlayer = useMemo(
-    () => players.find((player) => player._id === draft.playerId) ?? null,
-    [draft.playerId, players],
+    () =>
+      selectablePlayers.find((player) => player._id === draft.playerId) ??
+      players.find((player) => player._id === draft.playerId) ??
+      null,
+    [draft.playerId, players, selectablePlayers],
   );
 
   const relatedPlayerOptions = useMemo(() => {
@@ -244,14 +308,33 @@ function EventDraftFields({
       return [];
     }
 
+    const currentClubOnFieldIds =
+      clubStates.find((clubState) => clubState.clubId === selectedPlayer.clubId)
+        ?.onFieldPlayerIds ?? [];
+    const currentClubOnFieldSet = new Set(currentClubOnFieldIds);
+
     return players.filter(
       (player) =>
         player.clubId === selectedPlayer.clubId &&
-        player._id !== selectedPlayer._id,
+        player._id !== selectedPlayer._id &&
+        (currentClubOnFieldIds.length === 0 ||
+          !currentClubOnFieldSet.has(player._id)),
     );
-  }, [players, selectedPlayer]);
+  }, [clubStates, players, selectedPlayer]);
 
   useEffect(() => {
+    if (
+      draft.playerId &&
+      !selectablePlayers.some((player) => player._id === draft.playerId)
+    ) {
+      onChange({
+        ...draft,
+        playerId: "",
+        relatedPlayerId: "",
+      });
+      return;
+    }
+
     if (!isSubstitution && draft.relatedPlayerId) {
       onChange({ ...draft, relatedPlayerId: "" });
       return;
@@ -332,7 +415,7 @@ function EventDraftFields({
                 : t("games.events.player")}
             </FieldLabel>
             <PlayerPicker
-              players={players}
+              players={selectablePlayers}
               value={draft.playerId}
               onChange={(playerId) =>
                 onChange({
@@ -506,6 +589,18 @@ export function GameEventDialog({
     }
   };
 
+  const effectiveClubStatesByDraft = useMemo(
+    () =>
+      draftEvents.map((_, index) =>
+        buildEffectiveOnFieldState(
+          editorData?.clubStates ?? [],
+          draftEvents,
+          index,
+        ),
+      ),
+    [draftEvents, editorData?.clubStates],
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
@@ -540,6 +635,12 @@ export function GameEventDialog({
                   draft={draft}
                   index={index}
                   players={editorData?.players ?? []}
+                  clubStates={Array.from(
+                    effectiveClubStatesByDraft[index]?.entries() ?? [],
+                  ).map(([clubId, onFieldIds]) => ({
+                    clubId,
+                    onFieldPlayerIds: Array.from(onFieldIds),
+                  }))}
                   onChange={(nextDraft) =>
                     handleUpdateDraft(draft.id, nextDraft)
                   }

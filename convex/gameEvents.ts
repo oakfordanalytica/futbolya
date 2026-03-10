@@ -39,6 +39,11 @@ const editorPlayerValidator = v.object({
   cometNumber: v.optional(v.string()),
 });
 
+const editorClubStateValidator = v.object({
+  clubId: v.id("clubs"),
+  onFieldPlayerIds: v.array(v.id("players")),
+});
+
 const registerEventInputValidator = v.object({
   playerId: v.id("players"),
   relatedPlayerId: v.optional(v.id("players")),
@@ -83,8 +88,9 @@ async function getGameEventAccessScope(ctx: EventCtx, gameId: Id<"games">) {
   return {
     user,
     game,
-    canManageHome: isOrgAdmin || canManageHome,
-    canManageAway: isOrgAdmin || canManageAway,
+    isOrgAdmin,
+    canAccessHome: isOrgAdmin || canManageHome,
+    canAccessAway: isOrgAdmin || canManageAway,
   };
 }
 
@@ -268,6 +274,143 @@ async function incrementGameScore(
   }
 }
 
+async function getInitialOnFieldPlayerIdsForClub(
+  ctx: EventCtx,
+  gameId: Id<"games">,
+  clubId: Id<"clubs">,
+) {
+  const lineup = await ctx.db
+    .query("gameLineups")
+    .withIndex("byGameAndClub", (q) =>
+      q.eq("gameId", gameId).eq("clubId", clubId),
+    )
+    .unique();
+
+  const slotPlayerIds =
+    lineup?.slots
+      ?.map((slot) => slot.playerId)
+      .filter((playerId): playerId is Id<"players"> => Boolean(playerId)) ?? [];
+
+  if (slotPlayerIds.length > 0) {
+    return slotPlayerIds;
+  }
+
+  if ((lineup?.starterPlayerIds.length ?? 0) > 0) {
+    return lineup!.starterPlayerIds;
+  }
+
+  const statRows = await ctx.db
+    .query("gamePlayerStats")
+    .withIndex("byGameAndClub", (q) =>
+      q.eq("gameId", gameId).eq("clubId", clubId),
+    )
+    .collect();
+
+  const starterStatIds = statRows
+    .filter((stat) => stat.isStarter)
+    .map((stat) => stat.playerId);
+
+  if (starterStatIds.length > 0) {
+    return starterStatIds;
+  }
+
+  return [];
+}
+
+async function buildCurrentOnFieldByClub(
+  ctx: EventCtx,
+  gameId: Id<"games">,
+  clubIds: Id<"clubs">[],
+) {
+  const clubEntries: Array<[Id<"clubs">, Set<Id<"players">>]> =
+    await Promise.all(
+      clubIds.map(
+        async (clubId) =>
+          [
+            clubId,
+            new Set(
+              await getInitialOnFieldPlayerIdsForClub(ctx, gameId, clubId),
+            ),
+          ] as [Id<"clubs">, Set<Id<"players">>],
+      ),
+    );
+
+  const currentOnFieldByClub = new Map<Id<"clubs">, Set<Id<"players">>>(
+    clubEntries,
+  );
+
+  const existingEvents = await ctx.db
+    .query("gameEvents")
+    .withIndex("byGame", (q) => q.eq("gameId", gameId))
+    .collect();
+
+  const sortedEvents = existingEvents.sort((a, b) => {
+    if (a.minute !== b.minute) {
+      return a.minute - b.minute;
+    }
+    return a._creationTime - b._creationTime;
+  });
+
+  for (const event of sortedEvents) {
+    if (event.eventType !== "substitution" || !event.relatedPlayerId) {
+      continue;
+    }
+
+    const currentOnField = currentOnFieldByClub.get(event.clubId);
+    if (!currentOnField) {
+      continue;
+    }
+
+    const resolvedDirection = resolveSubstitutionDirection(currentOnField, {
+      playerId: event.playerId,
+      relatedPlayerId: event.relatedPlayerId,
+    });
+
+    if (!resolvedDirection) {
+      continue;
+    }
+
+    currentOnField.delete(resolvedDirection.outgoingPlayerId);
+    currentOnField.add(resolvedDirection.incomingPlayerId);
+  }
+
+  return currentOnFieldByClub;
+}
+
+function resolveSubstitutionDirection(
+  currentOnField: Set<Id<"players">>,
+  event: {
+    playerId: Id<"players">;
+    relatedPlayerId?: Id<"players">;
+  },
+) {
+  if (!event.relatedPlayerId) {
+    return null;
+  }
+
+  const playerIsOnField = currentOnField.has(event.playerId);
+  const relatedPlayerIsOnField = currentOnField.has(event.relatedPlayerId);
+
+  if (playerIsOnField && !relatedPlayerIsOnField) {
+    return {
+      outgoingPlayerId: event.playerId,
+      incomingPlayerId: event.relatedPlayerId,
+    };
+  }
+
+  if (!playerIsOnField && relatedPlayerIsOnField) {
+    return {
+      outgoingPlayerId: event.relatedPlayerId,
+      incomingPlayerId: event.playerId,
+    };
+  }
+
+  return {
+    outgoingPlayerId: event.playerId,
+    incomingPlayerId: event.relatedPlayerId,
+  };
+}
+
 async function registerEventAndSync(
   ctx: MutationCtx,
   args: {
@@ -293,6 +436,7 @@ async function registerEventAndSync(
     };
     canManageHome: boolean;
     canManageAway: boolean;
+    currentOnFieldByClub: Map<Id<"clubs">, Set<Id<"players">>>;
   },
 ) {
   const player = await ctx.db.get(args.playerId);
@@ -324,6 +468,9 @@ async function registerEventAndSync(
   );
   let relatedPlayerId: Id<"players"> | undefined;
   let relatedPlayerName: string | undefined;
+  const currentClubOnField =
+    args.currentOnFieldByClub.get(player.clubId) ?? new Set<Id<"players">>();
+  const hasTrackedOnField = currentClubOnField.size > 0;
 
   if (args.eventType === "substitution") {
     if (!args.relatedPlayerId) {
@@ -353,8 +500,19 @@ async function registerEventAndSync(
       relatedPlayer.lastName,
       relatedPlayer.secondLastName,
     );
+
+    if (hasTrackedOnField) {
+      if (!currentClubOnField.has(player._id)) {
+        throw new Error("Outgoing player must currently be on the field");
+      }
+      if (currentClubOnField.has(relatedPlayerId)) {
+        throw new Error("Incoming player is already on the field");
+      }
+    }
   } else if (args.relatedPlayerId) {
     throw new Error("This event type does not support a related player");
+  } else if (hasTrackedOnField && !currentClubOnField.has(player._id)) {
+    throw new Error("Selected player is not currently on the field");
   }
 
   const eventId = await ctx.db.insert("gameEvents", {
@@ -443,6 +601,10 @@ async function registerEventAndSync(
         clubId: player.clubId,
         increments: { substitutions: 1 },
       });
+      if (relatedPlayerId) {
+        currentClubOnField.delete(player._id);
+        currentClubOnField.add(relatedPlayerId);
+      }
       break;
     default:
       break;
@@ -458,8 +620,10 @@ export const getByGameId = query({
     events: v.array(timelineEventValidator),
   }),
   handler: async (ctx, args) => {
-    const { game, canManageHome, canManageAway } =
-      await getGameEventAccessScope(ctx, args.gameId);
+    const { game, isOrgAdmin } = await getGameEventAccessScope(
+      ctx,
+      args.gameId,
+    );
 
     const events = await ctx.db
       .query("gameEvents")
@@ -474,7 +638,7 @@ export const getByGameId = query({
     });
 
     return {
-      canManageEvents: canManageHome || canManageAway,
+      canManageEvents: isOrgAdmin,
       events: sortedEvents.map((event) => ({
         id: event._id,
         side:
@@ -497,15 +661,18 @@ export const getEditorData = query({
   returns: v.object({
     canManageEvents: v.boolean(),
     players: v.array(editorPlayerValidator),
+    clubStates: v.array(editorClubStateValidator),
   }),
   handler: async (ctx, args) => {
-    const { game, canManageHome, canManageAway } =
-      await getGameEventAccessScope(ctx, args.gameId);
+    const { game, isOrgAdmin } = await getGameEventAccessScope(
+      ctx,
+      args.gameId,
+    );
+    if (!isOrgAdmin) {
+      throw new Error("Admin access required for match events");
+    }
 
-    const allowedClubIds = [
-      ...(canManageHome ? [game.homeClubId] : []),
-      ...(canManageAway ? [game.awayClubId] : []),
-    ];
+    const allowedClubIds = [game.homeClubId, game.awayClubId];
 
     const clubs = await Promise.all(
       allowedClubIds.map((clubId) => ctx.db.get(clubId)),
@@ -523,6 +690,12 @@ export const getEditorData = query({
           .withIndex("byClub", (q) => q.eq("clubId", clubId))
           .collect(),
       ),
+    );
+
+    const currentOnFieldByClub = await buildCurrentOnFieldByClub(
+      ctx,
+      args.gameId,
+      allowedClubIds,
     );
 
     const players = playersByClub
@@ -555,8 +728,12 @@ export const getEditorData = query({
       }));
 
     return {
-      canManageEvents: canManageHome || canManageAway,
+      canManageEvents: true,
       players,
+      clubStates: allowedClubIds.map((clubId) => ({
+        clubId,
+        onFieldPlayerIds: Array.from(currentOnFieldByClub.get(clubId) ?? []),
+      })),
     };
   },
 });
@@ -571,8 +748,18 @@ export const register = mutation({
   },
   returns: v.id("gameEvents"),
   handler: async (ctx, args) => {
-    const { user, game, canManageHome, canManageAway } =
-      await getGameEventAccessScope(ctx, args.gameId);
+    const { user, game, isOrgAdmin } = await getGameEventAccessScope(
+      ctx,
+      args.gameId,
+    );
+    if (!isOrgAdmin) {
+      throw new Error("Admin access required for match events");
+    }
+    const currentOnFieldByClub = await buildCurrentOnFieldByClub(
+      ctx,
+      args.gameId,
+      [game.homeClubId, game.awayClubId],
+    );
 
     if (!Number.isFinite(args.minute) || args.minute < 1 || args.minute > 130) {
       throw new Error("Minute must be between 1 and 130");
@@ -585,8 +772,9 @@ export const register = mutation({
       eventType: args.eventType,
       userId: user._id,
       game,
-      canManageHome,
-      canManageAway,
+      canManageHome: true,
+      canManageAway: true,
+      currentOnFieldByClub,
     });
   },
 });
@@ -599,8 +787,18 @@ export const registerBatch = mutation({
   },
   returns: v.array(v.id("gameEvents")),
   handler: async (ctx, args) => {
-    const { user, game, canManageHome, canManageAway } =
-      await getGameEventAccessScope(ctx, args.gameId);
+    const { user, game, isOrgAdmin } = await getGameEventAccessScope(
+      ctx,
+      args.gameId,
+    );
+    if (!isOrgAdmin) {
+      throw new Error("Admin access required for match events");
+    }
+    const currentOnFieldByClub = await buildCurrentOnFieldByClub(
+      ctx,
+      args.gameId,
+      [game.homeClubId, game.awayClubId],
+    );
 
     if (!Number.isFinite(args.minute) || args.minute < 1 || args.minute > 130) {
       throw new Error("Minute must be between 1 and 130");
@@ -619,8 +817,9 @@ export const registerBatch = mutation({
         eventType: event.eventType,
         userId: user._id,
         game,
-        canManageHome,
-        canManageAway,
+        canManageHome: true,
+        canManageAway: true,
+        currentOnFieldByClub,
       });
       eventIds.push(eventId);
     }

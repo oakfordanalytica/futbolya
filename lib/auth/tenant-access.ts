@@ -1,15 +1,10 @@
 import "server-only";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { getAuthToken } from "@/lib/auth/auth";
-import {
-  hasSingleTenantAccessFromSessionClaims,
-  isAdminFromSessionClaims,
-  roleFromSessionClaims,
-  type TenantRole,
-} from "@/lib/auth/roles";
+import { roleFromSessionClaims, type TenantRole } from "@/lib/auth/roles";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 
 interface TenantAccess {
@@ -30,6 +25,29 @@ function normalizeMembershipRole(
   }
 
   if (role === "member" || role === "coach") {
+    return "coach";
+  }
+
+  return null;
+}
+
+function normalizeMetadataRole(
+  role: unknown,
+  isSuperAdmin: unknown,
+): TenantRole | null {
+  if (isSuperAdmin === true) {
+    return "superadmin";
+  }
+
+  if (role === "superadmin" || role === "org:superadmin") {
+    return "superadmin";
+  }
+
+  if (role === "admin" || role === "org:admin") {
+    return "admin";
+  }
+
+  if (role === "coach" || role === "member" || role === "org:member") {
     return "coach";
   }
 
@@ -80,14 +98,30 @@ export async function getTenantAccess(
       }
     }
 
-    const role = roleFromSessionClaims(authObject.sessionClaims);
-    return {
-      hasAccess: hasSingleTenantAccessFromSessionClaims(
-        authObject.sessionClaims,
-      ),
-      isAdmin: isAdminFromSessionClaims(authObject.sessionClaims),
-      role,
-    };
+    try {
+      const client = await clerkClient();
+      const clerkUser = await client.users.getUser(authObject.userId);
+      const role =
+        normalizeMetadataRole(
+          clerkUser.publicMetadata?.role,
+          clerkUser.publicMetadata?.isSuperAdmin,
+        ) ??
+        roleFromSessionClaims(authObject.sessionClaims) ??
+        "coach";
+
+      return {
+        hasAccess: true,
+        isAdmin: role === "admin" || role === "superadmin",
+        role,
+      };
+    } catch {
+      const role = roleFromSessionClaims(authObject.sessionClaims) ?? "coach";
+      return {
+        hasAccess: true,
+        isAdmin: role === "admin" || role === "superadmin",
+        role,
+      };
+    }
   }
 
   const resolvedToken = token ?? (await getAuthToken());

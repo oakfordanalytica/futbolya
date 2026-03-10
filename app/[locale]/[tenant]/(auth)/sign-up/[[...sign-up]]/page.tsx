@@ -17,7 +17,7 @@ export default async function TenantSignUpPage({ params }: PageProps) {
   return (
     <SignUp
       signInUrl={`${localePrefix}${ROUTES.tenant.auth.signIn(tenant)}`}
-      forceRedirectUrl={`${localePrefix}${ROUTES.org.teams.list(tenant)}`}
+      forceRedirectUrl={`${localePrefix}${ROUTES.org.root(tenant)}`}
       {...signUpProps}
     />
   );

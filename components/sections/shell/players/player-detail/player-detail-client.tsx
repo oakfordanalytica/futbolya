@@ -11,7 +11,6 @@ import { DataTable } from "@/components/table/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { COMPACT_STATS_TABLE_CLASS } from "@/components/sections/shell/stats/stats-columns";
 import { darkenHex } from "@/lib/utils";
-import { useIsAdmin } from "@/hooks/use-is-admin";
 import { PlayerFormDialog } from "@/components/sections/shell/teams/soccer/team-settings/player-form-dialog";
 import { PlayerBioDialog } from "./player-bio-dialog";
 import { PlayerHighlightDialog } from "./player-highlight-dialog";
@@ -36,7 +35,6 @@ export function PlayerDetailClient({
   const locale = useLocale();
   const t = useTranslations("Common");
   const player = usePreloadedQuery(preloadedPlayer);
-  const { isAdmin, isLoaded } = useIsAdmin();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isBioEditOpen, setIsBioEditOpen] = useState(false);
   const [isHighlightDialogOpen, setIsHighlightDialogOpen] = useState(false);
@@ -100,10 +98,11 @@ export function PlayerDetailClient({
     [locale, t],
   );
   const gameLogRows = playerGameLog ?? [];
-  const canManagePlayerContent =
+  const canManagePlayer =
     player.viewerAccessLevel === "superadmin" ||
     player.viewerAccessLevel === "admin" ||
     player.viewerAccessLevel === "coach";
+  const canManagePlayerContent = canManagePlayer;
   const bioTitle = player.bioTitle?.trim() || t("players.bio");
   const bioContent = player.bioContent?.trim() || t("players.bioPlaceholder");
 
@@ -114,7 +113,7 @@ export function PlayerDetailClient({
         orgSlug={orgSlug}
         positionName={positionName}
         statsBackgroundColor={darkerColor}
-        canEdit={isLoaded && isAdmin}
+        canEdit={canManagePlayer}
         onEdit={() => setIsEditOpen(true)}
       />
 

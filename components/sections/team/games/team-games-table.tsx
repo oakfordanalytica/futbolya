@@ -12,6 +12,7 @@ import {
   type GameRow,
 } from "@/components/sections/shell/games/columns";
 import { CreateGameDialog } from "@/components/sections/shell/games/create-game-dialog";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { TEAM_ROUTES } from "@/lib/navigation/routes";
 
 interface TeamGamesTableProps {
@@ -31,6 +32,7 @@ export function TeamGamesTable({
   const t = useTranslations("Common");
   const data = usePreloadedQuery(preloadedGames);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const { isAdmin, isLoaded } = useIsAdmin();
 
   const handleRowClick = (game: GameRow) => {
     router.push(TEAM_ROUTES.games.detail(orgSlug, clubSlug, game._id));
@@ -52,16 +54,18 @@ export function TeamGamesTable({
         filtersMenuLabel={t("table.filters")}
         previousLabel={t("actions.previous")}
         nextLabel={t("actions.next")}
-        onCreate={() => setIsCreateOpen(true)}
+        onCreate={isLoaded && isAdmin ? () => setIsCreateOpen(true) : undefined}
         onRowClick={handleRowClick}
       />
 
-      <CreateGameDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        orgSlug={orgSlug}
-        preselectedClubId={clubId}
-      />
+      {isLoaded && isAdmin ? (
+        <CreateGameDialog
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          orgSlug={orgSlug}
+          preselectedClubId={clubId}
+        />
+      ) : null}
     </div>
   );
 }

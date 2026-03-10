@@ -39,7 +39,6 @@ export default async function TeamGameDetailPage({
       preloadedGame={preloadedGame}
       orgSlug={tenant}
       clubSlug={team}
-      clubId={club._id}
     />
   );
 }

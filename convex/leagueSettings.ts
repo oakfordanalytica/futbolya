@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { requireOrgAccess, requireOrgAdmin } from "./lib/permissions";
+import { requireOrgAdmin } from "./lib/permissions";
 
 // ============================================================================
 // VALIDATORS
@@ -168,7 +168,14 @@ export const listSeasons = query({
   args: { leagueSlug: v.string() },
   returns: v.array(seasonValidator),
   handler: async (ctx, args) => {
-    const { organization } = await requireOrgAccess(ctx, args.leagueSlug);
+    const organization = await ctx.db
+      .query("organizations")
+      .withIndex("bySlug", (q) => q.eq("slug", args.leagueSlug))
+      .unique();
+
+    if (!organization) {
+      return [];
+    }
 
     const settings = await ctx.db
       .query("leagueSettings")
@@ -190,7 +197,14 @@ export const listActiveSeasons = query({
   args: { leagueSlug: v.string() },
   returns: v.array(seasonValidator),
   handler: async (ctx, args) => {
-    const { organization } = await requireOrgAccess(ctx, args.leagueSlug);
+    const organization = await ctx.db
+      .query("organizations")
+      .withIndex("bySlug", (q) => q.eq("slug", args.leagueSlug))
+      .unique();
+
+    if (!organization) {
+      return [];
+    }
 
     const settings = await ctx.db
       .query("leagueSettings")

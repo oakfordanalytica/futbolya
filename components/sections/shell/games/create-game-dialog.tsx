@@ -144,15 +144,30 @@ export function CreateGameDialog({
 }: CreateGameDialogProps) {
   const t = useTranslations("Common");
 
-  const teamConfig = useQuery(api.leagueSettings.getTeamConfig, {
-    leagueSlug: orgSlug,
-  });
-  const clubs = useQuery(api.clubs.listByLeague, {
-    orgSlug,
-  });
-  const activeSeasons = useQuery(api.leagueSettings.listActiveSeasons, {
-    leagueSlug: orgSlug,
-  });
+  const teamConfig = useQuery(
+    api.leagueSettings.getTeamConfig,
+    open
+      ? {
+          leagueSlug: orgSlug,
+        }
+      : "skip",
+  );
+  const clubs = useQuery(
+    api.clubs.listByLeague,
+    open
+      ? {
+          orgSlug,
+        }
+      : "skip",
+  );
+  const activeSeasons = useQuery(
+    api.leagueSettings.listActiveSeasons,
+    open
+      ? {
+          leagueSlug: orgSlug,
+        }
+      : "skip",
+  );
 
   const createGame = useMutation(api.games.create);
   const updateGame = useMutation(api.games.update);

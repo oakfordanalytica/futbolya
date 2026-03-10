@@ -7,6 +7,7 @@ import { SidebarLayout } from "@/components/layouts/sidebar-layout";
 import { OrgMismatchError } from "@/components/sections/shell/organizations/org-mismatch-error";
 import { getTenantAccess } from "@/lib/auth/tenant-access";
 import { getPrimaryTeamSlug } from "@/lib/auth/team-access";
+import { syncCurrentUser } from "@/lib/auth/sync-current-user";
 import { TEAM_ROUTES } from "@/lib/navigation/routes";
 import { routing } from "@/i18n/routing";
 import { redirect } from "next/navigation";
@@ -19,6 +20,7 @@ interface LayoutProps {
 export default async function OrgLayout({ children, params }: LayoutProps) {
   const { locale, tenant } = await params;
   const localePrefix = locale === routing.defaultLocale ? "" : `/${locale}`;
+  await syncCurrentUser();
   const { hasAccess, role } = await getTenantAccess(tenant);
 
   if (!hasAccess) {

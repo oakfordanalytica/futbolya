@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getTenantAccess } from "@/lib/auth/tenant-access";
 import { getAccessibleTeamSlugs } from "@/lib/auth/team-access";
+import { syncCurrentUser } from "@/lib/auth/sync-current-user";
 import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
 import { routing } from "@/i18n/routing";
 
@@ -15,6 +16,7 @@ export default async function TeamScopedLayout({
 }: TeamScopedLayoutProps) {
   const { locale, tenant, team } = await params;
   const localePrefix = locale === routing.defaultLocale ? "" : `/${locale}`;
+  await syncCurrentUser();
   const { hasAccess, role } = await getTenantAccess(tenant);
 
   if (!hasAccess) {

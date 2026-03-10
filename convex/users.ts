@@ -20,6 +20,101 @@ type CurrentUserWithMemberships = {
   }>;
 };
 
+type SingleTenantResolvedRole = "superadmin" | "admin" | "coach";
+
+type PendingStaffInvite = {
+  staffRole: string;
+  clubId: string;
+  categoryId?: string;
+};
+
+function resolveSingleTenantRole(data: {
+  publicMetadata?: {
+    role?: unknown;
+    isSuperAdmin?: unknown;
+  };
+}): SingleTenantResolvedRole {
+  if (data.publicMetadata?.isSuperAdmin === true) {
+    return "superadmin";
+  }
+
+  const role = data.publicMetadata?.role;
+  if (role === "superadmin" || role === "org:superadmin") {
+    return "superadmin";
+  }
+  if (role === "admin" || role === "org:admin") {
+    return "admin";
+  }
+  if (role === "coach" || role === "member" || role === "org:member") {
+    return "coach";
+  }
+  return "coach";
+}
+
+function getPendingStaffInvite(
+  publicMetadata: unknown,
+): PendingStaffInvite | null {
+  if (!publicMetadata || typeof publicMetadata !== "object") {
+    return null;
+  }
+
+  const pendingStaff = (publicMetadata as { pendingStaff?: unknown })
+    .pendingStaff;
+  if (!pendingStaff || typeof pendingStaff !== "object") {
+    return null;
+  }
+
+  const staffRole = (pendingStaff as { staffRole?: unknown }).staffRole;
+  const clubId = (pendingStaff as { clubId?: unknown }).clubId;
+  const categoryId = (pendingStaff as { categoryId?: unknown }).categoryId;
+
+  if (typeof staffRole !== "string" || typeof clubId !== "string") {
+    return null;
+  }
+
+  return {
+    staffRole,
+    clubId,
+    ...(typeof categoryId === "string" ? { categoryId } : {}),
+  };
+}
+
+async function processPendingStaffInvite(args: {
+  ctx: {
+    runQuery: Function;
+    runMutation: Function;
+  };
+  clerkUserId: string;
+  publicMetadata: unknown;
+}) {
+  const pendingStaff = getPendingStaffInvite(args.publicMetadata);
+  if (!pendingStaff) {
+    return;
+  }
+
+  const user = await args.ctx.runQuery(internal.users.getByClerkId, {
+    clerkId: args.clerkUserId,
+  });
+
+  if (!user) {
+    return;
+  }
+
+  await args.ctx.runMutation(internal.staff.createFromClerkMembership, {
+    userId: user._id,
+    clubId: pendingStaff.clubId,
+    staffRole: pendingStaff.staffRole,
+    ...(pendingStaff.categoryId ? { categoryId: pendingStaff.categoryId } : {}),
+  });
+
+  await clerkClient.users.updateUserMetadata(args.clerkUserId, {
+    publicMetadata: {
+      ...(args.publicMetadata as Record<string, unknown>),
+      pendingStaff: undefined,
+    },
+  });
+}
+
 /**
  * Get the current authenticated user's profile with their organization memberships.
  */
@@ -79,7 +174,9 @@ export const me = query({
       organizationIds.map((id) => ctx.db.get(id)),
     );
     const organizationMap = new Map(
-      organizations.filter(Boolean).map((organization) => [organization!._id, organization!]),
+      organizations
+        .filter(Boolean)
+        .map((organization) => [organization!._id, organization!]),
     );
 
     const enrichedMemberships = memberships.map((membership) => {
@@ -96,6 +193,55 @@ export const me = query({
       ...user,
       memberships: enrichedMemberships,
     };
+  },
+});
+
+/**
+ * Self-heal the current Clerk user into Convex and ensure synthetic single-tenant
+ * membership/staff assignment exists before protected layouts resolve access.
+ */
+export const syncCurrentUser = action({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const clerkUser = await clerkClient.users.getUser(identity.subject);
+
+    await ctx.runMutation(internal.users.upsertFromClerk, {
+      data: {
+        id: clerkUser.id,
+        first_name: clerkUser.firstName,
+        last_name: clerkUser.lastName,
+        image_url: clerkUser.imageUrl,
+        profile_image_url: clerkUser.imageUrl,
+        primary_email_address:
+          clerkUser.primaryEmailAddress?.emailAddress ?? undefined,
+        email_addresses: clerkUser.emailAddresses.map((email) => ({
+          email_address: email.emailAddress,
+        })),
+        public_metadata: clerkUser.publicMetadata,
+      },
+    });
+
+    if (isSingleTenantMode()) {
+      await ctx.runMutation(internal.members.upsertFromSingleTenant, {
+        clerkUserId: clerkUser.id,
+        organizationSlug: DEFAULT_TENANT_SLUG,
+        role: resolveSingleTenantRole(clerkUser),
+      });
+
+      await processPendingStaffInvite({
+        ctx,
+        clerkUserId: clerkUser.id,
+        publicMetadata: clerkUser.publicMetadata,
+      });
+    }
+
+    return null;
   },
 });
 
