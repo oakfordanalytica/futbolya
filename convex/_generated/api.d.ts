@@ -13,6 +13,7 @@ import type * as clerk from "../clerk.js";
 import type * as clubs from "../clubs.js";
 import type * as conferences from "../conferences.js";
 import type * as files from "../files.js";
+import type * as gameCenter from "../gameCenter.js";
 import type * as gameEvents from "../gameEvents.js";
 import type * as gameLineups from "../gameLineups.js";
 import type * as games from "../games.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   clubs: typeof clubs;
   conferences: typeof conferences;
   files: typeof files;
+  gameCenter: typeof gameCenter;
   gameEvents: typeof gameEvents;
   gameLineups: typeof gameLineups;
   games: typeof games;

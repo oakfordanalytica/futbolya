@@ -10,6 +10,15 @@ interface GameSummaryTabProps {
   currentClubSlug?: string;
   game: {
     _id: string;
+    status:
+      | "scheduled"
+      | "in_progress"
+      | "awaiting_stats"
+      | "pending_review"
+      | "completed"
+      | "cancelled";
+    matchStartedAt?: number;
+    matchEndedAt?: number;
     homeTeamName: string;
     awayTeamName: string;
     homeClubSlug: string;
@@ -33,6 +42,9 @@ export function GameSummaryTab({
         <MatchLineups
           className="min-w-0 xl:row-span-2"
           gameId={game._id}
+          gameStatus={game.status}
+          matchStartedAt={game.matchStartedAt}
+          matchEndedAt={game.matchEndedAt}
           orgSlug={orgSlug}
           routeScope={routeScope}
           currentClubSlug={currentClubSlug}
@@ -52,6 +64,7 @@ export function GameSummaryTab({
 
         <MatchTimeline
           gameId={game._id}
+          orgSlug={orgSlug}
           homeTeam={{
             name: game.homeTeamName,
             logoUrl: game.homeTeamLogo,

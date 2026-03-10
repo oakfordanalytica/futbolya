@@ -18,6 +18,24 @@ export function parseIsoDateAsLocal(date: string): Date | null {
   return parsed;
 }
 
+export function parseLocalDateTime(date: string, time: string): Date | null {
+  const parsedDate = parseIsoDateAsLocal(date);
+  if (!parsedDate || !/^\d{2}:\d{2}$/.test(time)) {
+    return null;
+  }
+
+  const [hours, minutes] = time.split(":").map(Number);
+  const parsedDateTime = new Date(
+    parsedDate.getFullYear(),
+    parsedDate.getMonth(),
+    parsedDate.getDate(),
+    hours,
+    minutes,
+  );
+
+  return Number.isNaN(parsedDateTime.getTime()) ? null : parsedDateTime;
+}
+
 export function formatIsoDateAsLocal(
   date: string,
   locales?: string | string[],

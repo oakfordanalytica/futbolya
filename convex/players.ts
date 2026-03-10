@@ -143,6 +143,7 @@ function shouldIncludePlayerStatGame(game: {
   organizationId: Id<"organizations">;
   status:
     | "scheduled"
+    | "in_progress"
     | "awaiting_stats"
     | "pending_review"
     | "completed"

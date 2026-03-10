@@ -26,6 +26,7 @@ const gender = v.union(
 
 const gameStatus = v.union(
   v.literal("scheduled"),
+  v.literal("in_progress"),
   v.literal("awaiting_stats"),
   v.literal("pending_review"),
   v.literal("completed"),
@@ -58,6 +59,8 @@ const gameValidator = v.object({
   status: gameStatus,
   homeScore: v.optional(v.number()),
   awayScore: v.optional(v.number()),
+  matchStartedAt: v.optional(v.number()),
+  matchEndedAt: v.optional(v.number()),
   homeStatsSubmittedAt: v.optional(v.number()),
   awayStatsSubmittedAt: v.optional(v.number()),
   homeStatsConfirmed: v.optional(v.boolean()),
@@ -343,8 +346,11 @@ type GameDoc = {
   awayClubId: Id<"clubs">;
   homeScore?: number;
   awayScore?: number;
+  matchStartedAt?: number;
+  matchEndedAt?: number;
   status:
     | "scheduled"
+    | "in_progress"
     | "awaiting_stats"
     | "pending_review"
     | "completed"
@@ -1486,6 +1492,8 @@ export const getById = query({
       status: game.status,
       homeScore: game.homeScore,
       awayScore: game.awayScore,
+      matchStartedAt: game.matchStartedAt,
+      matchEndedAt: game.matchEndedAt,
       homeStatsSubmittedAt: game.homeStatsSubmittedAt,
       awayStatsSubmittedAt: game.awayStatsSubmittedAt,
       homeStatsConfirmed: game.homeStatsConfirmed,
@@ -1593,6 +1601,10 @@ export const update = mutation({
     }
 
     await requireGameAdminAccess(ctx, game.organizationId);
+
+    if (game.status === "in_progress") {
+      throw new Error("Games in progress cannot be edited");
+    }
 
     const { gameId, ...updates } = args;
     const filteredUpdates: Record<string, unknown> = {};

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -18,19 +18,6 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -43,21 +30,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { cn } from "@/lib/utils";
+import {
+  GAME_EVENT_TYPE_ICONS,
+  GAME_EVENT_TYPES,
+  type GameEventType,
+} from "@/lib/games/event-types";
+import { PlayerPicker } from "./player-picker";
 
 interface GameEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   gameId: string | null;
 }
-
-type EventType =
-  | "goal"
-  | "yellow_card"
-  | "red_card"
-  | "substitution"
-  | "penalty_scored"
-  | "penalty_missed";
 
 type EditorPlayer = {
   _id: string;
@@ -70,7 +54,7 @@ type EditorPlayer = {
 
 type EventDraft = {
   id: string;
-  eventType: EventType;
+  eventType: GameEventType;
   playerId: string;
   relatedPlayerId: string;
 };
@@ -78,24 +62,6 @@ type EventDraft = {
 type ClubState = {
   clubId: string;
   onFieldPlayerIds: string[];
-};
-
-const EVENT_TYPES: EventType[] = [
-  "goal",
-  "yellow_card",
-  "red_card",
-  "substitution",
-  "penalty_scored",
-  "penalty_missed",
-];
-
-const EVENT_TYPE_ICONS: Record<EventType, string> = {
-  goal: "⚽",
-  yellow_card: "🟨",
-  red_card: "🟥",
-  substitution: "🔁",
-  penalty_scored: "🎯",
-  penalty_missed: "❌",
 };
 
 function createDraftId() {
@@ -149,110 +115,6 @@ function buildEffectiveOnFieldState(
   }
 
   return clubStateMap;
-}
-
-function PlayerPicker({
-  players,
-  value,
-  onChange,
-  placeholder,
-  searchPlaceholder,
-  emptyMessage,
-  disabled = false,
-}: {
-  players: EditorPlayer[];
-  value: string;
-  onChange: (playerId: string) => void;
-  placeholder: string;
-  searchPlaceholder: string;
-  emptyMessage: string;
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-
-  const selectedPlayer = useMemo(
-    () => players.find((player) => player._id === value) ?? null,
-    [players, value],
-  );
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-          disabled={disabled}
-        >
-          {selectedPlayer ? (
-            <span className="flex min-w-0 flex-col items-start text-left">
-              <span className="truncate font-medium">
-                {selectedPlayer.playerName}
-              </span>
-              <span className="truncate text-xs text-muted-foreground">
-                {selectedPlayer.teamName}
-                {selectedPlayer.jerseyNumber !== undefined
-                  ? ` · #${selectedPlayer.jerseyNumber}`
-                  : selectedPlayer.cometNumber
-                    ? ` · ${selectedPlayer.cometNumber}`
-                    : ""}
-              </span>
-            </span>
-          ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
-          )}
-          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] p-0"
-        align="start"
-      >
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
-            <CommandGroup>
-              {players.map((player) => (
-                <CommandItem
-                  key={player._id}
-                  value={`${player.playerName} ${player.teamName} ${
-                    player.jerseyNumber ?? ""
-                  } ${player.cometNumber ?? ""}`}
-                  onSelect={() => {
-                    onChange(player._id);
-                    setOpen(false);
-                  }}
-                >
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate font-medium">
-                      {player.playerName}
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {player.teamName}
-                      {player.jerseyNumber !== undefined
-                        ? ` · #${player.jerseyNumber}`
-                        : player.cometNumber
-                          ? ` · ${player.cometNumber}`
-                          : ""}
-                    </span>
-                  </div>
-                  <Check
-                    className={cn(
-                      "ml-2 size-4 shrink-0",
-                      value === player._id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
 }
 
 function EventDraftFields({
@@ -370,7 +232,7 @@ function EventDraftFields({
             {t("games.events.eventLabel", { number: index + 1 })}
           </span>
           <span className="truncate text-xs text-muted-foreground">
-            {EVENT_TYPE_ICONS[draft.eventType]} {summary}
+            {GAME_EVENT_TYPE_ICONS[draft.eventType]} {summary}
           </span>
         </div>
       </AccordionTrigger>
@@ -383,7 +245,7 @@ function EventDraftFields({
               onValueChange={(value) =>
                 onChange({
                   ...draft,
-                  eventType: value as EventType,
+                  eventType: value as GameEventType,
                   relatedPlayerId:
                     value === "substitution" ? draft.relatedPlayerId : "",
                 })
@@ -394,11 +256,11 @@ function EventDraftFields({
                 <SelectValue placeholder={t("games.events.typePlaceholder")} />
               </SelectTrigger>
               <SelectContent align="start">
-                {EVENT_TYPES.map((type) => (
+                {GAME_EVENT_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
                     <span className="flex items-center gap-2">
                       <span className="text-base leading-none">
-                        {EVENT_TYPE_ICONS[type]}
+                        {GAME_EVENT_TYPE_ICONS[type]}
                       </span>
                       <span>{t(`games.events.typeOptions.${type}`)}</span>
                     </span>

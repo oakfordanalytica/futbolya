@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/navigation/routes";
 import { GameEventDialog } from "./game-event-dialog";
 
 type MatchTimelineSide = "home" | "away";
@@ -49,6 +50,7 @@ interface MatchTimelineTeam {
 
 interface MatchTimelineProps {
   gameId: string;
+  orgSlug: string;
   title?: string;
   homeTeam: MatchTimelineTeam;
   awayTeam: MatchTimelineTeam;
@@ -302,12 +304,14 @@ function TeamRow({ team }: { team: MatchTimelineTeam }) {
 
 export function MatchTimeline({
   gameId,
+  orgSlug,
   title,
   homeTeam,
   awayTeam,
   className,
 }: MatchTimelineProps) {
   const t = useTranslations("Common");
+  const router = useRouter();
   const resolvedTitle = title ?? t("games.summarySections.timeline");
   const timelineData = useQuery(api.gameEvents.getByGameId, {
     gameId: gameId as Id<"games">,
@@ -362,7 +366,9 @@ export function MatchTimeline({
                 variant="outline"
                 size="sm"
                 className="h-7 px-2.5 text-xs"
-                onClick={() => toast(t("games.events.matchCenterSoon"))}
+                onClick={() =>
+                  router.push(ROUTES.org.games.center(orgSlug, gameId))
+                }
               >
                 <span className="sm:hidden">
                   {t("games.events.matchCenterShort")}

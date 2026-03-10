@@ -42,6 +42,7 @@ const dominantProfile = v.union(
 
 const gameStatus = v.union(
   v.literal("scheduled"),
+  v.literal("in_progress"),
   v.literal("awaiting_stats"),
   v.literal("pending_review"),
   v.literal("completed"),
@@ -295,6 +296,8 @@ export default defineSchema({
     status: gameStatus,
     homeScore: v.optional(v.number()),
     awayScore: v.optional(v.number()),
+    matchStartedAt: v.optional(v.number()),
+    matchEndedAt: v.optional(v.number()),
     // Stats submission tracking
     homeStatsSubmittedAt: v.optional(v.number()),
     awayStatsSubmittedAt: v.optional(v.number()),

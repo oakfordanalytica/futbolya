@@ -34,6 +34,15 @@ interface MatchLineupsTeam {
 
 interface MatchLineupsProps {
   gameId: string;
+  gameStatus:
+    | "scheduled"
+    | "in_progress"
+    | "awaiting_stats"
+    | "pending_review"
+    | "completed"
+    | "cancelled";
+  matchStartedAt?: number;
+  matchEndedAt?: number;
   orgSlug: string;
   routeScope: "org" | "team";
   currentClubSlug?: string;
@@ -671,6 +680,9 @@ function LineupTabPanel({
 
 export function MatchLineups({
   gameId,
+  gameStatus,
+  matchStartedAt,
+  matchEndedAt,
   orgSlug,
   routeScope,
   currentClubSlug,
@@ -713,6 +725,10 @@ export function MatchLineups({
   );
   const canEditLineups =
     Boolean(gameLineups?.canEditHome) || Boolean(gameLineups?.canEditAway);
+  const areLineupsLocked =
+    Boolean(matchStartedAt) ||
+    Boolean(matchEndedAt) ||
+    gameStatus !== "scheduled";
   const playerEventMarkers = useMemo(
     () => getPlayerEventMarkers(timelineData?.events ?? []),
     [timelineData?.events],
@@ -855,6 +871,7 @@ export function MatchLineups({
                 size="sm"
                 className="h-7 max-w-full px-2 text-[11px] sm:px-2.5 sm:text-xs"
                 onClick={() => setIsEditorOpen(true)}
+                disabled={areLineupsLocked}
               >
                 <span className="sm:hidden">
                   {t("games.lineups.configureShort")}

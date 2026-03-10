@@ -444,8 +444,30 @@
         "penalty_missed": "Penalty missed"
       }
     },
+    "center": {
+      "title": "Match center",
+      "fieldTitle": "Live field",
+      "start": "Start match",
+      "started": "Match started successfully.",
+      "finish": "Finish match",
+      "finished": "Match finished successfully.",
+      "endedState": "Match ended",
+      "liveState": "Live · {minute}'",
+      "waitingState": "Waiting to start",
+      "startDisabledUntil": "The match can only start at or after {dateTime}.",
+      "noLineup": "This team does not have a lineup ready for the match center yet.",
+      "eventPanelTitle": "On-pitch events",
+      "eventPanelBeforeStart": "Start the match to enable live event registration.",
+      "eventPanelAfterFinish": "The match has already ended. Use Register event for atemporal corrections.",
+      "eventPanelNoLineup": "Configure lineups before registering on-pitch events.",
+      "eventPanelSelectSlot": "Tap a player on the pitch to register an event.",
+      "noPlayerAssigned": "There is no player assigned to this position.",
+      "currentMinute": "Current minute: {minute}'",
+      "registerSelectedEvent": "Register"
+    },
     "statusOptions": {
       "scheduled": "Scheduled",
+      "in_progress": "In Progress",
       "awaiting_stats": "Awaiting Stats",
       "pending_review": "Pending Review",
       "completed": "Completed",

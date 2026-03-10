@@ -444,8 +444,30 @@
         "penalty_missed": "Penal fallado"
       }
     },
+    "center": {
+      "title": "Centro de partido",
+      "fieldTitle": "Campo en vivo",
+      "start": "Iniciar partido",
+      "started": "Partido iniciado correctamente.",
+      "finish": "Finalizar partido",
+      "finished": "Partido finalizado correctamente.",
+      "endedState": "Partido finalizado",
+      "liveState": "En vivo · {minute}'",
+      "waitingState": "Esperando inicio",
+      "startDisabledUntil": "El partido solo puede iniciar a partir de {dateTime}.",
+      "noLineup": "Este equipo todavía no tiene una alineación lista para el centro de partido.",
+      "eventPanelTitle": "Eventos en cancha",
+      "eventPanelBeforeStart": "Inicia el partido para habilitar el registro en tiempo real.",
+      "eventPanelAfterFinish": "El partido ya terminó. Usa Registrar evento para correcciones atemporales.",
+      "eventPanelNoLineup": "Configura alineaciones antes de registrar eventos desde el campo.",
+      "eventPanelSelectSlot": "Toca un jugador en la cancha para registrar un evento.",
+      "noPlayerAssigned": "No hay un jugador asignado a esta posición.",
+      "currentMinute": "Minuto actual: {minute}'",
+      "registerSelectedEvent": "Registrar"
+    },
     "statusOptions": {
       "scheduled": "Programado",
+      "in_progress": "En Juego",
       "awaiting_stats": "Esperando Estadísticas",
       "pending_review": "Pendiente de Revisión",
       "completed": "Completado",

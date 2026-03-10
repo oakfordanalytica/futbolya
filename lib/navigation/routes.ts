@@ -121,6 +121,8 @@ export const ROUTES = {
       list: (orgSlug: string) => `/${orgSlug}/games`,
       detail: (orgSlug: string, gameId: string) =>
         `/${orgSlug}/games/${gameId}`,
+      center: (orgSlug: string, gameId: string) =>
+        `/${orgSlug}/games/${gameId}/center`,
       create: (orgSlug: string) => `/${orgSlug}/games/create`,
     },
 

@@ -30,9 +30,8 @@ export function GameDetailClient({
   }
 
   return (
-    <div className="w-full max-w-full space-y-0">
+    <div className="w-full max-w-full space-y-0 pb-6">
       <GameHeader game={game} orgSlug={orgSlug} routeScope="org" />
-
       <Tabs defaultValue="summary" className="w-full">
         <div className="w-full overflow-x-auto overflow-y-hidden bg-muted/50 shadow-xs">
           <TabsList className="inline-flex min-w-max flex-nowrap justify-start rounded-none px-4 py-2.5 md:px-6">

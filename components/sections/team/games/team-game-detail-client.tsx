@@ -32,7 +32,7 @@ export function TeamGameDetailClient({
   }
 
   return (
-    <div className="w-full max-w-full space-y-0">
+    <div className="w-full max-w-full space-y-0 pb-6">
       <GameHeader
         game={game}
         orgSlug={orgSlug}
