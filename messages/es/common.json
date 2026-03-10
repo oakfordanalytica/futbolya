@@ -401,6 +401,29 @@
       "substitutes": "Suplentes",
       "empty": "Aún no hay alineaciones registradas para este equipo."
     },
+    "events": {
+      "register": "Registrar evento",
+      "registerShort": "Evento",
+      "saved": "Evento registrado correctamente.",
+      "matchCenter": "Centro de partido",
+      "matchCenterShort": "Centro",
+      "matchCenterSoon": "El centro de partido estará disponible pronto.",
+      "minute": "Minuto",
+      "minutePlaceholder": "Ej. 62",
+      "player": "Jugador",
+      "playerPlaceholder": "Selecciona un jugador",
+      "playerSearch": "Buscar jugador...",
+      "playerEmpty": "No se encontraron jugadores.",
+      "type": "Evento",
+      "typePlaceholder": "Selecciona un evento",
+      "typeOptions": {
+        "goal": "Gol",
+        "yellow_card": "Tarjeta amarilla",
+        "red_card": "Tarjeta roja",
+        "penalty_scored": "Penal convertido",
+        "penalty_missed": "Penal fallado"
+      }
+    },
     "statusOptions": {
       "scheduled": "Programado",
       "awaiting_stats": "Esperando Estadísticas",

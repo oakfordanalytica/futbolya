@@ -51,6 +51,7 @@ export function GameSummaryTab({
         />
 
         <MatchTimeline
+          gameId={game._id}
           homeTeam={{
             name: game.homeTeamName,
             logoUrl: game.homeTeamLogo,
@@ -59,7 +60,6 @@ export function GameSummaryTab({
             name: game.awayTeamName,
             logoUrl: game.awayTeamLogo,
           }}
-          events={[]}
         />
 
         <GameBoxScore game={game} />

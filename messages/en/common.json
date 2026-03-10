@@ -401,6 +401,29 @@
       "substitutes": "Substitutes",
       "empty": "No lineup has been registered for this team yet."
     },
+    "events": {
+      "register": "Register event",
+      "registerShort": "Event",
+      "saved": "Event registered successfully.",
+      "matchCenter": "Match center",
+      "matchCenterShort": "Center",
+      "matchCenterSoon": "Match center will be available soon.",
+      "minute": "Minute",
+      "minutePlaceholder": "Ex. 62",
+      "player": "Player",
+      "playerPlaceholder": "Select a player",
+      "playerSearch": "Search player...",
+      "playerEmpty": "No players found.",
+      "type": "Event",
+      "typePlaceholder": "Select an event",
+      "typeOptions": {
+        "goal": "Goal",
+        "yellow_card": "Yellow card",
+        "red_card": "Red card",
+        "penalty_scored": "Penalty scored",
+        "penalty_missed": "Penalty missed"
+      }
+    },
     "statusOptions": {
       "scheduled": "Scheduled",
       "awaiting_stats": "Awaiting Stats",

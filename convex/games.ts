@@ -1524,7 +1524,11 @@ export const remove = mutation({
 
     await requireGameAdminAccess(ctx, game.organizationId);
 
-    const [playerStats, teamStats, lineups] = await Promise.all([
+    const [events, playerStats, teamStats, lineups] = await Promise.all([
+      ctx.db
+        .query("gameEvents")
+        .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
+        .collect(),
       ctx.db
         .query("gamePlayerStats")
         .withIndex("byGame", (q) => q.eq("gameId", args.gameId))
@@ -1539,6 +1543,9 @@ export const remove = mutation({
         .collect(),
     ]);
 
+    for (const event of events) {
+      await ctx.db.delete(event._id);
+    }
     for (const stat of playerStats) {
       await ctx.db.delete(stat._id);
     }

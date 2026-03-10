@@ -48,6 +48,14 @@ const gameStatus = v.union(
   v.literal("cancelled"),
 );
 
+const gameEventType = v.union(
+  v.literal("goal"),
+  v.literal("yellow_card"),
+  v.literal("red_card"),
+  v.literal("penalty_scored"),
+  v.literal("penalty_missed"),
+);
+
 const sportType = v.literal("soccer");
 
 const positionValidator = v.object({
@@ -326,6 +334,23 @@ export default defineSchema({
     .index("byGame", ["gameId"])
     .index("byClub", ["clubId"])
     .index("byGameAndClub", ["gameId", "clubId"]),
+
+  /**
+   * Game Events - Individual match events used by the timeline and future referee flow.
+   */
+  gameEvents: defineTable({
+    gameId: v.id("games"),
+    organizationId: v.id("organizations"),
+    clubId: v.id("clubs"),
+    playerId: v.id("players"),
+    playerName: v.string(),
+    minute: v.number(),
+    eventType: gameEventType,
+    createdByUserId: v.id("users"),
+  })
+    .index("byGame", ["gameId"])
+    .index("byGameAndClub", ["gameId", "clubId"])
+    .index("byPlayer", ["playerId"]),
 
   /**
    * Game Team Stats - Team-level match metrics recorded for a game.

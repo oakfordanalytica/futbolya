@@ -185,9 +185,13 @@ export const deleteFromClerk = internalMutation({
       )
       .collect();
 
-    // 1. Delete gamePlayerStats, gameTeamStats, and gameLineups for all games
+    // 1. Delete gameEvents, gamePlayerStats, gameTeamStats, and gameLineups for all games
     for (const game of games) {
-      const [playerStats, teamStats, lineups] = await Promise.all([
+      const [events, playerStats, teamStats, lineups] = await Promise.all([
+        ctx.db
+          .query("gameEvents")
+          .withIndex("byGame", (q) => q.eq("gameId", game._id))
+          .collect(),
         ctx.db
           .query("gamePlayerStats")
           .withIndex("byGame", (q) => q.eq("gameId", game._id))
@@ -201,6 +205,9 @@ export const deleteFromClerk = internalMutation({
           .withIndex("byGame", (q) => q.eq("gameId", game._id))
           .collect(),
       ]);
+      for (const event of events) {
+        await ctx.db.delete(event._id);
+      }
       for (const stat of playerStats) {
         await ctx.db.delete(stat._id);
       }
