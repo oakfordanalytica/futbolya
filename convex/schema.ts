@@ -52,6 +52,7 @@ const gameEventType = v.union(
   v.literal("goal"),
   v.literal("yellow_card"),
   v.literal("red_card"),
+  v.literal("substitution"),
   v.literal("penalty_scored"),
   v.literal("penalty_missed"),
 );
@@ -344,6 +345,8 @@ export default defineSchema({
     clubId: v.id("clubs"),
     playerId: v.id("players"),
     playerName: v.string(),
+    relatedPlayerId: v.optional(v.id("players")),
+    relatedPlayerName: v.optional(v.string()),
     minute: v.number(),
     eventType: gameEventType,
     createdByUserId: v.id("users"),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useQuery } from "convex/react";
@@ -44,10 +44,29 @@ interface MatchLineupsProps {
 
 type GamePlayerStat = {
   _id: string;
+  playerId: string;
   playerName: string;
   jerseyNumber?: number;
   cometNumber?: string;
   isStarter: boolean;
+};
+
+type GameTimelineEvent = {
+  id: string;
+  type:
+    | "goal"
+    | "yellow_card"
+    | "red_card"
+    | "substitution"
+    | "penalty_scored"
+    | "penalty_missed";
+  playerId: string;
+  relatedPlayerId?: string;
+};
+
+type PlayerSubstitutionLink = {
+  outgoingPlayerId: string;
+  incomingPlayerId: string;
 };
 
 type PersistedLineupPlayer = {
@@ -78,7 +97,7 @@ type PersistedLineup = {
 
 function mapStatToLineupPlayer(stat: GamePlayerStat): FootballLineupPlayer {
   return {
-    id: stat._id,
+    id: stat.playerId,
     name: stat.playerName,
     number: stat.jerseyNumber !== undefined ? `${stat.jerseyNumber}` : "—",
   };
@@ -94,6 +113,44 @@ function mapPersistedToLineupPlayer(
     photoUrl: player.photoUrl,
     number: player.jerseyNumber !== undefined ? `${player.jerseyNumber}` : "—",
     position: player.position,
+  };
+}
+
+function clonePlayerWithSubstitutionLines(
+  player: FootballLineupPlayer,
+  substitutionsByOutgoingPlayer: Map<string, PlayerSubstitutionLink[]>,
+  substitutionsByIncomingPlayer: Map<string, PlayerSubstitutionLink[]>,
+  playersById: Map<string, FootballLineupPlayer>,
+  substitutedByLabel: string,
+  enteredForLabel: string,
+): FootballLineupPlayer {
+  const outgoingLinks =
+    substitutionsByOutgoingPlayer.get(String(player.id)) ?? [];
+  const incomingLinks =
+    substitutionsByIncomingPlayer.get(String(player.id)) ?? [];
+
+  const substitutionTooltipLines = [
+    ...outgoingLinks
+      .map((link) => playersById.get(link.incomingPlayerId))
+      .filter((incomingPlayer): incomingPlayer is FootballLineupPlayer =>
+        Boolean(incomingPlayer),
+      )
+      .map((incomingPlayer) => `${substitutedByLabel}: ${incomingPlayer.name}`),
+    ...incomingLinks
+      .map((link) => playersById.get(link.outgoingPlayerId))
+      .filter((outgoingPlayer): outgoingPlayer is FootballLineupPlayer =>
+        Boolean(outgoingPlayer),
+      )
+      .map((outgoingPlayer) => `${enteredForLabel}: ${outgoingPlayer.name}`),
+  ];
+
+  if (substitutionTooltipLines.length === 0) {
+    return player;
+  }
+
+  return {
+    ...player,
+    substitutionTooltipLines,
   };
 }
 
@@ -206,12 +263,100 @@ function FieldPlaceholder({
   );
 }
 
+function getPlayerEventMarkers(events: GameTimelineEvent[]) {
+  const markers = new Map<string, string[]>();
+
+  const pushMarker = (playerId: string, marker: string) => {
+    const current = markers.get(playerId) ?? [];
+    current.push(marker);
+    markers.set(playerId, current);
+  };
+
+  for (const event of events) {
+    switch (event.type) {
+      case "goal":
+        pushMarker(event.playerId, "⚽");
+        break;
+      case "yellow_card":
+        pushMarker(event.playerId, "🟨");
+        break;
+      case "red_card":
+        pushMarker(event.playerId, "🟥");
+        break;
+      case "penalty_scored":
+        pushMarker(event.playerId, "🎯");
+        break;
+      case "penalty_missed":
+        pushMarker(event.playerId, "❌");
+        break;
+      case "substitution":
+        break;
+      default:
+        break;
+    }
+  }
+
+  return markers;
+}
+
+function getPlayerSubstitutionLinks(
+  events: GameTimelineEvent[],
+  starterIds: Set<string>,
+) {
+  const substitutions = new Map<string, PlayerSubstitutionLink[]>();
+  const incomingSubstitutions = new Map<string, PlayerSubstitutionLink[]>();
+  const incomingPlayerIds = new Set<string>();
+
+  for (const event of events) {
+    if (event.type !== "substitution" || !event.relatedPlayerId) {
+      continue;
+    }
+
+    const playerIsStarter = starterIds.has(String(event.playerId));
+    const relatedPlayerIsStarter = starterIds.has(
+      String(event.relatedPlayerId),
+    );
+
+    let outgoingPlayerId = String(event.playerId);
+    let incomingPlayerId = String(event.relatedPlayerId);
+
+    if (!playerIsStarter && relatedPlayerIsStarter) {
+      outgoingPlayerId = String(event.relatedPlayerId);
+      incomingPlayerId = String(event.playerId);
+    }
+
+    const current = substitutions.get(outgoingPlayerId) ?? [];
+    current.push({
+      outgoingPlayerId,
+      incomingPlayerId,
+    });
+    substitutions.set(outgoingPlayerId, current);
+    const currentIncoming = incomingSubstitutions.get(incomingPlayerId) ?? [];
+    currentIncoming.push({
+      outgoingPlayerId,
+      incomingPlayerId,
+    });
+    incomingSubstitutions.set(incomingPlayerId, currentIncoming);
+    incomingPlayerIds.add(incomingPlayerId);
+  }
+
+  return {
+    substitutionsByOutgoingPlayer: substitutions,
+    substitutionsByIncomingPlayer: incomingSubstitutions,
+    incomingPlayerIds,
+  };
+}
+
 function LineupPlayersList({
   lineup,
+  fallbackPlayers,
   orgSlug,
   routeScope,
   currentClubSlug,
   teamClubSlug,
+  eventMarkers,
+  substitutionsByOutgoingPlayer,
+  incomingPlayerIds,
   noLabel,
   nameLabel,
   startersLabel,
@@ -219,10 +364,14 @@ function LineupPlayersList({
   emptyLabel,
 }: {
   lineup: FootballLineup;
+  fallbackPlayers: FootballLineupPlayer[];
   orgSlug: string;
   routeScope: "org" | "team";
   currentClubSlug?: string;
   teamClubSlug: string;
+  eventMarkers: Map<string, string[]>;
+  substitutionsByOutgoingPlayer: Map<string, PlayerSubstitutionLink[]>;
+  incomingPlayerIds: Set<string>;
   noLabel: string;
   nameLabel: string;
   startersLabel: string;
@@ -230,8 +379,52 @@ function LineupPlayersList({
   emptyLabel: string;
 }) {
   const router = useRouter();
-  const substitutes = lineup.substitutes ?? [];
-  const hasPlayers = lineup.starters.length > 0 || substitutes.length > 0;
+  const playersById = useMemo(() => {
+    const allPlayers = [
+      ...lineup.starters,
+      ...(lineup.substitutes ?? []),
+      ...fallbackPlayers,
+    ];
+    return new Map(allPlayers.map((player) => [String(player.id), player]));
+  }, [fallbackPlayers, lineup.starters, lineup.substitutes]);
+
+  const visibleStarters = useMemo(() => {
+    const starterMap = new Map<string, FootballLineupPlayer>();
+
+    for (const player of lineup.starters) {
+      if (!incomingPlayerIds.has(String(player.id))) {
+        starterMap.set(String(player.id), player);
+      }
+    }
+
+    for (const [outgoingPlayerId] of substitutionsByOutgoingPlayer) {
+      if (!starterMap.has(outgoingPlayerId)) {
+        const fallbackPlayer = playersById.get(outgoingPlayerId);
+        if (fallbackPlayer) {
+          starterMap.set(outgoingPlayerId, fallbackPlayer);
+        }
+      }
+    }
+
+    return Array.from(starterMap.values());
+  }, [
+    incomingPlayerIds,
+    lineup.starters,
+    playersById,
+    substitutionsByOutgoingPlayer,
+  ]);
+
+  const substitutes = useMemo(() => {
+    return (lineup.substitutes ?? []).filter(
+      (player) =>
+        !incomingPlayerIds.has(String(player.id)) &&
+        !visibleStarters.some(
+          (visibleStarter) => String(visibleStarter.id) === String(player.id),
+        ),
+    );
+  }, [incomingPlayerIds, lineup.substitutes, visibleStarters]);
+
+  const hasPlayers = visibleStarters.length > 0 || substitutes.length > 0;
 
   const getPlayerHref = (player: FootballLineupPlayer) => {
     if (routeScope === "org") {
@@ -263,36 +456,102 @@ function LineupPlayersList({
 
   return (
     <div className="rounded-lg border">
-      <div className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-2 border-b px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="grid grid-cols-[28px_minmax(0,1fr)] items-center gap-2 border-b px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         <span>{noLabel}</span>
         <span>{nameLabel}</span>
       </div>
 
-      {lineup.starters.map((player) => (
-        <button
-          type="button"
-          key={player.id}
-          className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-2 border-b px-3 py-2 text-xs last:border-b-0"
-          onClick={() => {
-            const href = getPlayerHref(player);
-            if (href) {
-              router.push(href);
-            }
-          }}
-          disabled={!getPlayerHref(player)}
-        >
-          <span className="font-medium tabular-nums text-muted-foreground">
-            {player.number}
-          </span>
-          <span
-            className={cn(
-              "truncate text-left font-medium",
-              getPlayerHref(player) && "cursor-pointer hover:underline",
-            )}
+      {visibleStarters.map((player) => (
+        <div key={player.id} className="border-b last:border-b-0">
+          <button
+            type="button"
+            className="grid w-full grid-cols-[28px_minmax(0,1fr)] items-center gap-2 px-3 py-2 text-xs"
+            onClick={() => {
+              const href = getPlayerHref(player);
+              if (href) {
+                router.push(href);
+              }
+            }}
+            disabled={!getPlayerHref(player)}
           >
-            {player.name}
-          </span>
-        </button>
+            <span className="font-medium tabular-nums text-muted-foreground">
+              {player.number}
+            </span>
+            <span
+              className={cn(
+                "flex min-w-0 items-center gap-2 truncate text-left font-medium",
+                getPlayerHref(player) && "cursor-pointer hover:underline",
+              )}
+            >
+              <span className="truncate">{player.name}</span>
+              {eventMarkers.get(String(player.id))?.length ? (
+                <span className="inline-flex shrink-0 items-center gap-1 text-sm leading-none">
+                  {eventMarkers.get(String(player.id))!.map((marker, index) => (
+                    <span key={`${player.id}-${marker}-${index}`}>
+                      {marker}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
+            </span>
+          </button>
+
+          {substitutionsByOutgoingPlayer
+            .get(String(player.id))
+            ?.map((substitution, index) => {
+              const incomingPlayer = playersById.get(
+                substitution.incomingPlayerId,
+              );
+              if (!incomingPlayer) {
+                return null;
+              }
+
+              return (
+                <button
+                  type="button"
+                  key={`${player.id}-sub-${substitution.incomingPlayerId}-${index}`}
+                  className="grid w-full grid-cols-[28px_minmax(0,1fr)] items-center gap-2 border-t border-border/60 bg-muted/20 px-3 py-1.5 text-xs"
+                  onClick={() => {
+                    const href = getPlayerHref(incomingPlayer);
+                    if (href) {
+                      router.push(href);
+                    }
+                  }}
+                  disabled={!getPlayerHref(incomingPlayer)}
+                >
+                  <span />
+                  <span
+                    className={cn(
+                      "flex min-w-0 items-center gap-1.5 truncate pl-1 text-left font-medium",
+                      getPlayerHref(incomingPlayer) &&
+                        "cursor-pointer hover:underline",
+                    )}
+                  >
+                    <span className="shrink-0 text-[11px] leading-none text-muted-foreground">
+                      ↕
+                    </span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">
+                      {incomingPlayer.number}
+                    </span>
+                    <span className="truncate">{incomingPlayer.name}</span>
+                    {eventMarkers.get(String(incomingPlayer.id))?.length ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 text-sm leading-none">
+                        {eventMarkers
+                          .get(String(incomingPlayer.id))!
+                          .map((marker, markerIndex) => (
+                            <span
+                              key={`${incomingPlayer.id}-${marker}-${markerIndex}`}
+                            >
+                              {marker}
+                            </span>
+                          ))}
+                      </span>
+                    ) : null}
+                  </span>
+                </button>
+              );
+            })}
+        </div>
       ))}
 
       {substitutes.length > 0 ? (
@@ -304,7 +563,7 @@ function LineupPlayersList({
             <button
               type="button"
               key={player.id}
-              className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-2 border-b px-3 py-2 text-xs last:border-b-0"
+              className="grid grid-cols-[28px_minmax(0,1fr)] items-center gap-2 border-b px-3 py-2 text-xs last:border-b-0"
               onClick={() => {
                 const href = getPlayerHref(player);
                 if (href) {
@@ -318,11 +577,22 @@ function LineupPlayersList({
               </span>
               <span
                 className={cn(
-                  "truncate text-left font-medium",
+                  "flex min-w-0 items-center gap-2 truncate text-left font-medium",
                   getPlayerHref(player) && "cursor-pointer hover:underline",
                 )}
               >
-                {player.name}
+                <span className="truncate">{player.name}</span>
+                {eventMarkers.get(String(player.id))?.length ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-sm leading-none">
+                    {eventMarkers
+                      .get(String(player.id))!
+                      .map((marker, index) => (
+                        <span key={`${player.id}-${marker}-${index}`}>
+                          {marker}
+                        </span>
+                      ))}
+                  </span>
+                ) : null}
               </span>
             </button>
           ))}
@@ -334,10 +604,14 @@ function LineupPlayersList({
 
 function LineupTabPanel({
   lineup,
+  fallbackPlayers,
   orgSlug,
   routeScope,
   currentClubSlug,
   teamClubSlug,
+  eventMarkers,
+  substitutionsByOutgoingPlayer,
+  incomingPlayerIds,
   pendingFormationDescription,
   noLabel,
   nameLabel,
@@ -346,10 +620,14 @@ function LineupTabPanel({
   emptyLabel,
 }: {
   lineup: FootballLineup;
+  fallbackPlayers: FootballLineupPlayer[];
   orgSlug: string;
   routeScope: "org" | "team";
   currentClubSlug?: string;
   teamClubSlug: string;
+  eventMarkers: Map<string, string[]>;
+  substitutionsByOutgoingPlayer: Map<string, PlayerSubstitutionLink[]>;
+  incomingPlayerIds: Set<string>;
   pendingFormationDescription: string;
   noLabel: string;
   nameLabel: string;
@@ -373,10 +651,14 @@ function LineupTabPanel({
 
       <LineupPlayersList
         lineup={lineup}
+        fallbackPlayers={fallbackPlayers}
         orgSlug={orgSlug}
         routeScope={routeScope}
         currentClubSlug={currentClubSlug}
         teamClubSlug={teamClubSlug}
+        eventMarkers={eventMarkers}
+        substitutionsByOutgoingPlayer={substitutionsByOutgoingPlayer}
+        incomingPlayerIds={incomingPlayerIds}
         noLabel={noLabel}
         nameLabel={nameLabel}
         startersLabel={startersLabel}
@@ -405,6 +687,9 @@ export function MatchLineups({
   const gameStats = useQuery(api.games.getGamePlayerStats, {
     gameId: gameId as Id<"games">,
   });
+  const timelineData = useQuery(api.gameEvents.getByGameId, {
+    gameId: gameId as Id<"games">,
+  });
 
   const homeLineup = buildDisplayLineup(
     homeTeam.name,
@@ -418,8 +703,140 @@ export function MatchLineups({
     gameLineups?.awayLineup,
     gameStats?.awayStats ?? [],
   );
+  const homeFallbackPlayers = useMemo(
+    () => (gameStats?.homeStats ?? []).map(mapStatToLineupPlayer),
+    [gameStats?.homeStats],
+  );
+  const awayFallbackPlayers = useMemo(
+    () => (gameStats?.awayStats ?? []).map(mapStatToLineupPlayer),
+    [gameStats?.awayStats],
+  );
   const canEditLineups =
     Boolean(gameLineups?.canEditHome) || Boolean(gameLineups?.canEditAway);
+  const playerEventMarkers = useMemo(
+    () => getPlayerEventMarkers(timelineData?.events ?? []),
+    [timelineData?.events],
+  );
+  const homeTimelineEvents = useMemo(
+    () => (timelineData?.events ?? []).filter((event) => event.side === "home"),
+    [timelineData?.events],
+  );
+  const awayTimelineEvents = useMemo(
+    () => (timelineData?.events ?? []).filter((event) => event.side === "away"),
+    [timelineData?.events],
+  );
+  const homeStarterIds = useMemo(
+    () => new Set(homeLineup.starters.map((player) => String(player.id))),
+    [homeLineup.starters],
+  );
+  const awayStarterIds = useMemo(
+    () => new Set(awayLineup.starters.map((player) => String(player.id))),
+    [awayLineup.starters],
+  );
+  const homeSubstitutionData = useMemo(
+    () => getPlayerSubstitutionLinks(homeTimelineEvents, homeStarterIds),
+    [homeStarterIds, homeTimelineEvents],
+  );
+  const awaySubstitutionData = useMemo(
+    () => getPlayerSubstitutionLinks(awayTimelineEvents, awayStarterIds),
+    [awayStarterIds, awayTimelineEvents],
+  );
+  const homeLineupWithSubstitutions = useMemo(() => {
+    const playersById = new Map(
+      [
+        ...homeLineup.starters,
+        ...(homeLineup.substitutes ?? []),
+        ...homeFallbackPlayers,
+      ].map((player) => [String(player.id), player]),
+    );
+
+    return {
+      ...homeLineup,
+      starters: homeLineup.starters.map((player) =>
+        clonePlayerWithSubstitutionLines(
+          player,
+          homeSubstitutionData.substitutionsByOutgoingPlayer,
+          homeSubstitutionData.substitutionsByIncomingPlayer,
+          playersById,
+          t("games.lineups.substitutedBy"),
+          t("games.lineups.enteredFor"),
+        ),
+      ),
+      substitutes: (homeLineup.substitutes ?? []).map((player) =>
+        clonePlayerWithSubstitutionLines(
+          player,
+          homeSubstitutionData.substitutionsByOutgoingPlayer,
+          homeSubstitutionData.substitutionsByIncomingPlayer,
+          playersById,
+          t("games.lineups.substitutedBy"),
+          t("games.lineups.enteredFor"),
+        ),
+      ),
+      slots: homeLineup.slots?.map((slot) => ({
+        ...slot,
+        ...(slot.player
+          ? {
+              player: clonePlayerWithSubstitutionLines(
+                slot.player,
+                homeSubstitutionData.substitutionsByOutgoingPlayer,
+                homeSubstitutionData.substitutionsByIncomingPlayer,
+                playersById,
+                t("games.lineups.substitutedBy"),
+                t("games.lineups.enteredFor"),
+              ),
+            }
+          : {}),
+      })),
+    };
+  }, [homeFallbackPlayers, homeLineup, homeSubstitutionData, t]);
+  const awayLineupWithSubstitutions = useMemo(() => {
+    const playersById = new Map(
+      [
+        ...awayLineup.starters,
+        ...(awayLineup.substitutes ?? []),
+        ...awayFallbackPlayers,
+      ].map((player) => [String(player.id), player]),
+    );
+
+    return {
+      ...awayLineup,
+      starters: awayLineup.starters.map((player) =>
+        clonePlayerWithSubstitutionLines(
+          player,
+          awaySubstitutionData.substitutionsByOutgoingPlayer,
+          awaySubstitutionData.substitutionsByIncomingPlayer,
+          playersById,
+          t("games.lineups.substitutedBy"),
+          t("games.lineups.enteredFor"),
+        ),
+      ),
+      substitutes: (awayLineup.substitutes ?? []).map((player) =>
+        clonePlayerWithSubstitutionLines(
+          player,
+          awaySubstitutionData.substitutionsByOutgoingPlayer,
+          awaySubstitutionData.substitutionsByIncomingPlayer,
+          playersById,
+          t("games.lineups.substitutedBy"),
+          t("games.lineups.enteredFor"),
+        ),
+      ),
+      slots: awayLineup.slots?.map((slot) => ({
+        ...slot,
+        ...(slot.player
+          ? {
+              player: clonePlayerWithSubstitutionLines(
+                slot.player,
+                awaySubstitutionData.substitutionsByOutgoingPlayer,
+                awaySubstitutionData.substitutionsByIncomingPlayer,
+                playersById,
+                t("games.lineups.substitutedBy"),
+                t("games.lineups.enteredFor"),
+              ),
+            }
+          : {}),
+      })),
+    };
+  }, [awayFallbackPlayers, awayLineup, awaySubstitutionData, t]);
 
   return (
     <>
@@ -486,11 +903,17 @@ export function MatchLineups({
 
             <TabsContent value="home" className="mt-4 w-full min-w-0">
               <LineupTabPanel
-                lineup={homeLineup}
+                lineup={homeLineupWithSubstitutions}
+                fallbackPlayers={homeFallbackPlayers}
                 orgSlug={orgSlug}
                 routeScope={routeScope}
                 currentClubSlug={currentClubSlug}
                 teamClubSlug={homeTeam.clubSlug}
+                eventMarkers={playerEventMarkers}
+                substitutionsByOutgoingPlayer={
+                  homeSubstitutionData.substitutionsByOutgoingPlayer
+                }
+                incomingPlayerIds={homeSubstitutionData.incomingPlayerIds}
                 pendingFormationDescription={t(
                   "games.lineups.pendingFormationDescription",
                 )}
@@ -504,11 +927,17 @@ export function MatchLineups({
 
             <TabsContent value="away" className="mt-4 w-full min-w-0">
               <LineupTabPanel
-                lineup={awayLineup}
+                lineup={awayLineupWithSubstitutions}
+                fallbackPlayers={awayFallbackPlayers}
                 orgSlug={orgSlug}
                 routeScope={routeScope}
                 currentClubSlug={currentClubSlug}
                 teamClubSlug={awayTeam.clubSlug}
+                eventMarkers={playerEventMarkers}
+                substitutionsByOutgoingPlayer={
+                  awaySubstitutionData.substitutionsByOutgoingPlayer
+                }
+                incomingPlayerIds={awaySubstitutionData.incomingPlayerIds}
                 pendingFormationDescription={t(
                   "games.lineups.pendingFormationDescription",
                 )}

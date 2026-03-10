@@ -9,6 +9,11 @@ import { FootballFieldSurface } from "@/components/ui/football-field-surface";
 import { cn } from "@/lib/utils";
 import { JerseyIcon } from "@/components/ui/jersey-icon";
 import { PlayerChip } from "@/components/ui/player-chip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FootballFieldProps {
   lineup: FootballLineup;
@@ -87,6 +92,7 @@ function TemplateSlotChip({
   const player = slot.player;
   const lastName = resolveDisplayLastName(player);
   const isClickable = Boolean(onClick);
+  const substitutionTooltipLines = player?.substitutionTooltipLines ?? [];
 
   return (
     <button
@@ -104,7 +110,7 @@ function TemplateSlotChip({
     >
       <div
         className={cn(
-          "rounded-md transition-colors",
+          "relative rounded-md transition-colors",
           selected && "ring-2 ring-white ring-offset-2 ring-offset-transparent",
         )}
       >
@@ -113,6 +119,26 @@ function TemplateSlotChip({
           number={player?.number}
           size={40}
         />
+        {substitutionTooltipLines.length > 0 ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="absolute -right-2 top-0 inline-flex h-4 w-4 items-center justify-center rounded-full bg-background/90 text-[10px] font-semibold leading-none text-foreground shadow-sm"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                ↕
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="center" className="px-3 py-2">
+              <div className="space-y-1 text-xs">
+                {substitutionTooltipLines.map((line, index) => (
+                  <p key={`${slot.id}-substitution-${index}`}>{line}</p>
+                ))}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        ) : null}
       </div>
       {lastName && (
         <span

@@ -105,10 +105,14 @@ export function GameHeader({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const hasRecordedScore =
+    typeof game.homeScore === "number" && typeof game.awayScore === "number";
   const showScore =
-    game.status === "awaiting_stats" ||
-    game.status === "pending_review" ||
-    game.status === "completed";
+    game.status !== "cancelled" &&
+    (hasRecordedScore ||
+      game.status === "awaiting_stats" ||
+      game.status === "pending_review" ||
+      game.status === "completed");
   const parsedGameDate = parseIsoDateAsLocal(game.date);
   const formattedDate = parsedGameDate ? format(parsedGameDate, "PPP") : "—";
 

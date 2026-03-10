@@ -187,7 +187,9 @@ export function createGameColumns(t: Translator): ColumnDef<GameRow>[] {
       header: t("games.score"),
       cell: ({ row }) => {
         const { homeScore, awayScore, status } = row.original;
-        if (status === "scheduled" || status === "cancelled") {
+        const hasRecordedScore =
+          typeof homeScore === "number" && typeof awayScore === "number";
+        if (status === "cancelled" || !hasRecordedScore) {
           return <span className="text-sm text-muted-foreground">—</span>;
         }
         return (

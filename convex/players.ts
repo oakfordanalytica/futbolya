@@ -139,6 +139,18 @@ function didPlayerParticipate(stat: {
   );
 }
 
+function shouldIncludePlayerStatGame(game: {
+  organizationId: Id<"organizations">;
+  status:
+    | "scheduled"
+    | "awaiting_stats"
+    | "pending_review"
+    | "completed"
+    | "cancelled";
+}) {
+  return game.status !== "cancelled";
+}
+
 function extractYouTubeVideoId(rawUrl: string): string | null {
   try {
     const parsed = new URL(rawUrl);
@@ -372,13 +384,11 @@ export const getSoccerPlayerDetailByClubSlug = query({
       const stat = playerStats[index];
       const game = linkedGames[index];
 
-      if (
-        !game ||
-        game.organizationId !== club.organizationId ||
-        game.status !== "completed" ||
-        typeof game.homeScore !== "number" ||
-        typeof game.awayScore !== "number"
-      ) {
+      if (!game || game.organizationId !== club.organizationId) {
+        continue;
+      }
+
+      if (!shouldIncludePlayerStatGame(game)) {
         continue;
       }
 
@@ -503,7 +513,7 @@ export const listSoccerPlayerGameLog = query({
         continue;
       }
 
-      if (game.status !== "completed") {
+      if (!shouldIncludePlayerStatGame(game)) {
         continue;
       }
 
