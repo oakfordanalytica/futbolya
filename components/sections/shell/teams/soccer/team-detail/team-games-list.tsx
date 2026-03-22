@@ -11,6 +11,7 @@ import {
   type GameRow,
 } from "@/components/sections/shell/games/columns";
 import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
+import { useMatchTimingNow } from "@/hooks/use-match-timing-now";
 import type { TeamRouteScope } from "./types";
 
 interface TeamGamesListProps {
@@ -27,6 +28,7 @@ export function TeamGamesList({
   const router = useRouter();
   const t = useTranslations("Common");
   const games = useQuery(api.games.listByClubSlug, { clubSlug });
+  const nowMs = useMatchTimingNow(games ?? []);
 
   const handleRowClick = (game: GameRow) => {
     if (routeScope === "org") {
@@ -37,7 +39,7 @@ export function TeamGamesList({
     router.push(TEAM_ROUTES.games.detail(orgSlug, clubSlug, game._id));
   };
 
-  const gameColumns = createGameColumns(t);
+  const gameColumns = createGameColumns(t, nowMs);
   const gameFilterConfigs = createGameFilterConfigs(t);
 
   return (

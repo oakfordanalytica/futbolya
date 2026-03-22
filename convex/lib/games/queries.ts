@@ -7,7 +7,10 @@ import {
   requireOrgAccess,
 } from "../../lib/permissions";
 import { buildPlayerFullName } from "@/lib/players/name";
-import { buildSubstitutionCountsFromEvents, didPlayerParticipate } from "@/lib/soccer/stats-domain";
+import {
+  buildSubstitutionCountsFromEvents,
+  didPlayerParticipate,
+} from "@/lib/soccer/stats-domain";
 import { normalizeGameStatus } from "@/lib/games/status";
 import { buildSeasonStatsAggregate } from "./season_stats";
 import {
@@ -77,6 +80,15 @@ export async function listByLeagueSlugHandler(
       status: normalizeGameStatus(game.status),
       homeScore: game.homeScore,
       awayScore: game.awayScore,
+      matchStartedAt: game.matchStartedAt,
+      matchEndedAt: game.matchEndedAt,
+      matchPhase: game.matchPhase,
+      firstHalfStartedAt: game.firstHalfStartedAt,
+      firstHalfEndedAt: game.firstHalfEndedAt,
+      secondHalfStartedAt: game.secondHalfStartedAt,
+      secondHalfEndedAt: game.secondHalfEndedAt,
+      firstHalfAddedMinutes: game.firstHalfAddedMinutes,
+      secondHalfAddedMinutes: game.secondHalfAddedMinutes,
     };
   });
 }
@@ -137,6 +149,15 @@ export async function listByClubSlugHandler(
       status: normalizeGameStatus(game.status),
       homeScore: game.homeScore,
       awayScore: game.awayScore,
+      matchStartedAt: game.matchStartedAt,
+      matchEndedAt: game.matchEndedAt,
+      matchPhase: game.matchPhase,
+      firstHalfStartedAt: game.firstHalfStartedAt,
+      firstHalfEndedAt: game.firstHalfEndedAt,
+      secondHalfStartedAt: game.secondHalfStartedAt,
+      secondHalfEndedAt: game.secondHalfEndedAt,
+      firstHalfAddedMinutes: game.firstHalfAddedMinutes,
+      secondHalfAddedMinutes: game.secondHalfAddedMinutes,
     };
   });
 }
@@ -259,8 +280,7 @@ export async function getGamePlayerStatsHandler(
         redCards: stat.redCards,
         penaltiesAttempted: stat.penaltiesAttempted,
         penaltiesScored: stat.penaltiesScored,
-        substitutionsIn:
-          substitutions?.substitutionsIn ?? stat.substitutionsIn,
+        substitutionsIn: substitutions?.substitutionsIn ?? stat.substitutionsIn,
         substitutionsOut:
           substitutions?.substitutionsOut ?? stat.substitutionsOut,
       };
@@ -273,7 +293,9 @@ export async function getGamePlayerStatsHandler(
     allPlayerStats.filter((stat) => stat.clubId === game.awayClubId),
   );
 
-  const teamStatsByClub = new Map(teamStatsRows.map((row) => [row.clubId, row]));
+  const teamStatsByClub = new Map(
+    teamStatsRows.map((row) => [row.clubId, row]),
+  );
 
   return {
     homeStats,
@@ -332,8 +354,8 @@ export async function getSeasonLeadersHandler(
     };
   }
 
-  const playerLeaderRows: Array<SeasonPlayerLeader> = seasonStats.playerRows.map(
-    (row) => ({
+  const playerLeaderRows: Array<SeasonPlayerLeader> =
+    seasonStats.playerRows.map((row) => ({
       playerId: row.playerId,
       playerName: row.playerName,
       photoUrl: row.photoUrl,
@@ -345,8 +367,7 @@ export async function getSeasonLeadersHandler(
       yellowCards: row.yellowCards,
       redCards: row.redCards,
       penaltiesScored: row.penaltiesScored,
-    }),
-  );
+    }));
   const teamLeaderRows: Array<SeasonTeamLeader> = seasonStats.teamRows.map(
     (row) => ({
       clubId: row.clubId,
@@ -392,7 +413,11 @@ export async function getSeasonLeadersHandler(
     },
     teamLeaders: {
       points: topByMetric(teamLeaderRows, (item) => item.points, leaderLimit),
-      goalsFor: topByMetric(teamLeaderRows, (item) => item.goalsFor, leaderLimit),
+      goalsFor: topByMetric(
+        teamLeaderRows,
+        (item) => item.goalsFor,
+        leaderLimit,
+      ),
       goalsAgainst: topByMetric(
         teamLeaderRows,
         (item) => item.goalsAgainst,

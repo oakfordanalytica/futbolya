@@ -13,6 +13,7 @@ import {
 } from "@/components/sections/shell/games/columns";
 import { CreateGameDialog } from "@/components/sections/shell/games/create-game-dialog";
 import { ROUTES } from "@/lib/navigation/routes";
+import { useMatchTimingNow } from "@/hooks/use-match-timing-now";
 
 interface GamesTableProps {
   preloadedGames: Preloaded<typeof api.games.listByLeagueSlug>;
@@ -24,12 +25,13 @@ export function GamesTable({ preloadedGames, orgSlug }: GamesTableProps) {
   const t = useTranslations("Common");
   const data = usePreloadedQuery(preloadedGames);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const nowMs = useMatchTimingNow(data ?? []);
 
   const handleRowClick = (game: GameRow) => {
     router.push(ROUTES.org.games.detail(orgSlug, game._id));
   };
 
-  const gameColumns = createGameColumns(t);
+  const gameColumns = createGameColumns(t, nowMs);
   const gameFilterConfigs = createGameFilterConfigs(t);
 
   return (

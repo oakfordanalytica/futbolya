@@ -90,6 +90,15 @@ export const gameListItemValidator = v.object({
   status: gameStatus,
   homeScore: v.optional(v.number()),
   awayScore: v.optional(v.number()),
+  matchStartedAt: v.optional(v.number()),
+  matchEndedAt: v.optional(v.number()),
+  matchPhase: v.optional(gameMatchPhase),
+  firstHalfStartedAt: v.optional(v.number()),
+  firstHalfEndedAt: v.optional(v.number()),
+  secondHalfStartedAt: v.optional(v.number()),
+  secondHalfEndedAt: v.optional(v.number()),
+  firstHalfAddedMinutes: v.optional(v.number()),
+  secondHalfAddedMinutes: v.optional(v.number()),
 });
 
 export const seasonValidator = v.object({

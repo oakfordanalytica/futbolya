@@ -14,6 +14,7 @@ import {
 import { CreateGameDialog } from "@/components/sections/shell/games/create-game-dialog";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { TEAM_ROUTES } from "@/lib/navigation/routes";
+import { useMatchTimingNow } from "@/hooks/use-match-timing-now";
 
 interface TeamGamesTableProps {
   preloadedGames: Preloaded<typeof api.games.listByClubSlug>;
@@ -33,12 +34,13 @@ export function TeamGamesTable({
   const data = usePreloadedQuery(preloadedGames);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { isAdmin, isLoaded } = useIsAdmin();
+  const nowMs = useMatchTimingNow(data ?? []);
 
   const handleRowClick = (game: GameRow) => {
     router.push(TEAM_ROUTES.games.detail(orgSlug, clubSlug, game._id));
   };
 
-  const gameColumns = createGameColumns(t);
+  const gameColumns = createGameColumns(t, nowMs);
   const gameFilterConfigs = createGameFilterConfigs(t);
 
   return (

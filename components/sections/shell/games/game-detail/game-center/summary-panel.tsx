@@ -3,10 +3,7 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import {
-  formatClock,
-  type MatchPhase,
-} from "@/components/sections/shell/games/game-detail/game-center/domain";
+import { formatClock, type MatchPhase } from "@/lib/games/match-timing";
 
 interface GameCenterSummaryPanelProps {
   homeTeamName: string;

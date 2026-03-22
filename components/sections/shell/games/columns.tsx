@@ -7,6 +7,7 @@ import type { FilterConfig } from "@/lib/table/types";
 import type { GameStatus } from "@/lib/games/status";
 import { Avatar } from "@/components/ui/avatar";
 import { formatIsoDateAsLocal } from "@/lib/utils/date";
+import { getMatchTiming } from "@/lib/games/match-timing";
 
 export interface GameRow {
   _id: string;
@@ -28,9 +29,21 @@ export interface GameRow {
   status: GameStatus;
   homeScore?: number;
   awayScore?: number;
+  matchStartedAt?: number;
+  matchEndedAt?: number;
+  matchPhase?: "first_half" | "halftime" | "second_half" | "finished";
+  firstHalfStartedAt?: number;
+  firstHalfEndedAt?: number;
+  secondHalfStartedAt?: number;
+  secondHalfEndedAt?: number;
+  firstHalfAddedMinutes?: number;
+  secondHalfAddedMinutes?: number;
 }
 
-type Translator = (key: string) => string;
+type Translator = (
+  key: string,
+  values?: Record<string, string | number>,
+) => string;
 
 const STATUS_STYLES: Record<string, string> = {
   scheduled: "text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
@@ -62,7 +75,28 @@ function MatchTeam({ name, logoUrl }: { name: string; logoUrl?: string }) {
   );
 }
 
-export function createGameColumns(t: Translator): ColumnDef<GameRow>[] {
+function getGameStatusLabel(t: Translator, game: GameRow, nowMs: number) {
+  const timing = getMatchTiming(game, nowMs);
+
+  if (timing.matchPhase === "first_half") {
+    return t("games.center.firstHalfState", { minute: timing.liveMinute });
+  }
+
+  if (timing.matchPhase === "halftime") {
+    return t("games.center.halftimeState");
+  }
+
+  if (timing.matchPhase === "second_half") {
+    return t("games.center.secondHalfState", { minute: timing.liveMinute });
+  }
+
+  return t(`games.statusOptions.${game.status}`);
+}
+
+export function createGameColumns(
+  t: Translator,
+  nowMs: number,
+): ColumnDef<GameRow>[] {
   return [
     createSearchColumn<GameRow>([
       "homeTeamName",
@@ -169,7 +203,7 @@ export function createGameColumns(t: Translator): ColumnDef<GameRow>[] {
           <span
             className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${className}`}
           >
-            {t(`games.statusOptions.${status}`)}
+            {getGameStatusLabel(t, row.original, nowMs)}
           </span>
         );
       },

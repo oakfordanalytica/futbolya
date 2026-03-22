@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useRouter } from "@/i18n/navigation";
@@ -21,6 +21,8 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import type { GameStatus } from "@/lib/games/status";
 import { TEAM_ROUTES } from "@/lib/navigation/routes";
+import { getMatchTiming } from "@/lib/games/match-timing";
+import { useMatchTimingNow } from "@/hooks/use-match-timing-now";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +64,15 @@ interface GameHeaderProps {
     status: GameStatus;
     homeScore?: number;
     awayScore?: number;
+    matchStartedAt?: number;
+    matchEndedAt?: number;
+    matchPhase?: "first_half" | "halftime" | "second_half" | "finished";
+    firstHalfStartedAt?: number;
+    firstHalfEndedAt?: number;
+    secondHalfStartedAt?: number;
+    secondHalfEndedAt?: number;
+    firstHalfAddedMinutes?: number;
+    secondHalfAddedMinutes?: number;
   };
   orgSlug: string;
   routeScope?: "org" | "team";
@@ -100,6 +111,7 @@ export function GameHeader({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const nowMs = useMatchTimingNow(game);
 
   const hasRecordedScore =
     typeof game.homeScore === "number" && typeof game.awayScore === "number";
@@ -126,6 +138,17 @@ export function GameHeader({
     game.status === "in_progress" ||
     game.status === "halftime" ||
     game.status === "completed";
+  const matchTiming = useMemo(() => getMatchTiming(game, nowMs), [game, nowMs]);
+  const liveStateLabel =
+    matchTiming.matchPhase === "first_half"
+      ? t("games.center.firstHalfState", { minute: matchTiming.liveMinute })
+      : matchTiming.matchPhase === "halftime"
+        ? t("games.center.halftimeState")
+        : matchTiming.matchPhase === "second_half"
+          ? t("games.center.secondHalfState", {
+              minute: matchTiming.liveMinute,
+            })
+          : null;
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -245,14 +268,21 @@ export function GameHeader({
 
             <div className="shrink-0 px-1">
               {showScore ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-white sm:text-3xl md:text-4xl">
-                    {game.homeScore ?? 0}
-                  </span>
-                  <span className="text-lg text-white/70 sm:text-xl">-</span>
-                  <span className="text-2xl font-bold text-white sm:text-3xl md:text-4xl">
-                    {game.awayScore ?? 0}
-                  </span>
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-white sm:text-3xl md:text-4xl">
+                      {game.homeScore ?? 0}
+                    </span>
+                    <span className="text-lg text-white/70 sm:text-xl">-</span>
+                    <span className="text-2xl font-bold text-white sm:text-3xl md:text-4xl">
+                      {game.awayScore ?? 0}
+                    </span>
+                  </div>
+                  {liveStateLabel ? (
+                    <div className="text-xs font-semibold tracking-wide text-white/90 sm:text-sm">
+                      {liveStateLabel}
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <span className="text-2xl font-bold text-white/90 sm:text-3xl">
