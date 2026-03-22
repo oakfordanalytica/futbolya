@@ -5,7 +5,6 @@ export interface FootballLineupPlayer {
   position?: string;
   photoUrl?: string;
   lastName?: string;
-  substitutionTooltipLines?: string[];
 }
 
 export interface FootballLineupTemplateSlot {

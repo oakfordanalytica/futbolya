@@ -4,6 +4,7 @@ import {
   createSortableHeader,
 } from "@/components/table/column-helpers";
 import type { FilterConfig } from "@/lib/table/types";
+import type { GameStatus } from "@/lib/games/status";
 import { Avatar } from "@/components/ui/avatar";
 import { formatIsoDateAsLocal } from "@/lib/utils/date";
 
@@ -24,14 +25,7 @@ export interface GameRow {
   gender: "male" | "female" | "mixed";
   locationName?: string;
   locationCoordinates?: number[];
-  status:
-    | "scheduled"
-    | "in_progress"
-    | "halftime"
-    | "awaiting_stats"
-    | "pending_review"
-    | "completed"
-    | "cancelled";
+  status: GameStatus;
   homeScore?: number;
   awayScore?: number;
 }
@@ -44,10 +38,6 @@ const STATUS_STYLES: Record<string, string> = {
     "text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950",
   halftime:
     "text-violet-700 bg-violet-50 dark:text-violet-400 dark:bg-violet-950",
-  awaiting_stats:
-    "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950",
-  pending_review:
-    "text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950",
   completed: "text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950",
   cancelled: "text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950",
 };
@@ -220,14 +210,6 @@ export function createGameFilterConfigs(t: Translator): FilterConfig[] {
           label: t("games.statusOptions.in_progress"),
         },
         { value: "halftime", label: t("games.statusOptions.halftime") },
-        {
-          value: "awaiting_stats",
-          label: t("games.statusOptions.awaiting_stats"),
-        },
-        {
-          value: "pending_review",
-          label: t("games.statusOptions.pending_review"),
-        },
         { value: "completed", label: t("games.statusOptions.completed") },
         { value: "cancelled", label: t("games.statusOptions.cancelled") },
       ],

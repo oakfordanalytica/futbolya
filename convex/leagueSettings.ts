@@ -1,240 +1,77 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
-import { requireOrgAdmin } from "./lib/permissions";
+import { mutation, query } from "./_generated/server";
+import {
+  addAgeCategoryHandler,
+  removeAgeCategoryHandler,
+  updateAgeCategoryHandler,
+} from "./lib/league_settings/age_categories";
+import {
+  gender,
+  ageCategoryValidator,
+  horizontalDivisionsValidator,
+  leagueSettingsValidator,
+  lineupSlotValidator,
+  lineupTemplateValidator,
+  positionValidator,
+  seasonValidator,
+  sportType,
+  teamConfigValidator,
+} from "./lib/league_settings/validators";
+import {
+  getByLeagueSlugHandler,
+  getTeamConfigHandler,
+  listActiveSeasonsHandler,
+  listSeasonsHandler,
+} from "./lib/league_settings/queries";
+import {
+  upsertLeagueSettingsHandler,
+  updateEnabledGendersHandler,
+  updateHorizontalDivisionsHandler,
+} from "./lib/league_settings/general";
+import {
+  addPositionHandler,
+  removePositionHandler,
+  updatePositionHandler,
+} from "./lib/league_settings/positions";
+import {
+  addSeasonHandler,
+  removeSeasonHandler,
+  updateSeasonHandler,
+} from "./lib/league_settings/seasons";
+import {
+  addLineupHandler,
+  removeLineupHandler,
+  updateLineupHandler,
+} from "./lib/league_settings/lineups";
 
-// ============================================================================
-// VALIDATORS
-// ============================================================================
-
-const gender = v.union(
-  v.literal("male"),
-  v.literal("female"),
-  v.literal("mixed"),
-);
-
-const sportType = v.literal("soccer");
-
-const ageCategoryValidator = v.object({
-  id: v.string(),
-  name: v.string(),
-  minAge: v.number(),
-  maxAge: v.number(),
-});
-
-const positionValidator = v.object({
-  id: v.string(),
-  name: v.string(),
-  abbreviation: v.string(),
-});
-
-const seasonValidator = v.object({
-  id: v.string(),
-  name: v.string(),
-  startDate: v.string(),
-  endDate: v.string(),
-});
-
-const lineupSlotValidator = v.object({
-  id: v.string(),
-  x: v.number(),
-  y: v.number(),
-  role: v.union(v.literal("goalkeeper"), v.literal("outfield")),
-});
-
-const lineupTemplateValidator = v.object({
-  id: v.string(),
-  name: v.string(),
-  slots: v.array(lineupSlotValidator),
-});
-
-const horizontalDivisionsValidator = v.object({
-  enabled: v.boolean(),
-  type: v.union(
-    v.literal("alphabetic"),
-    v.literal("greek"),
-    v.literal("numeric"),
-  ),
-});
-
-const teamConfigValidator = v.object({
-  sportType: sportType,
-  ageCategories: v.array(ageCategoryValidator),
-  positions: v.array(positionValidator),
-  lineups: v.array(lineupTemplateValidator),
-  enabledGenders: v.array(gender),
-  horizontalDivisions: v.optional(horizontalDivisionsValidator),
-});
-
-function getTodayDateString(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function isIsoDateString(date: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(date);
-}
-
-// ============================================================================
-// QUERIES
-// ============================================================================
-
-/**
- * Get team configuration for a league.
- * Returns the settings needed for creating teams, categories, and games.
- */
 export const getTeamConfig = query({
   args: { leagueSlug: v.string() },
   returns: v.union(teamConfigValidator, v.null()),
-  handler: async (ctx, args) => {
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("bySlug", (q) => q.eq("slug", args.leagueSlug))
-      .unique();
-
-    if (!org) {
-      return null;
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) => q.eq("organizationId", org._id))
-      .unique();
-
-    if (!settings) {
-      // Return default configuration
-      return {
-        sportType: "soccer" as const,
-        ageCategories: [],
-        positions: [],
-        lineups: [],
-        enabledGenders: ["male", "female"] as Array<
-          "male" | "female" | "mixed"
-        >,
-        horizontalDivisions: undefined,
-      };
-    }
-
-    return {
-      sportType: settings.sportType,
-      ageCategories: settings.ageCategories,
-      positions: settings.positions ?? [],
-      lineups: settings.lineups ?? [],
-      enabledGenders: settings.enabledGenders,
-      horizontalDivisions: settings.horizontalDivisions,
-    };
-  },
+  handler: getTeamConfigHandler,
 });
 
-/**
- * Get full league settings.
- */
 export const getByLeagueSlug = query({
   args: { leagueSlug: v.string() },
-  returns: v.union(
-    v.object({
-      _id: v.id("leagueSettings"),
-      _creationTime: v.number(),
-      organizationId: v.id("organizations"),
-      sportType: sportType,
-      ageCategories: v.array(ageCategoryValidator),
-      positions: v.optional(v.array(positionValidator)),
-      lineups: v.optional(v.array(lineupTemplateValidator)),
-      enabledGenders: v.array(gender),
-      seasons: v.optional(v.array(seasonValidator)),
-      horizontalDivisions: v.optional(horizontalDivisionsValidator),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args) => {
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("bySlug", (q) => q.eq("slug", args.leagueSlug))
-      .unique();
-
-    if (!org) {
-      return null;
-    }
-
-    return await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) => q.eq("organizationId", org._id))
-      .unique();
-  },
+  returns: v.union(leagueSettingsValidator, v.null()),
+  handler: getByLeagueSlugHandler,
 });
 
-/**
- * List all seasons for a league.
- */
 export const listSeasons = query({
   args: { leagueSlug: v.string() },
   returns: v.array(seasonValidator),
-  handler: async (ctx, args) => {
-    const organization = await ctx.db
-      .query("organizations")
-      .withIndex("bySlug", (q) => q.eq("slug", args.leagueSlug))
-      .unique();
-
-    if (!organization) {
-      return [];
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    const seasons = settings?.seasons ?? [];
-    return [...seasons].sort((a, b) => b.startDate.localeCompare(a.startDate));
-  },
+  handler: listSeasonsHandler,
 });
 
-/**
- * List active seasons for a league.
- * A season is active when today is within its date range.
- */
 export const listActiveSeasons = query({
   args: { leagueSlug: v.string() },
   returns: v.array(seasonValidator),
-  handler: async (ctx, args) => {
-    const organization = await ctx.db
-      .query("organizations")
-      .withIndex("bySlug", (q) => q.eq("slug", args.leagueSlug))
-      .unique();
-
-    if (!organization) {
-      return [];
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings?.seasons?.length) {
-      return [];
-    }
-
-    const today = getTodayDateString();
-    return settings.seasons
-      .filter((season) => season.startDate <= today && season.endDate >= today)
-      .sort((a, b) => a.startDate.localeCompare(b.startDate));
-  },
+  handler: listActiveSeasonsHandler,
 });
 
-// ============================================================================
-// MUTATIONS
-// ============================================================================
-
-/**
- * Create or update league settings.
- */
 export const upsert = mutation({
   args: {
     leagueSlug: v.string(),
-    sportType: sportType,
+    sportType,
     ageCategories: v.array(ageCategoryValidator),
     positions: v.array(positionValidator),
     lineups: v.optional(v.array(lineupTemplateValidator)),
@@ -242,124 +79,27 @@ export const upsert = mutation({
     horizontalDivisions: v.optional(horizontalDivisionsValidator),
   },
   returns: v.id("leagueSettings"),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const existing = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        sportType: args.sportType,
-        ageCategories: args.ageCategories,
-        positions: args.positions,
-        lineups: args.lineups,
-        enabledGenders: args.enabledGenders,
-        horizontalDivisions: args.horizontalDivisions,
-      });
-      return existing._id;
-    }
-
-    return await ctx.db.insert("leagueSettings", {
-      organizationId: organization._id,
-      sportType: args.sportType,
-      ageCategories: args.ageCategories,
-      positions: args.positions,
-      lineups: args.lineups,
-      enabledGenders: args.enabledGenders,
-      horizontalDivisions: args.horizontalDivisions,
-    });
-  },
+  handler: upsertLeagueSettingsHandler,
 });
 
-/**
- * Add an age category.
- */
 export const addAgeCategory = mutation({
   args: {
     leagueSlug: v.string(),
     category: ageCategoryValidator,
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      // Create settings with just this category
-      await ctx.db.insert("leagueSettings", {
-        organizationId: organization._id,
-        sportType: "soccer",
-        ageCategories: [args.category],
-        positions: [],
-        lineups: [],
-        enabledGenders: ["male", "female"],
-      });
-      return null;
-    }
-
-    // Check for duplicate
-    const exists = settings.ageCategories.some(
-      (c) => c.id === args.category.id || c.name === args.category.name,
-    );
-    if (exists) {
-      throw new Error("Age category already exists");
-    }
-
-    await ctx.db.patch(settings._id, {
-      ageCategories: [...settings.ageCategories, args.category],
-    });
-
-    return null;
-  },
+  handler: addAgeCategoryHandler,
 });
 
-/**
- * Remove an age category.
- */
 export const removeAgeCategory = mutation({
   args: {
     leagueSlug: v.string(),
     categoryId: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      return null;
-    }
-
-    await ctx.db.patch(settings._id, {
-      ageCategories: settings.ageCategories.filter(
-        (c) => c.id !== args.categoryId,
-      ),
-    });
-
-    return null;
-  },
+  handler: removeAgeCategoryHandler,
 });
 
-/**
- * Update an age category.
- */
 export const updateAgeCategory = mutation({
   args: {
     leagueSlug: v.string(),
@@ -369,225 +109,45 @@ export const updateAgeCategory = mutation({
     maxAge: v.number(),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const categoryName = args.name.trim();
-    if (!categoryName) {
-      throw new Error("Age category name is required");
-    }
-    if (args.minAge > args.maxAge) {
-      throw new Error("Minimum age cannot be greater than maximum age");
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      throw new Error("League settings not found");
-    }
-
-    const categoryExists = settings.ageCategories.some(
-      (category) => category.id === args.categoryId,
-    );
-    if (!categoryExists) {
-      throw new Error("Age category not found");
-    }
-
-    const duplicateName = settings.ageCategories.some(
-      (category) =>
-        category.id !== args.categoryId && category.name === categoryName,
-    );
-    if (duplicateName) {
-      throw new Error("Age category already exists");
-    }
-
-    await ctx.db.patch(settings._id, {
-      ageCategories: settings.ageCategories.map((category) =>
-        category.id === args.categoryId
-          ? {
-              ...category,
-              name: categoryName,
-              minAge: args.minAge,
-              maxAge: args.maxAge,
-            }
-          : category,
-      ),
-    });
-
-    return null;
-  },
+  handler: updateAgeCategoryHandler,
 });
 
-/**
- * Update enabled genders.
- */
 export const updateEnabledGenders = mutation({
   args: {
     leagueSlug: v.string(),
     enabledGenders: v.array(gender),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      // Create settings with enabled genders
-      await ctx.db.insert("leagueSettings", {
-        organizationId: organization._id,
-        sportType: "soccer",
-        ageCategories: [],
-        positions: [],
-        lineups: [],
-        enabledGenders: args.enabledGenders,
-      });
-      return null;
-    }
-
-    await ctx.db.patch(settings._id, {
-      enabledGenders: args.enabledGenders,
-    });
-
-    return null;
-  },
+  handler: updateEnabledGendersHandler,
 });
 
-/**
- * Update horizontal divisions configuration.
- */
 export const updateHorizontalDivisions = mutation({
   args: {
     leagueSlug: v.string(),
     horizontalDivisions: v.optional(horizontalDivisionsValidator),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      // Create settings with horizontal divisions
-      await ctx.db.insert("leagueSettings", {
-        organizationId: organization._id,
-        sportType: "soccer",
-        ageCategories: [],
-        positions: [],
-        lineups: [],
-        enabledGenders: ["male", "female"],
-        horizontalDivisions: args.horizontalDivisions,
-      });
-      return null;
-    }
-
-    await ctx.db.patch(settings._id, {
-      horizontalDivisions: args.horizontalDivisions,
-    });
-
-    return null;
-  },
+  handler: updateHorizontalDivisionsHandler,
 });
 
-/**
- * Add a position.
- */
 export const addPosition = mutation({
   args: {
     leagueSlug: v.string(),
     position: positionValidator,
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      // Create settings with just this position
-      await ctx.db.insert("leagueSettings", {
-        organizationId: organization._id,
-        sportType: "soccer",
-        ageCategories: [],
-        positions: [args.position],
-        lineups: [],
-        enabledGenders: ["male", "female"],
-      });
-      return null;
-    }
-
-    // Check for duplicate
-    const currentPositions = settings.positions ?? [];
-    const exists = currentPositions.some(
-      (p) => p.id === args.position.id || p.name === args.position.name,
-    );
-    if (exists) {
-      throw new Error("Position already exists");
-    }
-
-    await ctx.db.patch(settings._id, {
-      positions: [...currentPositions, args.position],
-    });
-
-    return null;
-  },
+  handler: addPositionHandler,
 });
 
-/**
- * Remove a position.
- */
 export const removePosition = mutation({
   args: {
     leagueSlug: v.string(),
     positionId: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      return null;
-    }
-
-    const currentPositions = settings.positions ?? [];
-    await ctx.db.patch(settings._id, {
-      positions: currentPositions.filter((p) => p.id !== args.positionId),
-    });
-
-    return null;
-  },
+  handler: removePositionHandler,
 });
 
-/**
- * Update a position.
- */
 export const updatePosition = mutation({
   args: {
     leagueSlug: v.string(),
@@ -596,189 +156,27 @@ export const updatePosition = mutation({
     abbreviation: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const positionName = args.name.trim();
-    const positionAbbreviation = args.abbreviation.trim();
-    if (!positionName || !positionAbbreviation) {
-      throw new Error("Position name and abbreviation are required");
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      throw new Error("League settings not found");
-    }
-
-    const currentPositions = settings.positions ?? [];
-    const positionExists = currentPositions.some(
-      (position) => position.id === args.positionId,
-    );
-    if (!positionExists) {
-      throw new Error("Position not found");
-    }
-
-    const duplicatePosition = currentPositions.some(
-      (position) =>
-        position.id !== args.positionId &&
-        (position.name === positionName ||
-          position.abbreviation === positionAbbreviation),
-    );
-    if (duplicatePosition) {
-      throw new Error("Position already exists");
-    }
-
-    await ctx.db.patch(settings._id, {
-      positions: currentPositions.map((position) =>
-        position.id === args.positionId
-          ? {
-              ...position,
-              name: positionName,
-              abbreviation: positionAbbreviation,
-            }
-          : position,
-      ),
-    });
-
-    return null;
-  },
+  handler: updatePositionHandler,
 });
 
-/**
- * Add a season.
- */
 export const addSeason = mutation({
   args: {
     leagueSlug: v.string(),
     season: seasonValidator,
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const seasonName = args.season.name.trim();
-    if (!seasonName) {
-      throw new Error("Season name is required");
-    }
-
-    if (
-      !isIsoDateString(args.season.startDate) ||
-      !isIsoDateString(args.season.endDate)
-    ) {
-      throw new Error("Season dates must use YYYY-MM-DD format");
-    }
-
-    if (args.season.startDate > args.season.endDate) {
-      throw new Error("Season start date must be before end date");
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      await ctx.db.insert("leagueSettings", {
-        organizationId: organization._id,
-        sportType: "soccer",
-        ageCategories: [],
-        positions: [],
-        lineups: [],
-        enabledGenders: ["male", "female"],
-        seasons: [
-          {
-            ...args.season,
-            name: seasonName,
-          },
-        ],
-      });
-      return null;
-    }
-
-    const currentSeasons = settings.seasons ?? [];
-    const seasonAlreadyExists = currentSeasons.some(
-      (season) => season.id === args.season.id || season.name === seasonName,
-    );
-    if (seasonAlreadyExists) {
-      throw new Error("Season already exists");
-    }
-
-    await ctx.db.patch(settings._id, {
-      seasons: [
-        ...currentSeasons,
-        {
-          ...args.season,
-          name: seasonName,
-        },
-      ],
-    });
-
-    return null;
-  },
+  handler: addSeasonHandler,
 });
 
-/**
- * Remove a season.
- */
 export const removeSeason = mutation({
   args: {
     leagueSlug: v.string(),
     seasonId: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings?.seasons?.length) {
-      return null;
-    }
-
-    const seasonExists = settings.seasons.some(
-      (season) => season.id === args.seasonId,
-    );
-    if (!seasonExists) {
-      return null;
-    }
-
-    const gamesWithSeason = await ctx.db
-      .query("games")
-      .withIndex("byOrganizationAndSeason", (q) =>
-        q.eq("organizationId", organization._id).eq("seasonId", args.seasonId),
-      )
-      .take(1);
-
-    if (gamesWithSeason.length > 0) {
-      throw new Error(
-        "Season cannot be removed because there are games linked to it",
-      );
-    }
-
-    await ctx.db.patch(settings._id, {
-      seasons: settings.seasons.filter((season) => season.id !== args.seasonId),
-    });
-
-    return null;
-  },
+  handler: removeSeasonHandler,
 });
 
-/**
- * Update a season.
- */
 export const updateSeason = mutation({
   args: {
     leagueSlug: v.string(),
@@ -788,133 +186,18 @@ export const updateSeason = mutation({
     endDate: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const seasonName = args.name.trim();
-    if (!seasonName) {
-      throw new Error("Season name is required");
-    }
-    if (!isIsoDateString(args.startDate) || !isIsoDateString(args.endDate)) {
-      throw new Error("Season dates must use YYYY-MM-DD format");
-    }
-    if (args.startDate > args.endDate) {
-      throw new Error("Season start date must be before end date");
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings?.seasons?.length) {
-      throw new Error("Season not found");
-    }
-
-    const seasonExists = settings.seasons.some(
-      (season) => season.id === args.seasonId,
-    );
-    if (!seasonExists) {
-      throw new Error("Season not found");
-    }
-
-    const duplicateName = settings.seasons.some(
-      (season) => season.id !== args.seasonId && season.name === seasonName,
-    );
-    if (duplicateName) {
-      throw new Error("Season already exists");
-    }
-
-    const gamesWithSeason = await ctx.db
-      .query("games")
-      .withIndex("byOrganizationAndSeason", (q) =>
-        q.eq("organizationId", organization._id).eq("seasonId", args.seasonId),
-      )
-      .collect();
-
-    const gameOutOfRange = gamesWithSeason.some(
-      (game) => game.date < args.startDate || game.date > args.endDate,
-    );
-    if (gameOutOfRange) {
-      throw new Error("Season range must include all linked games");
-    }
-
-    await ctx.db.patch(settings._id, {
-      seasons: settings.seasons.map((season) =>
-        season.id === args.seasonId
-          ? {
-              ...season,
-              name: seasonName,
-              startDate: args.startDate,
-              endDate: args.endDate,
-            }
-          : season,
-      ),
-    });
-
-    return null;
-  },
+  handler: updateSeasonHandler,
 });
 
-/**
- * Add a lineup template.
- */
 export const addLineup = mutation({
   args: {
     leagueSlug: v.string(),
     lineup: lineupTemplateValidator,
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const lineupName = args.lineup.name.trim();
-    if (!lineupName) {
-      throw new Error("Lineup name is required");
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      await ctx.db.insert("leagueSettings", {
-        organizationId: organization._id,
-        sportType: "soccer",
-        ageCategories: [],
-        positions: [],
-        lineups: [{ ...args.lineup, name: lineupName }],
-        enabledGenders: ["male", "female"],
-      });
-      return null;
-    }
-
-    const currentLineups = settings.lineups ?? [];
-    const exists = currentLineups.some(
-      (lineup) =>
-        lineup.id === args.lineup.id ||
-        lineup.name.toLowerCase() === lineupName.toLowerCase(),
-    );
-    if (exists) {
-      throw new Error("Lineup already exists");
-    }
-
-    await ctx.db.patch(settings._id, {
-      lineups: [...currentLineups, { ...args.lineup, name: lineupName }],
-    });
-
-    return null;
-  },
+  handler: addLineupHandler,
 });
 
-/**
- * Update a lineup template.
- */
 export const updateLineup = mutation({
   args: {
     leagueSlug: v.string(),
@@ -923,85 +206,14 @@ export const updateLineup = mutation({
     slots: v.array(lineupSlotValidator),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const lineupName = args.name.trim();
-    if (!lineupName) {
-      throw new Error("Lineup name is required");
-    }
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      throw new Error("League settings not found");
-    }
-
-    const currentLineups = settings.lineups ?? [];
-    const exists = currentLineups.some(
-      (lineup) =>
-        lineup.id !== args.lineupId &&
-        lineup.name.toLowerCase() === lineupName.toLowerCase(),
-    );
-    if (exists) {
-      throw new Error("Lineup already exists");
-    }
-
-    const target = currentLineups.find((lineup) => lineup.id === args.lineupId);
-    if (!target) {
-      throw new Error("Lineup not found");
-    }
-
-    await ctx.db.patch(settings._id, {
-      lineups: currentLineups.map((lineup) =>
-        lineup.id === args.lineupId
-          ? {
-              ...lineup,
-              name: lineupName,
-              slots: args.slots,
-            }
-          : lineup,
-      ),
-    });
-
-    return null;
-  },
+  handler: updateLineupHandler,
 });
 
-/**
- * Remove a lineup template.
- */
 export const removeLineup = mutation({
   args: {
     leagueSlug: v.string(),
     lineupId: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
-
-    const settings = await ctx.db
-      .query("leagueSettings")
-      .withIndex("byOrganization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .unique();
-
-    if (!settings) {
-      throw new Error("League settings not found");
-    }
-
-    await ctx.db.patch(settings._id, {
-      lineups: (settings.lineups ?? []).filter(
-        (lineup) => lineup.id !== args.lineupId,
-      ),
-    });
-
-    return null;
-  },
+  handler: removeLineupHandler,
 });

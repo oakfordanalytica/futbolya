@@ -6,7 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { darkenHex } from "@/lib/utils";
-import { useSportTerminology } from "@/lib/sports";
+import { useSoccerTerminology } from "@/lib/soccer/terminology";
 import { RosterGrid } from "./roster-grid";
 import { TeamHeader } from "./team-header";
 import { TeamStaffList } from "./team-staff-list";
@@ -24,7 +24,7 @@ export function TeamDetailClient({
   orgSlug,
   routeScope,
 }: TeamDetailClientProps) {
-  const terminology = useSportTerminology();
+  const terminology = useSoccerTerminology();
   const t = useTranslations("Common");
   const team = usePreloadedQuery(preloadedTeam);
 

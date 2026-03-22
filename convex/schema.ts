@@ -40,7 +40,9 @@ const dominantProfile = v.union(
   v.literal("both"),
 );
 
-const gameStatus = v.union(
+// Storage compatibility only. Public reads normalize legacy statuses to
+// "completed" and new writes no longer emit these legacy values.
+const storedGameStatus = v.union(
   v.literal("scheduled"),
   v.literal("in_progress"),
   v.literal("halftime"),
@@ -301,7 +303,7 @@ export default defineSchema({
     gender: gender,
     locationName: v.optional(v.string()),
     locationCoordinates: v.optional(v.array(v.number())),
-    status: gameStatus,
+    status: storedGameStatus,
     homeScore: v.optional(v.number()),
     awayScore: v.optional(v.number()),
     matchStartedAt: v.optional(v.number()),
@@ -313,7 +315,8 @@ export default defineSchema({
     secondHalfEndedAt: v.optional(v.number()),
     firstHalfAddedMinutes: v.optional(v.number()),
     secondHalfAddedMinutes: v.optional(v.number()),
-    // Stats submission tracking
+    // Legacy stats-submission flow. Kept only for compatibility with old game
+    // documents until a dedicated data migration removes these fields.
     homeStatsSubmittedAt: v.optional(v.number()),
     awayStatsSubmittedAt: v.optional(v.number()),
     homeStatsConfirmed: v.optional(v.boolean()),

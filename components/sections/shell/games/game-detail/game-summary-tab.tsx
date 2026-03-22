@@ -1,5 +1,6 @@
 "use client";
 
+import type { GameStatus } from "@/lib/games/status";
 import { GameBoxScore } from "./game-box-score";
 import { MatchLineups } from "./match-lineups";
 import { MatchTimeline } from "./match-timeline";
@@ -10,14 +11,7 @@ interface GameSummaryTabProps {
   currentClubSlug?: string;
   game: {
     _id: string;
-    status:
-      | "scheduled"
-      | "in_progress"
-      | "halftime"
-      | "awaiting_stats"
-      | "pending_review"
-      | "completed"
-      | "cancelled";
+    status: GameStatus;
     matchStartedAt?: number;
     matchEndedAt?: number;
     homeTeamName: string;

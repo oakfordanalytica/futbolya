@@ -15,12 +15,7 @@ interface TeamsGamesWeekStripProps {
   orgSlug: string;
 }
 
-const PAST_STATUSES = new Set<GameRow["status"]>([
-  "completed",
-  "cancelled",
-  "awaiting_stats",
-  "pending_review",
-]);
+const PAST_STATUSES = new Set<GameRow["status"]>(["completed", "cancelled"]);
 
 type GameWithMeta = {
   game: GameRow;

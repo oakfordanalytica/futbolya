@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import type { GameStatus } from "@/lib/games/status";
 import { TEAM_ROUTES } from "@/lib/navigation/routes";
 import {
   DropdownMenu,
@@ -58,14 +59,7 @@ interface GameHeaderProps {
     gender: "male" | "female" | "mixed";
     locationName?: string;
     locationCoordinates?: number[];
-    status:
-      | "scheduled"
-      | "in_progress"
-      | "halftime"
-      | "awaiting_stats"
-      | "pending_review"
-      | "completed"
-      | "cancelled";
+    status: GameStatus;
     homeScore?: number;
     awayScore?: number;
   };
@@ -80,10 +74,6 @@ const STATUS_STYLES: Record<string, string> = {
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
   halftime:
     "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-400",
-  awaiting_stats:
-    "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
-  pending_review:
-    "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400",
   completed:
     "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
   cancelled: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
@@ -118,8 +108,6 @@ export function GameHeader({
     (hasRecordedScore ||
       game.status === "in_progress" ||
       game.status === "halftime" ||
-      game.status === "awaiting_stats" ||
-      game.status === "pending_review" ||
       game.status === "completed");
   const parsedGameDate = parseIsoDateAsLocal(game.date);
   const formattedDate = parsedGameDate ? format(parsedGameDate, "PPP") : "—";

@@ -21,7 +21,7 @@ import {
   formatPenaltySummary,
   type PlayerBoxScoreRow,
   type TeamGameTotals,
-} from "@/lib/sports/soccer/game-stats";
+} from "@/lib/soccer/game-stats";
 
 interface Team {
   name: string;

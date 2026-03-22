@@ -1,0 +1,119 @@
+import type { MutationCtx } from "../../_generated/server";
+import { requireOrgAdmin } from "../../lib/permissions";
+import {
+  buildDefaultLeagueSettings,
+  getLeagueSettingsByOrganizationId,
+} from "./helpers";
+
+export async function addAgeCategoryHandler(
+  ctx: MutationCtx,
+  args: {
+    leagueSlug: string;
+    category: { id: string; name: string; minAge: number; maxAge: number };
+  },
+) {
+  const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+  const settings = await getLeagueSettingsByOrganizationId(ctx, organization._id);
+
+  if (!settings) {
+    await ctx.db.insert(
+      "leagueSettings",
+      buildDefaultLeagueSettings(organization._id, {
+        ageCategories: [args.category],
+      }),
+    );
+    return null;
+  }
+
+  const exists = settings.ageCategories.some(
+    (c) => c.id === args.category.id || c.name === args.category.name,
+  );
+  if (exists) {
+    throw new Error("Age category already exists");
+  }
+
+  await ctx.db.patch(settings._id, {
+    ageCategories: [...settings.ageCategories, args.category],
+  });
+
+  return null;
+}
+
+export async function removeAgeCategoryHandler(
+  ctx: MutationCtx,
+  args: { leagueSlug: string; categoryId: string },
+) {
+  const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+  const settings = await getLeagueSettingsByOrganizationId(ctx, organization._id);
+
+  if (!settings) {
+    return null;
+  }
+
+  await ctx.db.patch(settings._id, {
+    ageCategories: settings.ageCategories.filter(
+      (c) => c.id !== args.categoryId,
+    ),
+  });
+
+  return null;
+}
+
+export async function updateAgeCategoryHandler(
+  ctx: MutationCtx,
+  args: {
+    leagueSlug: string;
+    categoryId: string;
+    name: string;
+    minAge: number;
+    maxAge: number;
+  },
+) {
+  const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+
+  const categoryName = args.name.trim();
+  if (!categoryName) {
+    throw new Error("Age category name is required");
+  }
+  if (args.minAge > args.maxAge) {
+    throw new Error("Minimum age cannot be greater than maximum age");
+  }
+
+  const settings = await getLeagueSettingsByOrganizationId(ctx, organization._id);
+
+  if (!settings) {
+    throw new Error("League settings not found");
+  }
+
+  const categoryExists = settings.ageCategories.some(
+    (category) => category.id === args.categoryId,
+  );
+  if (!categoryExists) {
+    throw new Error("Age category not found");
+  }
+
+  const duplicateName = settings.ageCategories.some(
+    (category) =>
+      category.id !== args.categoryId && category.name === categoryName,
+  );
+  if (duplicateName) {
+    throw new Error("Age category already exists");
+  }
+
+  await ctx.db.patch(settings._id, {
+    ageCategories: settings.ageCategories.map((category) =>
+      category.id === args.categoryId
+        ? {
+            ...category,
+            name: categoryName,
+            minAge: args.minAge,
+            maxAge: args.maxAge,
+          }
+        : category,
+    ),
+  });
+
+  return null;
+}

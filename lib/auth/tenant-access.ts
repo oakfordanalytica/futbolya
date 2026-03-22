@@ -13,6 +13,22 @@ interface TenantAccess {
   role: TenantRole | null;
 }
 
+function hasPendingStaffInvite(publicMetadata: unknown): boolean {
+  if (!publicMetadata || typeof publicMetadata !== "object") {
+    return false;
+  }
+
+  const pendingStaff = (publicMetadata as { pendingStaff?: unknown })
+    .pendingStaff;
+  if (!pendingStaff || typeof pendingStaff !== "object") {
+    return false;
+  }
+
+  const staffRole = (pendingStaff as { staffRole?: unknown }).staffRole;
+  const clubId = (pendingStaff as { clubId?: unknown }).clubId;
+  return typeof staffRole === "string" && typeof clubId === "string";
+}
+
 function normalizeMembershipRole(
   role: "superadmin" | "admin" | "member" | "coach" | undefined,
 ): TenantRole | null {
@@ -52,6 +68,31 @@ function normalizeMetadataRole(
   }
 
   return null;
+}
+
+function resolveSingleTenantFallbackRole(args: {
+  publicMetadata?: unknown;
+  sessionClaims?: unknown;
+}): TenantRole | null {
+  if (args.publicMetadata && typeof args.publicMetadata === "object") {
+    const metadata = args.publicMetadata as {
+      role?: unknown;
+      isSuperAdmin?: unknown;
+    };
+    const metadataRole = normalizeMetadataRole(
+      metadata.role,
+      metadata.isSuperAdmin,
+    );
+    if (metadataRole) {
+      return metadataRole;
+    }
+
+    if (hasPendingStaffInvite(args.publicMetadata)) {
+      return "coach";
+    }
+  }
+
+  return roleFromSessionClaims(args.sessionClaims);
 }
 
 /**
@@ -101,13 +142,14 @@ export async function getTenantAccess(
     try {
       const client = await clerkClient();
       const clerkUser = await client.users.getUser(authObject.userId);
-      const role =
-        normalizeMetadataRole(
-          clerkUser.publicMetadata?.role,
-          clerkUser.publicMetadata?.isSuperAdmin,
-        ) ??
-        roleFromSessionClaims(authObject.sessionClaims) ??
-        "coach";
+      const role = resolveSingleTenantFallbackRole({
+        publicMetadata: clerkUser.publicMetadata,
+        sessionClaims: authObject.sessionClaims,
+      });
+
+      if (!role) {
+        return { hasAccess: false, isAdmin: false, role: null };
+      }
 
       return {
         hasAccess: true,
@@ -115,7 +157,14 @@ export async function getTenantAccess(
         role,
       };
     } catch {
-      const role = roleFromSessionClaims(authObject.sessionClaims) ?? "coach";
+      const role = resolveSingleTenantFallbackRole({
+        sessionClaims: authObject.sessionClaims,
+      });
+
+      if (!role) {
+        return { hasAccess: false, isAdmin: false, role: null };
+      }
+
       return {
         hasAccess: true,
         isAdmin: role === "admin" || role === "superadmin",

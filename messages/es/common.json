@@ -57,6 +57,15 @@
       "description": "No tienes acceso a la organización \"{organization}\". Por favor selecciona una organización a la que pertenezcas."
     }
   },
+  "auth": {
+    "postSignIn": {
+      "title": "Preparando tu acceso",
+      "description": "Estamos terminando la sincronización de tu sesión y redirección.",
+      "timeout": "La redirección está tardando más de lo esperado. Puedes reintentar o ir a tu organización.",
+      "retry": "Reintentar",
+      "continue": "Ir a la organización"
+    }
+  },
   "organizationType": {
     "league": "Liga",
     "club": "Club"
@@ -483,8 +492,6 @@
       "scheduled": "Programado",
       "in_progress": "En Juego",
       "halftime": "Descanso",
-      "awaiting_stats": "Esperando Estadísticas",
-      "pending_review": "Pendiente de Revisión",
       "completed": "Completado",
       "cancelled": "Cancelado"
     },

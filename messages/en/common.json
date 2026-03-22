@@ -57,6 +57,15 @@
       "description": "You don't have access to the organization \"{organization}\". Please select an organization you belong to."
     }
   },
+  "auth": {
+    "postSignIn": {
+      "title": "Preparing your access",
+      "description": "We're finishing your session sync and redirect.",
+      "timeout": "The redirect is taking longer than expected. You can retry or go to your organization.",
+      "retry": "Retry",
+      "continue": "Go to organization"
+    }
+  },
   "organizationType": {
     "league": "League",
     "club": "Club"
@@ -483,8 +492,6 @@
       "scheduled": "Scheduled",
       "in_progress": "In Progress",
       "halftime": "Halftime",
-      "awaiting_stats": "Awaiting Stats",
-      "pending_review": "Pending Review",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },

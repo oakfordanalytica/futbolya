@@ -23,6 +23,7 @@ export const ROUTES = {
     auth: {
       signIn: (orgSlug: string) => `/${orgSlug}/sign-in`,
       signUp: (orgSlug: string) => `/${orgSlug}/sign-up`,
+      complete: (orgSlug: string) => `/${orgSlug}/auth-complete`,
     },
     onboarding: (orgSlug: string) => `/${orgSlug}/onboarding`,
   },

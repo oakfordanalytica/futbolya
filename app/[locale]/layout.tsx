@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ColorSchemeProvider } from "@/components/providers/color-scheme-provider";
 import { ThemeScript } from "@/components/providers/theme-script";
 import { fontVariables } from "@/lib/fonts";
+import { DEFAULT_COLOR_SCHEME } from "@/lib/themes";
 import { shadcn } from "@clerk/themes";
 import "@/app/globals.css";
 
@@ -65,7 +66,12 @@ export default async function LocaleLayout({
     clerkLocalizations[locale as keyof typeof clerkLocalizations] ?? enUS;
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className="dark"
+      data-theme={DEFAULT_COLOR_SCHEME}
+      suppressHydrationWarning
+    >
       <head>
         <ThemeScript />
       </head>
@@ -74,7 +80,8 @@ export default async function LocaleLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem
+          forcedTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <ColorSchemeProvider>

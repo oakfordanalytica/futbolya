@@ -11,11 +11,6 @@ import { cn } from "@/lib/utils";
 import { JerseyIcon } from "@/components/ui/jersey-icon";
 import { PlayerChip } from "@/components/ui/player-chip";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -28,6 +23,7 @@ interface FootballFieldProps {
   onSlotClick?: (slotId: string) => void;
   onSlotPopoverOpenChange?: (slotId: string, open: boolean) => void;
   renderSlotPopoverContent?: (slot: FootballLineupSlot) => ReactNode;
+  renderSlotAccessory?: (slot: FootballLineupSlot) => ReactNode;
 }
 
 function parseFormationCounts(formation: string): number[] {
@@ -93,6 +89,7 @@ function TemplateSlotChip({
   onClick,
   onPopoverOpenChange,
   renderPopoverContent,
+  renderAccessory,
 }: {
   slot: FootballLineupSlot;
   teamColor?: string;
@@ -100,11 +97,11 @@ function TemplateSlotChip({
   onClick?: () => void;
   onPopoverOpenChange?: (open: boolean) => void;
   renderPopoverContent?: ReactNode;
+  renderAccessory?: ReactNode;
 }) {
   const player = slot.player;
   const lastName = resolveDisplayLastName(player);
   const isClickable = Boolean(onClick || onPopoverOpenChange);
-  const substitutionTooltipLines = player?.substitutionTooltipLines ?? [];
   const popoverAlign = slot.x <= 34 ? "start" : slot.x >= 66 ? "end" : "center";
   const popoverSide = slot.y >= 74 ? "top" : "bottom";
 
@@ -133,26 +130,7 @@ function TemplateSlotChip({
           number={player?.number}
           size={40}
         />
-        {substitutionTooltipLines.length > 0 ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className="absolute -right-2 top-0 inline-flex h-4 w-4 items-center justify-center rounded-full bg-background/90 text-[10px] font-semibold leading-none text-foreground shadow-sm"
-                onClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
-              >
-                ↕
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" align="center" className="px-3 py-2">
-              <div className="space-y-1 text-xs">
-                {substitutionTooltipLines.map((line, index) => (
-                  <p key={`${slot.id}-substitution-${index}`}>{line}</p>
-                ))}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        ) : null}
+        {renderAccessory}
       </div>
       {lastName && (
         <span
@@ -194,6 +172,7 @@ function TemplateSlotsLayout({
   onSlotClick,
   onSlotPopoverOpenChange,
   renderSlotPopoverContent,
+  renderSlotAccessory,
 }: {
   slots: FootballLineupSlot[];
   teamColor?: string;
@@ -201,6 +180,7 @@ function TemplateSlotsLayout({
   onSlotClick?: (slotId: string) => void;
   onSlotPopoverOpenChange?: (slotId: string, open: boolean) => void;
   renderSlotPopoverContent?: (slot: FootballLineupSlot) => ReactNode;
+  renderSlotAccessory?: (slot: FootballLineupSlot) => ReactNode;
 }) {
   return (
     <div className="absolute inset-0 z-10">
@@ -217,6 +197,7 @@ function TemplateSlotsLayout({
               : undefined
           }
           renderPopoverContent={renderSlotPopoverContent?.(slot)}
+          renderAccessory={renderSlotAccessory?.(slot)}
         />
       ))}
     </div>
@@ -230,6 +211,7 @@ export function FootballField({
   onSlotClick,
   onSlotPopoverOpenChange,
   renderSlotPopoverContent,
+  renderSlotAccessory,
 }: FootballFieldProps) {
   if (lineup.slots && lineup.slots.length > 0) {
     return (
@@ -241,6 +223,7 @@ export function FootballField({
           onSlotClick={onSlotClick}
           onSlotPopoverOpenChange={onSlotPopoverOpenChange}
           renderSlotPopoverContent={renderSlotPopoverContent}
+          renderSlotAccessory={renderSlotAccessory}
         />
       </FootballFieldSurface>
     );

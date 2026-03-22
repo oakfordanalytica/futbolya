@@ -21,15 +21,17 @@ import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { getTeamNavConfig, isItemActive } from "@/lib/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/navigation/routes";
-import { useSportTerminology } from "@/lib/sports";
-import type { SportTerminology } from "@/lib/sports";
+import {
+  useSoccerTerminology,
+  type SoccerTerminology,
+} from "@/lib/soccer/terminology";
 import { Link } from "@/components/ui/link";
 import {
   getTeamUserProfileUrl,
   getTenantSignInUrl,
 } from "@/lib/navigation/user-button";
 
-const TERMINOLOGY_MAP: Record<string, keyof SportTerminology> = {
+const TERMINOLOGY_MAP: Record<string, keyof SoccerTerminology> = {
   roster: "players",
   schedule: "matches",
 };
@@ -60,7 +62,7 @@ export function TeamSidebar() {
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations("Navigation.nav");
-  const terminology = useSportTerminology();
+  const terminology = useSoccerTerminology();
 
   const orgSlug = params.tenant as string;
   const teamSlug = params.team as string;

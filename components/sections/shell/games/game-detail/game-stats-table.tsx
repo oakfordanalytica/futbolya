@@ -14,10 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  emptyTeamTotals,
-  type TeamGameTotals,
-} from "@/lib/sports/soccer/game-stats";
+import { emptyTeamTotals, type TeamGameTotals } from "@/lib/soccer/game-stats";
 
 interface Team {
   name: string;

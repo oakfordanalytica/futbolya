@@ -8,7 +8,7 @@ import {
   formatHeight,
   formatWeight,
   calculateAge,
-} from "@/lib/sports/soccer/player-utils";
+} from "@/lib/soccer/player-utils";
 import { buildPlayerFullName, buildPlayerInitials } from "@/lib/players/name";
 
 interface PlayerCardProps {
