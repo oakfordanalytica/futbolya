@@ -66,6 +66,19 @@
       "continue": "Ir a la organización"
     }
   },
+  "imageCropper": {
+    "title": "Ajustar imagen",
+    "description": "Mueve y acerca la imagen hasta dejar el encuadre como quieres.",
+    "zoom": "Zoom",
+    "confirm": "Recortar",
+    "previewAlt": "Vista previa de imagen",
+    "remove": "Quitar imagen",
+    "errors": {
+      "invalidType": "Solo se permiten archivos de imagen.",
+      "tooLarge": "El archivo \"{fileName}\" supera el tamaño máximo de {size}.",
+      "cropFailed": "No se pudo procesar la imagen recortada."
+    }
+  },
   "organizationType": {
     "league": "Liga",
     "club": "Club"

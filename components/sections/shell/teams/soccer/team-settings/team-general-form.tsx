@@ -18,7 +18,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import ColorPicker from "@/components/ui/color-picker";
-import type { FileWithPreview } from "@/hooks/use-file-upload";
+import type { FileWithPreview } from "@/lib/files/upload";
 
 interface TeamColor {
   hex: string;

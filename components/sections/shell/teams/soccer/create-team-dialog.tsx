@@ -20,7 +20,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import ColorPicker from "@/components/ui/color-picker";
 import { useSoccerTerminology } from "@/lib/soccer/terminology";
-import type { FileWithPreview } from "@/hooks/use-file-upload";
+import type { FileWithPreview } from "@/lib/files/upload";
 
 type ClubStatus = "affiliated" | "invited" | "suspended";
 

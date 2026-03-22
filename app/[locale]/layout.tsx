@@ -14,6 +14,7 @@ import { fontVariables } from "@/lib/fonts";
 import { DEFAULT_COLOR_SCHEME } from "@/lib/themes";
 import { shadcn } from "@clerk/themes";
 import "@/app/globals.css";
+import "react-easy-crop/react-easy-crop.css";
 
 // NEXT-INTL RELATED
 import { hasLocale, NextIntlClientProvider } from "next-intl";
