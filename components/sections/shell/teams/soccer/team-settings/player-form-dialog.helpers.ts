@@ -1,11 +1,25 @@
 import { format, parse } from "date-fns";
 import { Id } from "@/convex/_generated/dataModel";
 import { normalizeCountryValue } from "@/lib/countries/countries";
+import {
+  deriveDivisionFromCategoryName,
+  findLeagueAgeCategoryByAgeGroup,
+  type LeagueAgeCategory,
+} from "@/lib/soccer/categories";
 import type { PlayerData, PlayerFormValues } from "./player-form-dialog.types";
 
 export function createPlayerFormValues(
   player?: PlayerData | null,
+  ageCategories: LeagueAgeCategory[] = [],
 ): PlayerFormValues {
+  const matchedLeagueCategory =
+    (player?.categoryLeagueCategoryId
+      ? (ageCategories.find(
+          (category) => category.id === player.categoryLeagueCategoryId,
+        ) ?? null)
+      : null) ??
+    findLeagueAgeCategoryByAgeGroup(ageCategories, player?.categoryAgeGroup);
+
   return {
     firstName: player?.firstName ?? "",
     lastName: player?.lastName ?? "",
@@ -23,13 +37,23 @@ export function createPlayerFormValues(
     height: player?.height?.toString() ?? "",
     weight: player?.weight?.toString() ?? "",
     country: normalizeCountryValue(player?.country),
-    categoryId: player?.categoryId ?? "",
+    leagueCategoryId: matchedLeagueCategory?.id ?? "",
+    division:
+      player?.categoryName && player?.categoryAgeGroup
+        ? deriveDivisionFromCategoryName(
+            player.categoryName,
+            player.categoryAgeGroup,
+          )
+        : "",
     photoFile: null,
     currentPhotoUrl: player?.photoUrl ?? null,
   };
 }
 
-export function isPlayerFormValid(values: PlayerFormValues): boolean {
+export function isPlayerFormValid(
+  values: PlayerFormValues,
+  horizontalDivisionsEnabled: boolean,
+): boolean {
   return Boolean(
     values.firstName.trim() &&
       values.lastName.trim() &&
@@ -42,11 +66,14 @@ export function isPlayerFormValid(values: PlayerFormValues): boolean {
       values.position &&
       values.dominantProfile &&
       values.country &&
-      values.categoryId,
+      values.leagueCategoryId &&
+      (!horizontalDivisionsEnabled || values.division),
   );
 }
 
-export function buildPlayerMutationPayload(values: PlayerFormValues) {
+export function buildPlayerMutationPayload(args: { values: PlayerFormValues }) {
+  const { values } = args;
+
   if (!values.dateOfBirth || !values.gender || !values.dominantProfile) {
     throw new Error("Player form payload is incomplete");
   }
@@ -61,7 +88,8 @@ export function buildPlayerMutationPayload(values: PlayerFormValues) {
     documentNumber: values.documentNumber.trim(),
     gender: values.gender,
     jerseyNumber: parseInt(values.jerseyNumber, 10),
-    categoryId: values.categoryId as Id<"categories">,
+    leagueCategoryId: values.leagueCategoryId,
+    division: values.division || undefined,
     cometNumber: values.cometNumber.trim(),
     fifaId: values.fifaId.trim() || undefined,
     position: values.position,

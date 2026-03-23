@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
-import { AlertCircle, CalendarIcon, Clock2Icon } from "lucide-react";
+import { CalendarIcon, Clock2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { FieldLabel } from "@/components/ui/field";
@@ -33,8 +33,7 @@ export function GameFormDetailsSection({
   controller: CreateGameDialogController;
 }) {
   const t = useTranslations("Common");
-  const { formState, ageCategories, enabledGenders, categoryValidation, updateField } =
-    controller;
+  const { formState, ageCategories, enabledGenders, updateField } = controller;
 
   return (
     <>
@@ -62,7 +61,9 @@ export function GameFormDetailsSection({
               onSelect={(date: Date | undefined) => updateField("date", date)}
             />
             <div className="border-t p-3">
-              <FieldLabel htmlFor="time-from">{t("games.startTime")}</FieldLabel>
+              <FieldLabel htmlFor="time-from">
+                {t("games.startTime")}
+              </FieldLabel>
               <InputGroup className="mt-1.5">
                 <InputGroupInput
                   id="time-from"
@@ -119,22 +120,6 @@ export function GameFormDetailsSection({
           </Select>
         </div>
       </div>
-
-      {!categoryValidation.isValid && categoryValidation.missingTeams.length > 0 && (
-        <div className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <p className="font-medium">{t("games.categoryValidationError")}</p>
-            <p className="mt-1">
-              {t("games.teamsMissingCategory", {
-                teams: categoryValidation.missingTeams.join(", "),
-                category: formState.category,
-              })}
-            </p>
-          </div>
-        </div>
-      )}
-
       <div>
         <FieldLabel>{t("games.location")}</FieldLabel>
         <div className="mt-2 h-48 overflow-hidden rounded-md border">

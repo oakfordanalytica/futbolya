@@ -84,7 +84,7 @@
     "teamConfig": {
       "ageCategories": {
         "title": "Categorías de Edad",
-        "description": "Define los grupos de edad para la organización de {clubs}",
+        "description": "Define los grupos de edad para la organización de {clubs}. Los rangos son inclusivos: una categoría aplica cuando minAge <= edad <= maxAge.",
         "name": "Nombre",
         "namePlaceholder": "ej. Sub-12, Senior",
         "minAge": "Mín",

@@ -1,7 +1,15 @@
 import type { MutationCtx } from "../../_generated/server";
 import type { Id } from "../../_generated/dataModel";
 import { getCurrentUser } from "../../lib/auth";
-import { requireClubAccess } from "../../lib/permissions";
+import {
+  deriveCategorySelectionFromExistingClubCategory,
+  ensureClubCategoryForLeagueSelection,
+  getClubLeagueCategoryConfig,
+} from "../../lib/categories/helpers";
+import {
+  requireClubAccess,
+  requireClubAccessBySlug,
+} from "../../lib/permissions";
 import {
   deleteStoredFileIfPresent,
   getExistingPlayer,
@@ -16,6 +24,7 @@ export async function generatePlayerUploadUrlHandler(ctx: MutationCtx) {
 export async function createPlayerHandler(
   ctx: MutationCtx,
   args: {
+    clubSlug: string;
     firstName: string;
     lastName: string;
     secondLastName: string;
@@ -24,7 +33,8 @@ export async function createPlayerHandler(
     documentNumber: string;
     gender: "male" | "female" | "mixed";
     jerseyNumber?: number;
-    categoryId: Id<"categories">;
+    leagueCategoryId: string;
+    division?: string;
     cometNumber: string;
     fifaId?: string;
     position?: string;
@@ -36,12 +46,13 @@ export async function createPlayerHandler(
 ) {
   await getCurrentUser(ctx);
 
-  const category = await ctx.db.get(args.categoryId);
-  if (!category) {
-    throw new Error("Category not found");
-  }
-
-  await requireClubAccess(ctx, category.clubId);
+  const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
+  const resolvedCategory = await ensureClubCategoryForLeagueSelection(ctx, {
+    clubId: club._id,
+    leagueCategoryId: args.leagueCategoryId,
+    gender: args.gender,
+    division: args.division,
+  });
 
   return await ctx.db.insert("players", {
     firstName: args.firstName,
@@ -52,8 +63,8 @@ export async function createPlayerHandler(
     documentNumber: args.documentNumber,
     gender: args.gender,
     jerseyNumber: args.jerseyNumber,
-    clubId: category.clubId,
-    categoryId: args.categoryId,
+    clubId: club._id,
+    categoryId: resolvedCategory.categoryId,
     sportType: "soccer",
     cometNumber: args.cometNumber,
     fifaId: args.fifaId,
@@ -101,7 +112,8 @@ export async function updatePlayerHandler(
     weight?: number;
     country?: string;
     status?: "active" | "inactive";
-    categoryId?: Id<"categories">;
+    leagueCategoryId?: string;
+    division?: string;
   },
 ) {
   await getCurrentUser(ctx);
@@ -109,7 +121,7 @@ export async function updatePlayerHandler(
   const player = await getExistingPlayer(ctx, args.playerId);
   await requireClubAccess(ctx, player.clubId);
 
-  const { playerId, ...updates } = args;
+  const { playerId, leagueCategoryId, division, ...updates } = args;
   const filteredUpdates: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(updates)) {
     if (value !== undefined) {
@@ -117,14 +129,42 @@ export async function updatePlayerHandler(
     }
   }
 
-  if (args.categoryId) {
-    const targetCategory = await ctx.db.get(args.categoryId);
-    if (!targetCategory) {
-      throw new Error("Category not found");
+  const shouldResyncCategory =
+    Boolean(leagueCategoryId) ||
+    division !== undefined ||
+    (args.gender !== undefined && args.gender !== player.gender);
+
+  if (shouldResyncCategory) {
+    const currentCategory = await ctx.db.get(player.categoryId);
+    if (!currentCategory) {
+      throw new Error("Current player category not found");
     }
 
-    await requireClubAccess(ctx, targetCategory.clubId);
-    filteredUpdates.clubId = targetCategory.clubId;
+    const { ageCategories } = await getClubLeagueCategoryConfig(
+      ctx,
+      player.clubId,
+    );
+    const currentSelection = deriveCategorySelectionFromExistingClubCategory({
+      ageCategories,
+      category: currentCategory,
+    });
+
+    const targetLeagueCategoryId =
+      leagueCategoryId ?? currentSelection.leagueCategoryId;
+    if (!targetLeagueCategoryId) {
+      throw new Error(
+        "Current player category is no longer available in league settings. Select a new category.",
+      );
+    }
+
+    const resolvedCategory = await ensureClubCategoryForLeagueSelection(ctx, {
+      clubId: player.clubId,
+      leagueCategoryId: targetLeagueCategoryId,
+      gender: args.gender ?? player.gender ?? currentCategory.gender,
+      division: division ?? currentSelection.division,
+    });
+    filteredUpdates.categoryId = resolvedCategory.categoryId;
+    filteredUpdates.clubId = player.clubId;
   }
 
   if (
@@ -176,7 +216,8 @@ export async function addPlayerHighlightHandler(
   const player = await getExistingPlayer(ctx, args.playerId);
   await requireClubAccess(ctx, player.clubId);
 
-  const { trimmedTitle, normalizedUrl, videoId } = normalizeHighlightInput(args);
+  const { trimmedTitle, normalizedUrl, videoId } =
+    normalizeHighlightInput(args);
   const currentHighlights = player.highlights ?? [];
 
   if (currentHighlights.some((highlight) => highlight.videoId === videoId)) {
@@ -215,7 +256,8 @@ export async function updatePlayerHighlightHandler(
   const player = await getExistingPlayer(ctx, args.playerId);
   await requireClubAccess(ctx, player.clubId);
 
-  const { trimmedTitle, normalizedUrl, videoId } = normalizeHighlightInput(args);
+  const { trimmedTitle, normalizedUrl, videoId } =
+    normalizeHighlightInput(args);
   const currentHighlights = player.highlights ?? [];
   const highlightIndex = currentHighlights.findIndex(
     (highlight) => highlight.id === args.highlightId,
@@ -261,7 +303,9 @@ export async function removePlayerHighlightHandler(
   await requireClubAccess(ctx, player.clubId);
 
   const currentHighlights = player.highlights ?? [];
-  if (!currentHighlights.some((highlight) => highlight.id === args.highlightId)) {
+  if (
+    !currentHighlights.some((highlight) => highlight.id === args.highlightId)
+  ) {
     throw new Error("Highlight not found");
   }
 

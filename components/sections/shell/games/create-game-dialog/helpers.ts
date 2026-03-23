@@ -1,6 +1,5 @@
 import { format } from "date-fns";
 import type {
-  CategoryValidation,
   Club,
   CreateGameDialogProps,
   GameFormState,
@@ -29,47 +28,21 @@ export function buildInitialGameFormState(args: {
     seasonId: gameToEdit?.seasonId ?? "",
     homeTeamId: gameToEdit?.homeClubId ?? preselectedClubId ?? "",
     awayTeamId: gameToEdit?.awayClubId ?? "",
-    date: gameToEdit?.date ? new Date(`${gameToEdit.date}T12:00:00`) : undefined,
+    date: gameToEdit?.date
+      ? new Date(`${gameToEdit.date}T12:00:00`)
+      : undefined,
     startTime: gameToEdit?.startTime ?? INITIAL_FORM_STATE.startTime,
     category: gameToEdit?.category ?? "",
     gender: gameToEdit?.gender ?? INITIAL_FORM_STATE.gender,
     locationName: gameToEdit?.locationName ?? "",
     locationCoordinates:
-      gameToEdit?.locationCoordinates && gameToEdit.locationCoordinates.length === 2
+      gameToEdit?.locationCoordinates &&
+      gameToEdit.locationCoordinates.length === 2
         ? ([
             gameToEdit.locationCoordinates[0],
             gameToEdit.locationCoordinates[1],
           ] as [number, number])
         : null,
-  };
-}
-
-export function buildCategoryValidation(args: {
-  formState: GameFormState;
-  clubIdsToCheck: string[];
-  categoryCheck:
-    | Array<{ clubName: string; hasCategory: boolean }>
-    | undefined
-    | null;
-}): CategoryValidation {
-  const { formState, clubIdsToCheck, categoryCheck } = args;
-
-  if (
-    !formState.category ||
-    !formState.gender ||
-    clubIdsToCheck.length === 0 ||
-    !categoryCheck
-  ) {
-    return { isValid: true, missingTeams: [] };
-  }
-
-  const missingTeams = categoryCheck
-    .filter((result) => !result.hasCategory)
-    .map((result) => result.clubName);
-
-  return {
-    isValid: missingTeams.length === 0,
-    missingTeams,
   };
 }
 
@@ -103,11 +76,9 @@ export function getSelectedSeason<T extends { id: string }>(args: {
 export function isCreateGameFormValid(args: {
   gameType: GameType;
   formState: GameFormState;
-  categoryValidation: CategoryValidation;
   isPreselectedClubAffiliated: boolean;
 }): boolean {
-  const { gameType, formState, categoryValidation, isPreselectedClubAffiliated } =
-    args;
+  const { gameType, formState, isPreselectedClubAffiliated } = args;
 
   return Boolean(
     (gameType !== "season" || formState.seasonId) &&
@@ -118,7 +89,6 @@ export function isCreateGameFormValid(args: {
       formState.startTime &&
       formState.category &&
       formState.gender &&
-      categoryValidation.isValid &&
       isPreselectedClubAffiliated,
   );
 }

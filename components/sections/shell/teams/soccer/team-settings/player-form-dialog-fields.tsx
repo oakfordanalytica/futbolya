@@ -21,30 +21,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getDivisionOptions } from "@/lib/soccer/categories";
 import { cn } from "@/lib/utils";
 import type {
-  PlayerCategoryOption,
+  HorizontalDivisionsConfig,
+  LeagueCategoryOption,
   PlayerFormValues,
   PositionOption,
+  PlayerGender,
   SetPlayerFormField,
 } from "./player-form-dialog.types";
 
 interface PlayerFormDialogFieldsProps {
-  categories: PlayerCategoryOption[];
+  ageCategories: LeagueCategoryOption[];
+  enabledGenders: PlayerGender[];
+  horizontalDivisions: HorizontalDivisionsConfig;
+  onDateOfBirthChange: (date: Date | undefined) => void;
   onFileChange: (file: PlayerFormValues["photoFile"]) => void;
+  onLeagueCategoryChange: (leagueCategoryId: string) => void;
   positions: PositionOption[];
   setField: SetPlayerFormField;
   values: PlayerFormValues;
 }
 
 export function PlayerFormDialogFields({
-  categories,
+  ageCategories,
+  enabledGenders,
+  horizontalDivisions,
+  onDateOfBirthChange,
   onFileChange,
+  onLeagueCategoryChange,
   positions,
   setField,
   values,
 }: PlayerFormDialogFieldsProps) {
   const t = useTranslations("Common");
+  const divisionOptions = getDivisionOptions(horizontalDivisions.type);
 
   return (
     <div className="space-y-6">
@@ -144,15 +156,11 @@ export function PlayerFormDialogFields({
                 <SelectValue placeholder={t("players.selectGender")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="male">
-                  {t("players.genderOptions.male")}
-                </SelectItem>
-                <SelectItem value="female">
-                  {t("players.genderOptions.female")}
-                </SelectItem>
-                <SelectItem value="mixed">
-                  {t("players.genderOptions.mixed")}
-                </SelectItem>
+                {enabledGenders.map((gender) => (
+                  <SelectItem key={gender} value={gender}>
+                    {t(`players.genderOptions.${gender}`)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </Field>
@@ -197,7 +205,7 @@ export function PlayerFormDialogFields({
                 <Calendar
                   mode="single"
                   selected={values.dateOfBirth}
-                  onSelect={(date) => setField("dateOfBirth", date)}
+                  onSelect={onDateOfBirthChange}
                   captionLayout="dropdown"
                   fromYear={1960}
                   toYear={new Date().getFullYear()}
@@ -223,7 +231,12 @@ export function PlayerFormDialogFields({
       </FieldGroup>
 
       <FieldGroup>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div
+          className={cn(
+            "grid gap-4 md:grid-cols-2",
+            horizontalDivisions.enabled ? "xl:grid-cols-4" : "xl:grid-cols-3",
+          )}
+        >
           <Field>
             <FieldLabel>{t("players.position")}</FieldLabel>
             <Select
@@ -268,21 +281,48 @@ export function PlayerFormDialogFields({
           <Field>
             <FieldLabel>{t("players.category")}</FieldLabel>
             <Select
-              value={values.categoryId}
-              onValueChange={(value) => setField("categoryId", value)}
+              value={values.leagueCategoryId}
+              onValueChange={onLeagueCategoryChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder={t("players.selectCategory")} />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category._id} value={category._id}>
-                    {category.name}
+                {ageCategories.length > 0 ? (
+                  ageCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name} ({category.minAge}-{category.maxAge})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-categories" disabled>
+                    {t("categories.emptyMessage")}
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </Field>
+
+          {horizontalDivisions.enabled && (
+            <Field>
+              <FieldLabel>{t("categories.horizontalDivision")}</FieldLabel>
+              <Select
+                value={values.division}
+                onValueChange={(value) => setField("division", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("categories.selectDivision")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {divisionOptions.map((division) => (
+                    <SelectItem key={division} value={division}>
+                      {division}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
         </div>
       </FieldGroup>
 

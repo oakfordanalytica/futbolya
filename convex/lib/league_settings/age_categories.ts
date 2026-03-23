@@ -1,9 +1,33 @@
 import type { MutationCtx } from "../../_generated/server";
+import { normalizeAgeGroup, normalizeSpaces } from "@/lib/soccer/categories";
 import { requireOrgAdmin } from "../../lib/permissions";
+import { syncClubCategoriesForLeagueCategoryRename } from "../categories/helpers";
 import {
   buildDefaultLeagueSettings,
   getLeagueSettingsByOrganizationId,
 } from "./helpers";
+
+function validateAgeCategoryInput(args: {
+  name: string;
+  minAge: number;
+  maxAge: number;
+}) {
+  const categoryName = normalizeSpaces(args.name);
+
+  if (!categoryName) {
+    throw new Error("Age category name is required");
+  }
+
+  if (args.minAge > args.maxAge) {
+    throw new Error("Minimum age cannot be greater than maximum age");
+  }
+
+  return categoryName;
+}
+
+function buildAgeCategorySemanticKey(name: string) {
+  return normalizeAgeGroup(name);
+}
 
 export async function addAgeCategoryHandler(
   ctx: MutationCtx,
@@ -13,28 +37,38 @@ export async function addAgeCategoryHandler(
   },
 ) {
   const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+  const categoryName = validateAgeCategoryInput(args.category);
 
-  const settings = await getLeagueSettingsByOrganizationId(ctx, organization._id);
+  const settings = await getLeagueSettingsByOrganizationId(
+    ctx,
+    organization._id,
+  );
 
   if (!settings) {
     await ctx.db.insert(
       "leagueSettings",
       buildDefaultLeagueSettings(organization._id, {
-        ageCategories: [args.category],
+        ageCategories: [{ ...args.category, name: categoryName }],
       }),
     );
     return null;
   }
 
+  const semanticCategoryKey = buildAgeCategorySemanticKey(categoryName);
   const exists = settings.ageCategories.some(
-    (c) => c.id === args.category.id || c.name === args.category.name,
+    (c) =>
+      c.id === args.category.id ||
+      buildAgeCategorySemanticKey(c.name) === semanticCategoryKey,
   );
   if (exists) {
     throw new Error("Age category already exists");
   }
 
   await ctx.db.patch(settings._id, {
-    ageCategories: [...settings.ageCategories, args.category],
+    ageCategories: [
+      ...settings.ageCategories,
+      { ...args.category, name: categoryName },
+    ],
   });
 
   return null;
@@ -46,7 +80,10 @@ export async function removeAgeCategoryHandler(
 ) {
   const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
 
-  const settings = await getLeagueSettingsByOrganizationId(ctx, organization._id);
+  const settings = await getLeagueSettingsByOrganizationId(
+    ctx,
+    organization._id,
+  );
 
   if (!settings) {
     return null;
@@ -72,16 +109,12 @@ export async function updateAgeCategoryHandler(
   },
 ) {
   const { organization } = await requireOrgAdmin(ctx, args.leagueSlug);
+  const categoryName = validateAgeCategoryInput(args);
 
-  const categoryName = args.name.trim();
-  if (!categoryName) {
-    throw new Error("Age category name is required");
-  }
-  if (args.minAge > args.maxAge) {
-    throw new Error("Minimum age cannot be greater than maximum age");
-  }
-
-  const settings = await getLeagueSettingsByOrganizationId(ctx, organization._id);
+  const settings = await getLeagueSettingsByOrganizationId(
+    ctx,
+    organization._id,
+  );
 
   if (!settings) {
     throw new Error("League settings not found");
@@ -94,9 +127,19 @@ export async function updateAgeCategoryHandler(
     throw new Error("Age category not found");
   }
 
+  const currentCategory =
+    settings.ageCategories.find(
+      (category) => category.id === args.categoryId,
+    ) ?? null;
+  if (!currentCategory) {
+    throw new Error("Age category not found");
+  }
+
+  const semanticCategoryKey = buildAgeCategorySemanticKey(categoryName);
   const duplicateName = settings.ageCategories.some(
     (category) =>
-      category.id !== args.categoryId && category.name === categoryName,
+      category.id !== args.categoryId &&
+      buildAgeCategorySemanticKey(category.name) === semanticCategoryKey,
   );
   if (duplicateName) {
     throw new Error("Age category already exists");
@@ -113,6 +156,13 @@ export async function updateAgeCategoryHandler(
           }
         : category,
     ),
+  });
+
+  await syncClubCategoriesForLeagueCategoryRename(ctx, {
+    organizationId: organization._id,
+    leagueCategoryId: args.categoryId,
+    previousAgeGroup: currentCategory.name,
+    nextAgeGroup: categoryName,
   });
 
   return null;

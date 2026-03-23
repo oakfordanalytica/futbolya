@@ -25,7 +25,9 @@ export async function listSoccerPlayersByClubSlugHandler(
     .query("players")
     .withIndex("byClub", (q) => q.eq("clubId", club._id))
     .collect();
-  const soccerPlayers = players.filter((player) => player.sportType === "soccer");
+  const soccerPlayers = players.filter(
+    (player) => player.sportType === "soccer",
+  );
   const categoryMap = await buildCategoryMap(
     ctx,
     soccerPlayers.map((player) => player.categoryId),
@@ -33,8 +35,14 @@ export async function listSoccerPlayersByClubSlugHandler(
 
   return await Promise.all(
     soccerPlayers.map(async (player) => ({
-      ...buildPlayerBase(player, await getPlayerPhotoUrl(ctx, player.photoStorageId)),
+      ...buildPlayerBase(
+        player,
+        await getPlayerPhotoUrl(ctx, player.photoStorageId),
+      ),
+      categoryLeagueCategoryId: categoryMap.get(player.categoryId)
+        ?.leagueCategoryId,
       categoryName: categoryMap.get(player.categoryId)?.name,
+      categoryAgeGroup: categoryMap.get(player.categoryId)?.ageGroup,
       clubSlug: club.slug,
       clubName: club.name,
       clubNickname: club.nickname,
@@ -50,7 +58,9 @@ export async function listSoccerPlayersByLeagueSlugHandler(
 
   const clubs = await ctx.db
     .query("clubs")
-    .withIndex("byOrganization", (q) => q.eq("organizationId", organization._id))
+    .withIndex("byOrganization", (q) =>
+      q.eq("organizationId", organization._id),
+    )
     .collect();
 
   if (clubs.length === 0) {
@@ -71,7 +81,9 @@ export async function listSoccerPlayersByLeagueSlugHandler(
     .flat()
     .filter((player) => player.sportType === "soccer")
     .sort((a, b) =>
-      `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`),
+      `${a.lastName} ${a.firstName}`.localeCompare(
+        `${b.lastName} ${b.firstName}`,
+      ),
     );
 
   const categoryMap = await buildCategoryMap(
@@ -84,8 +96,14 @@ export async function listSoccerPlayersByLeagueSlugHandler(
       const club = clubMap.get(player.clubId)!;
 
       return {
-        ...buildPlayerBase(player, await getPlayerPhotoUrl(ctx, player.photoStorageId)),
+        ...buildPlayerBase(
+          player,
+          await getPlayerPhotoUrl(ctx, player.photoStorageId),
+        ),
+        categoryLeagueCategoryId: categoryMap.get(player.categoryId)
+          ?.leagueCategoryId,
         categoryName: categoryMap.get(player.categoryId)?.name,
+        categoryAgeGroup: categoryMap.get(player.categoryId)?.ageGroup,
         clubSlug: club.slug,
         clubName: club.name,
         clubNickname: club.nickname,
@@ -101,7 +119,10 @@ export async function getSoccerPlayerDetailByClubSlugHandler(
     playerId: Id<"players">;
   },
 ) {
-  const { club, accessLevel } = await requireClubAccessBySlug(ctx, args.clubSlug);
+  const { club, accessLevel } = await requireClubAccessBySlug(
+    ctx,
+    args.clubSlug,
+  );
 
   const player = await ctx.db.get(args.playerId);
   if (!player || player.clubId !== club._id || player.sportType !== "soccer") {
@@ -147,12 +168,16 @@ export async function getSoccerPlayerDetailByClubSlugHandler(
 
   const [photoUrl, clubLogoUrl] = await Promise.all([
     getPlayerPhotoUrl(ctx, player.photoStorageId),
-    club.logoStorageId ? ctx.storage.getUrl(club.logoStorageId) : Promise.resolve(null),
+    club.logoStorageId
+      ? ctx.storage.getUrl(club.logoStorageId)
+      : Promise.resolve(null),
   ]);
 
   return {
     ...buildPlayerBase(player, photoUrl),
+    categoryLeagueCategoryId: category?.leagueCategoryId,
     categoryName: category?.name,
+    categoryAgeGroup: category?.ageGroup,
     clubId: club._id,
     clubName: club.name,
     clubSlug: club.slug,
@@ -258,13 +283,7 @@ export async function listSoccerPlayerGameLogHandler(
 
     const [year, month, day] = game.date.split("-").map(Number);
     const [hours = 0, minutes = 0] = game.startTime.split(":").map(Number);
-    const sortKey = Date.UTC(
-      year,
-      (month || 1) - 1,
-      day || 1,
-      hours,
-      minutes,
-    );
+    const sortKey = Date.UTC(year, (month || 1) - 1, day || 1, hours, minutes);
 
     rowsWithOpponentId.push({
       gameId: game._id,

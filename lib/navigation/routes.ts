@@ -152,8 +152,6 @@ export const TEAM_ROUTES = {
   rosterPlayerDetail: (orgSlug: string, teamSlug: string, playerId: string) =>
     `/${orgSlug}/${teamSlug}/roster/${playerId}`,
   staff: (orgSlug: string, teamSlug: string) => `/${orgSlug}/${teamSlug}/staff`,
-  categories: (orgSlug: string, teamSlug: string) =>
-    `/${orgSlug}/${teamSlug}/categories`,
   stats: {
     list: (orgSlug: string, teamSlug: string) =>
       `/${orgSlug}/${teamSlug}/stats`,

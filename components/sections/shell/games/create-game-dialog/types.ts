@@ -54,11 +54,6 @@ export const INITIAL_FORM_STATE: GameFormState = {
   locationCoordinates: null,
 };
 
-export interface CategoryValidation {
-  isValid: boolean;
-  missingTeams: string[];
-}
-
 export interface ActiveSeason {
   id: string;
   name: string;
@@ -92,7 +87,6 @@ export interface CreateGameDialogController {
   selectedHomeTeam: Club | null;
   selectedAwayTeam: Club | null;
   selectedSeason?: ActiveSeason;
-  categoryValidation: CategoryValidation;
   setGameType: (gameType: GameType) => void;
   updateField: <K extends keyof GameFormState>(
     field: K,

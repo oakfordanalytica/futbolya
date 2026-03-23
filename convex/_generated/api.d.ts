@@ -8,7 +8,6 @@
  * @module
  */
 
-import type * as categories from "../categories.js";
 import type * as clerk from "../clerk.js";
 import type * as clubs from "../clubs.js";
 import type * as conferences from "../conferences.js";
@@ -21,6 +20,7 @@ import type * as http from "../http.js";
 import type * as leagueSettings from "../leagueSettings.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_auth_types from "../lib/auth_types.js";
+import type * as lib_categories_helpers from "../lib/categories/helpers.js";
 import type * as lib_game_events_helpers from "../lib/game_events/helpers.js";
 import type * as lib_game_events_mutations from "../lib/game_events/mutations.js";
 import type * as lib_game_events_queries from "../lib/game_events/queries.js";
@@ -70,7 +70,6 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  categories: typeof categories;
   clerk: typeof clerk;
   clubs: typeof clubs;
   conferences: typeof conferences;
@@ -83,6 +82,7 @@ declare const fullApi: ApiFromModules<{
   leagueSettings: typeof leagueSettings;
   "lib/auth": typeof lib_auth;
   "lib/auth_types": typeof lib_auth_types;
+  "lib/categories/helpers": typeof lib_categories_helpers;
   "lib/game_events/helpers": typeof lib_game_events_helpers;
   "lib/game_events/mutations": typeof lib_game_events_mutations;
   "lib/game_events/queries": typeof lib_game_events_queries;

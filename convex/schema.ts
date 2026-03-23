@@ -182,6 +182,9 @@ export default defineSchema({
    */
   categories: defineTable({
     clubId: v.id("clubs"),
+    // Stable link to the league-level category this internal club category
+    // materializes. Optional only for compatibility with legacy documents.
+    leagueCategoryId: v.optional(v.string()),
     name: v.string(),
     ageGroup: v.string(),
     gender: gender,

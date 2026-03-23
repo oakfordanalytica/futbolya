@@ -64,6 +64,7 @@ export const generateUploadUrl = mutation({
 
 export const createPlayer = mutation({
   args: {
+    clubSlug: v.string(),
     firstName: v.string(),
     lastName: v.string(),
     secondLastName: v.string(),
@@ -72,7 +73,8 @@ export const createPlayer = mutation({
     documentNumber: v.string(),
     gender: playerGender,
     jerseyNumber: v.optional(v.number()),
-    categoryId: v.id("categories"),
+    leagueCategoryId: v.string(),
+    division: v.optional(v.string()),
     cometNumber: v.string(),
     fifaId: v.optional(v.string()),
     position: v.optional(v.string()),
@@ -110,7 +112,8 @@ export const updatePlayer = mutation({
     weight: v.optional(v.number()),
     country: v.optional(v.string()),
     status: v.optional(playerStatus),
-    categoryId: v.optional(v.id("categories")),
+    leagueCategoryId: v.optional(v.string()),
+    division: v.optional(v.string()),
   },
   returns: v.null(),
   handler: updatePlayerHandler,

@@ -21,7 +21,6 @@ import type {
   Gender,
 } from "./types";
 import {
-  buildCategoryValidation,
   buildInitialGameFormState,
   getAffiliatedClubs,
   getDefaultEnabledGenders,
@@ -83,38 +82,6 @@ export function useCreateGameDialogController({
   }, [open, gameToEdit, buildInitialFormState]);
 
   const hasPreselectedClub = Boolean(preselectedClubId);
-
-  const clubIdsToCheck = useMemo(() => {
-    const ids: Id<"clubs">[] = [];
-    if (formState.homeTeamId) {
-      ids.push(formState.homeTeamId as Id<"clubs">);
-    }
-    if (formState.awayTeamId) {
-      ids.push(formState.awayTeamId as Id<"clubs">);
-    }
-    return ids;
-  }, [formState.homeTeamId, formState.awayTeamId]);
-
-  const categoryCheck = useQuery(
-    api.categories.checkClubsHaveCategory,
-    clubIdsToCheck.length > 0 && formState.category && formState.gender
-      ? {
-          clubIds: clubIdsToCheck,
-          ageGroup: formState.category,
-          gender: formState.gender,
-        }
-      : "skip",
-  );
-
-  const categoryValidation = useMemo(
-    () =>
-      buildCategoryValidation({
-        formState,
-        clubIdsToCheck,
-        categoryCheck,
-      }),
-    [formState, clubIdsToCheck, categoryCheck],
-  );
 
   const ageCategories = teamConfig?.ageCategories || [];
   const enabledGenders = getDefaultEnabledGenders(
@@ -245,7 +212,6 @@ export function useCreateGameDialogController({
   const isFormValid = isCreateGameFormValid({
     gameType,
     formState,
-    categoryValidation,
     isPreselectedClubAffiliated,
   });
 
@@ -270,7 +236,6 @@ export function useCreateGameDialogController({
     selectedHomeTeam,
     selectedAwayTeam,
     selectedSeason,
-    categoryValidation,
     setGameType,
     updateField,
     handleBack,

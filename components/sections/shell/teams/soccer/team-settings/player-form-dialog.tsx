@@ -17,12 +17,18 @@ export function PlayerFormDialog({
   open,
   onOpenChange,
   clubSlug,
+  ageCategories,
+  enabledGenders,
+  horizontalDivisions,
   positions,
   player,
 }: PlayerFormDialogProps) {
   const t = useTranslations("Common");
   const controller = usePlayerFormDialogController({
+    ageCategories,
     clubSlug,
+    enabledGenders,
+    horizontalDivisions,
     onOpenChange,
     open,
     player,
@@ -43,8 +49,12 @@ export function PlayerFormDialog({
         >
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
             <PlayerFormDialogFields
-              categories={controller.categories}
+              ageCategories={controller.ageCategories}
+              enabledGenders={controller.enabledGenders}
+              horizontalDivisions={controller.horizontalDivisions}
+              onDateOfBirthChange={controller.handleDateOfBirthChange}
               onFileChange={controller.handleFileChange}
+              onLeagueCategoryChange={controller.handleLeagueCategoryChange}
               positions={positions}
               setField={controller.setField}
               values={controller.values}

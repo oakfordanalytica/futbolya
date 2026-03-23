@@ -1,4 +1,5 @@
 import type { FileWithPreview } from "@/lib/files/upload";
+import type { DivisionType, LeagueAgeCategory } from "@/lib/soccer/categories";
 
 export type PlayerGender = "male" | "female" | "mixed";
 export type DominantProfile = "left" | "right" | "both";
@@ -20,7 +21,10 @@ export interface PlayerData {
   height?: number | null;
   weight?: number | null;
   country?: string | null;
-  categoryId?: string;
+  categoryId?: string | null;
+  categoryLeagueCategoryId?: string | null;
+  categoryName?: string | null;
+  categoryAgeGroup?: string | null;
 }
 
 export interface PositionOption {
@@ -29,15 +33,20 @@ export interface PositionOption {
   abbreviation: string;
 }
 
-export interface PlayerCategoryOption {
-  _id: string;
-  name: string;
+export type LeagueCategoryOption = LeagueAgeCategory;
+
+export interface HorizontalDivisionsConfig {
+  enabled: boolean;
+  type: DivisionType;
 }
 
 export interface PlayerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clubSlug: string;
+  ageCategories: LeagueCategoryOption[];
+  enabledGenders: PlayerGender[];
+  horizontalDivisions: HorizontalDivisionsConfig;
   positions: PositionOption[];
   player?: PlayerData | null;
 }
@@ -57,7 +66,8 @@ export interface PlayerFormValues {
   height: string;
   weight: string;
   country: string;
-  categoryId: string;
+  leagueCategoryId: string;
+  division: string;
   photoFile: FileWithPreview | null;
   currentPhotoUrl: string | null;
 }
