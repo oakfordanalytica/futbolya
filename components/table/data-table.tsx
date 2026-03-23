@@ -58,6 +58,7 @@ export function DataTable<TData>({
   exportButtonLabel,
   filterConfigs,
   filtersMenuLabel,
+  desktopFilterVariant,
   previousLabel,
   nextLabel,
   selectedRowsLabel,
@@ -139,6 +140,8 @@ export function DataTable<TData>({
     onExport(rows);
   }, [onExport, table]);
 
+  const useInlineDesktopFilters = desktopFilterVariant === "inline";
+
   return (
     <div className="w-full">
       <div className="flex items-center gap-2 pb-4">
@@ -157,6 +160,19 @@ export function DataTable<TData>({
             />
           </InputGroup>
         ) : null}
+        {useInlineDesktopFilters &&
+        filterConfigs &&
+        filterConfigs.length > 0 ? (
+          <div className="hidden md:flex">
+            <DataTableFilters
+              table={table}
+              filterConfigs={filterConfigs}
+              filtersMenuLabel={filtersMenuLabel}
+              desktopVariant={desktopFilterVariant}
+              displayMode="inline"
+            />
+          </div>
+        ) : null}
         {onCreate && (
           <Button onClick={onCreate} size="icon" className="">
             <Plus className="size-4 " />
@@ -164,13 +180,29 @@ export function DataTable<TData>({
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          {filterConfigs && filterConfigs.length > 0 && (
+          {useInlineDesktopFilters &&
+          filterConfigs &&
+          filterConfigs.length > 0 ? (
+            <div className="md:hidden">
+              <DataTableFilters
+                table={table}
+                filterConfigs={filterConfigs}
+                filtersMenuLabel={filtersMenuLabel}
+                desktopVariant={desktopFilterVariant}
+                displayMode="dropdown"
+              />
+            </div>
+          ) : null}
+          {!useInlineDesktopFilters &&
+          filterConfigs &&
+          filterConfigs.length > 0 ? (
             <DataTableFilters
               table={table}
               filterConfigs={filterConfigs}
               filtersMenuLabel={filtersMenuLabel}
+              desktopVariant={desktopFilterVariant}
             />
-          )}
+          ) : null}
 
           {onExport && (
             <Button variant="outline" onClick={exportRows}>

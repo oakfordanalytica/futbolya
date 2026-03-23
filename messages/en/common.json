@@ -368,6 +368,7 @@
     "match": "Match",
     "homeTeam": "Home Team",
     "awayTeam": "Away Team",
+    "team": "Team",
     "selectTeam": "Select team",
     "dateTime": "Date & Time",
     "selectDateTime": "Select date & time",

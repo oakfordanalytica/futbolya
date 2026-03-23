@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Preloaded, usePreloadedQuery } from "convex/react";
@@ -40,8 +40,11 @@ export function TeamGamesTable({
     router.push(TEAM_ROUTES.games.detail(orgSlug, clubSlug, game._id));
   };
 
-  const gameColumns = createGameColumns(t, nowMs);
-  const gameFilterConfigs = createGameFilterConfigs(t);
+  const gameColumns = useMemo(() => createGameColumns(t, nowMs), [t, nowMs]);
+  const gameFilterConfigs = useMemo(
+    () => createGameFilterConfigs(t, data ?? []),
+    [data, t],
+  );
 
   return (
     <div className="p-4 md:p-6 ">

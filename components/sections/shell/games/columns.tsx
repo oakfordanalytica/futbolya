@@ -93,6 +93,31 @@ function getGameStatusLabel(t: Translator, game: GameRow, nowMs: number) {
   return t(`games.statusOptions.${game.status}`);
 }
 
+function getTeamFilterOptions(data: GameRow[]): FilterConfig["options"] {
+  const teamOptions = new Map<string, string>();
+
+  for (const game of data) {
+    teamOptions.set(game.homeTeamId, game.homeTeamName);
+    teamOptions.set(game.awayTeamId, game.awayTeamName);
+  }
+
+  return Array.from(teamOptions.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function getCategoryFilterOptions(data: GameRow[]): FilterConfig["options"] {
+  return Array.from(
+    new Set(
+      data
+        .map((game) => game.category?.trim())
+        .filter((category): category is string => Boolean(category)),
+    ),
+  )
+    .map((category) => ({ value: category, label: category }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 export function createGameColumns(
   t: Translator,
   nowMs: number,
@@ -122,6 +147,18 @@ export function createGameColumns(
           />
         </div>
       ),
+      filterFn: (row, id, value) => {
+        const selectedTeamIds = value as string[];
+        if (!selectedTeamIds || selectedTeamIds.length === 0) {
+          return true;
+        }
+
+        return selectedTeamIds.some(
+          (teamId) =>
+            teamId === row.original.homeTeamId ||
+            teamId === row.original.awayTeamId,
+        );
+      },
     },
 
     {
@@ -170,6 +207,14 @@ export function createGameColumns(
       cell: ({ row }) => (
         <span className="text-sm">{row.original.category || "—"}</span>
       ),
+      filterFn: (row, id, value) => {
+        const selectedCategories = value as string[];
+        if (!selectedCategories || selectedCategories.length === 0) {
+          return true;
+        }
+
+        return selectedCategories.includes(row.original.category);
+      },
     },
 
     {
@@ -232,8 +277,31 @@ export function createGameColumns(
   ];
 }
 
-export function createGameFilterConfigs(t: Translator): FilterConfig[] {
-  return [
+export function createGameFilterConfigs(
+  t: Translator,
+  data: GameRow[] = [],
+): FilterConfig[] {
+  const teamOptions = getTeamFilterOptions(data);
+  const categoryOptions = getCategoryFilterOptions(data);
+  const filterConfigs: FilterConfig[] = [];
+
+  if (teamOptions.length > 0) {
+    filterConfigs.push({
+      id: "teams",
+      label: t("games.team"),
+      options: teamOptions,
+    });
+  }
+
+  if (categoryOptions.length > 0) {
+    filterConfigs.push({
+      id: "category",
+      label: t("games.category"),
+      options: categoryOptions,
+    });
+  }
+
+  filterConfigs.push(
     {
       id: "status",
       label: t("games.status"),
@@ -265,5 +333,7 @@ export function createGameFilterConfigs(t: Translator): FilterConfig[] {
         { value: "season", label: t("games.typeOptions.season") },
       ],
     },
-  ];
+  );
+
+  return filterConfigs;
 }

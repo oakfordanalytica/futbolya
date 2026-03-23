@@ -368,6 +368,7 @@
     "match": "Partido",
     "homeTeam": "Equipo Local",
     "awayTeam": "Equipo Visitante",
+    "team": "Equipo",
     "selectTeam": "Seleccionar equipo",
     "dateTime": "Fecha y Hora",
     "selectDateTime": "Seleccionar fecha y hora",

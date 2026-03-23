@@ -12,6 +12,7 @@ import {
   createSearchColumn,
   createSortableHeader,
 } from "@/components/table/column-helpers";
+import type { FilterConfig } from "@/lib/table/types";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +70,46 @@ interface TeamPlayersTableProps {
   enableCreate?: boolean;
 }
 
+function getTeamFilterOptions(players: PlayerRow[]): FilterConfig["options"] {
+  const options = new Map<string, string>();
+
+  for (const player of players) {
+    const value = player.clubSlug ?? player.clubName ?? player.clubNickname;
+    const label = player.clubNickname ?? player.clubName ?? player.clubSlug;
+
+    if (!value || !label) {
+      continue;
+    }
+
+    options.set(value, label);
+  }
+
+  return Array.from(options.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function getCategoryFilterOptions(
+  players: PlayerRow[],
+): FilterConfig["options"] {
+  const options = new Map<string, string>();
+
+  for (const player of players) {
+    const label = player.categoryName?.trim();
+    const value = label?.toLocaleLowerCase();
+
+    if (!value || !label) {
+      continue;
+    }
+
+    options.set(value, label);
+  }
+
+  return Array.from(options.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 export function TeamPlayersTable({
   players,
   clubSlug,
@@ -100,6 +141,35 @@ export function TeamPlayersTable({
     }
     return map;
   }, [positions]);
+  const teamFilterOptions = useMemo(
+    () => getTeamFilterOptions(players),
+    [players],
+  );
+  const categoryFilterOptions = useMemo(
+    () => getCategoryFilterOptions(players),
+    [players],
+  );
+  const filterConfigs = useMemo(() => {
+    const configs: FilterConfig[] = [];
+
+    if (routeScope === "org" && teamFilterOptions.length > 0) {
+      configs.push({
+        id: "team",
+        label: t("players.team"),
+        options: teamFilterOptions,
+      });
+    }
+
+    if (categoryFilterOptions.length > 0) {
+      configs.push({
+        id: "categoryName",
+        label: t("players.category"),
+        options: categoryFilterOptions,
+      });
+    }
+
+    return configs;
+  }, [categoryFilterOptions, routeScope, t, teamFilterOptions]);
 
   const handleDelete = async () => {
     if (!playerToDelete) return;
@@ -173,6 +243,19 @@ export function TeamPlayersTable({
                 {row.original.clubNickname ?? row.original.clubName ?? "—"}
               </span>
             ),
+            filterFn: (row, id, value) => {
+              const selectedTeams = value as string[] | undefined;
+              if (!selectedTeams || selectedTeams.length === 0) {
+                return true;
+              }
+
+              const teamValue =
+                row.original.clubSlug ??
+                row.original.clubName ??
+                row.original.clubNickname;
+
+              return teamValue ? selectedTeams.includes(teamValue) : false;
+            },
           } satisfies ColumnDef<PlayerRow>,
         ]
       : []),
@@ -226,6 +309,20 @@ export function TeamPlayersTable({
           {row.original.categoryName || t("players.notAssigned")}
         </span>
       ),
+      filterFn: (row, id, value) => {
+        const selectedCategories = value as string[] | undefined;
+        if (!selectedCategories || selectedCategories.length === 0) {
+          return true;
+        }
+
+        const categoryValue = row.original.categoryName
+          ?.trim()
+          .toLocaleLowerCase();
+
+        return categoryValue
+          ? selectedCategories.includes(categoryValue)
+          : false;
+      },
     },
 
     {
@@ -306,6 +403,9 @@ export function TeamPlayersTable({
         data={players}
         filterColumn="search"
         filterPlaceholder={t("players.searchPlaceholder")}
+        filterConfigs={filterConfigs}
+        filtersMenuLabel={t("table.filters")}
+        desktopFilterVariant="inline"
         emptyMessage={t("players.emptyMessage")}
         onRowClick={handlePlayerRowClick}
         onCreate={
