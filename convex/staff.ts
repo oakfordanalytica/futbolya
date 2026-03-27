@@ -5,7 +5,6 @@ import { getCurrentUserOrNull } from "./lib/auth";
 import {
   hasOrgAdminAccess,
   requireClubAccess,
-  requireClubAccessBySlug,
 } from "./lib/permissions";
 
 // ============================================================================
@@ -46,7 +45,16 @@ export const listAllByClubSlug = query({
     staff: v.array(staffMemberValidator),
   }),
   handler: async (ctx, args) => {
-    const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
+    const existingClub = await ctx.db
+      .query("clubs")
+      .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
+      .unique();
+
+    if (!existingClub) {
+      return { staff: [] };
+    }
+
+    const { club } = await requireClubAccess(ctx, existingClub._id);
 
     const staffMembers = await ctx.db
       .query("staff")

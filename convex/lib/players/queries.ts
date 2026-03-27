@@ -19,7 +19,16 @@ export async function listSoccerPlayersByClubSlugHandler(
   ctx: QueryCtx,
   args: { clubSlug: string },
 ) {
-  const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
+  const existingClub = await ctx.db
+    .query("clubs")
+    .withIndex("bySlug", (q) => q.eq("slug", args.clubSlug))
+    .unique();
+
+  if (!existingClub) {
+    return [];
+  }
+
+  const { club } = await requireClubAccess(ctx, existingClub._id);
 
   const players = await ctx.db
     .query("players")

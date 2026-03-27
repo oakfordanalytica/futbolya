@@ -19,7 +19,7 @@ const clubValidator = v.object({
   organizationId: v.id("organizations"),
   name: v.string(),
   slug: v.string(),
-  nickname: v.optional(v.string()),
+  nickname: v.string(),
   logoStorageId: v.optional(v.id("_storage")),
   logoUrl: v.optional(v.string()),
   colors: v.optional(v.array(v.string())),
@@ -49,6 +49,22 @@ const createClubResultValidator = v.object({
   clubId: v.id("clubs"),
   headCoachStatus: headCoachAssignmentStatus,
 });
+
+function sanitizeClubNickname(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "")
+    .replace(/^-|-$/g, "");
+}
+
+function requireValidClubNickname(value: string) {
+  const nickname = sanitizeClubNickname(value);
+  if (!nickname) {
+    throw new Error("A valid nickname/slug is required");
+  }
+
+  return nickname;
+}
 
 // ============================================================================
 // QUERIES
@@ -137,7 +153,7 @@ export const listByLeague = query({
       result.push({
         _id: club._id,
         name: club.name,
-        nickname: club.nickname ?? "",
+        nickname: club.nickname ?? club.slug,
         logoUrl,
         headCoach: {
           name: headCoachName,
@@ -173,6 +189,7 @@ export const getBySlug = query({
 
     return {
       ...club,
+      nickname: club.nickname ?? club.slug,
       logoUrl,
     };
   },
@@ -198,6 +215,7 @@ export const getById = query({
 
     return {
       ...club,
+      nickname: club.nickname ?? club.slug,
       logoUrl,
     };
   },
@@ -213,7 +231,7 @@ export const getById = query({
 export const createWithDelegate = mutation({
   args: {
     name: v.string(),
-    nickname: v.optional(v.string()),
+    nickname: v.string(),
     orgSlug: v.string(),
     status: clubStatus,
     logoStorageId: v.optional(v.id("_storage")),
@@ -226,20 +244,8 @@ export const createWithDelegate = mutation({
     const { organization } = await requireOrgAdmin(ctx, args.orgSlug);
     const normalizedHeadCoachEmail = args.headCoachEmail?.trim().toLowerCase();
 
-    // Use nickname as slug if provided, otherwise generate from name
-    const slug = args.nickname
-      ? args.nickname
-          .toLowerCase()
-          .replace(/[^a-z0-9-]+/g, "")
-          .replace(/^-|-$/g, "")
-      : args.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "");
-
-    if (!slug) {
-      throw new Error("A valid nickname/slug is required");
-    }
+    const nickname = requireValidClubNickname(args.nickname);
+    const slug = nickname;
 
     // Check slug uniqueness within organization
     const existing = await ctx.db
@@ -275,7 +281,7 @@ export const createWithDelegate = mutation({
       organizationId: organization._id,
       name: args.name,
       slug,
-      nickname: args.nickname,
+      nickname,
       logoStorageId: args.logoStorageId,
       colors: args.colors,
       colorNames: args.colorNames,
@@ -337,30 +343,22 @@ export const update = mutation({
     }
 
     // Update slug if nickname changed (nickname is used as slug)
-    if (
-      filteredUpdates.nickname &&
-      typeof filteredUpdates.nickname === "string"
-    ) {
-      const newSlug = filteredUpdates.nickname
-        .toLowerCase()
-        .replace(/[^a-z0-9-]+/g, "")
-        .replace(/^-|-$/g, "");
+    if (typeof filteredUpdates.nickname === "string") {
+      const newNickname = requireValidClubNickname(filteredUpdates.nickname);
 
-      if (newSlug) {
-        // Check uniqueness
-        const existing = await ctx.db
-          .query("clubs")
-          .withIndex("byOrgAndSlug", (q) =>
-            q.eq("organizationId", club.organizationId).eq("slug", newSlug),
-          )
-          .unique();
+      const existing = await ctx.db
+        .query("clubs")
+        .withIndex("byOrgAndSlug", (q) =>
+          q.eq("organizationId", club.organizationId).eq("slug", newNickname),
+        )
+        .unique();
 
-        if (existing && existing._id !== clubId) {
-          throw new Error(`Club with slug "${newSlug}" already exists`);
-        }
-
-        filteredUpdates.slug = newSlug;
+      if (existing && existing._id !== clubId) {
+        throw new Error(`Club with slug "${newNickname}" already exists`);
       }
+
+      filteredUpdates.nickname = newNickname;
+      filteredUpdates.slug = newNickname;
     }
 
     if (Object.keys(filteredUpdates).length > 0) {
@@ -390,22 +388,33 @@ export const remove = mutation({
 
     await requireOrgAdmin(ctx, org.slug);
 
-    // Delete related data
-    const categories = await ctx.db
-      .query("categories")
+    const [homeGame, awayGame] = await Promise.all([
+      ctx.db
+        .query("games")
+        .withIndex("byHomeClub", (q) => q.eq("homeClubId", args.clubId))
+        .first(),
+      ctx.db
+        .query("games")
+        .withIndex("byAwayClub", (q) => q.eq("awayClubId", args.clubId))
+        .first(),
+    ]);
+
+    if (homeGame || awayGame) {
+      throw new Error(
+        "Cannot delete a team with associated games. Delete its games first.",
+      );
+    }
+
+    // Delete players and their photos
+    const players = await ctx.db
+      .query("players")
       .withIndex("byClub", (q) => q.eq("clubId", args.clubId))
       .collect();
-
-    for (const category of categories) {
-      // Delete players in this category
-      const players = await ctx.db
-        .query("players")
-        .withIndex("byCategory", (q) => q.eq("categoryId", category._id))
-        .collect();
-      for (const player of players) {
-        await ctx.db.delete(player._id);
+    for (const player of players) {
+      if (player.photoStorageId) {
+        await ctx.storage.delete(player.photoStorageId);
       }
-      await ctx.db.delete(category._id);
+      await ctx.db.delete(player._id);
     }
 
     // Delete staff
@@ -415,6 +424,19 @@ export const remove = mutation({
       .collect();
     for (const staff of staffMembers) {
       await ctx.db.delete(staff._id);
+    }
+
+    // Delete categories
+    const categories = await ctx.db
+      .query("categories")
+      .withIndex("byClub", (q) => q.eq("clubId", args.clubId))
+      .collect();
+    for (const category of categories) {
+      await ctx.db.delete(category._id);
+    }
+
+    if (club.logoStorageId) {
+      await ctx.storage.delete(club.logoStorageId);
     }
 
     // Delete the club

@@ -6,7 +6,11 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/navigation/routes";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,6 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import ColorPicker from "@/components/ui/color-picker";
@@ -43,7 +57,10 @@ interface TeamGeneralFormProps {
 
 export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
   const t = useTranslations("Common");
+  const router = useRouter();
+  const { isAdmin, isLoaded } = useIsAdmin();
   const updateTeam = useMutation(api.clubs.update);
+  const removeTeam = useMutation(api.clubs.remove);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const [name, setName] = useState(team.name);
@@ -69,6 +86,8 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
   );
   const [logoFile, setLogoFile] = useState<FileWithPreview | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!currentColor || currentColor.length < 4 || editingColorIndex !== null)
@@ -152,8 +171,32 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
       });
     } catch (error) {
       console.error("[TeamGeneralForm] Failed to update team:", error);
+      toast.error(
+        error instanceof Error ? error.message : t("errors.generic"),
+      );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      await removeTeam({ clubId: team._id as Id<"clubs"> });
+      toast.success(t("teams.deleted"));
+      router.push(ROUTES.org.teams.list(orgSlug));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("errors.generic");
+      toast.error(
+        message === "Cannot delete a team with associated games. Delete its games first."
+          ? t("teams.deleteHasGames")
+          : message,
+      );
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteOpen(false);
     }
   };
 
@@ -223,6 +266,7 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
               }}
               placeholder={t("teams.nickname")}
               pattern="[a-z0-9-]+"
+              required
               title="Only lowercase letters, numbers, and hyphens allowed"
             />
             <p className="text-xs text-muted-foreground mt-1">
@@ -360,8 +404,44 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
         </div>
       </Field>
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting}>
+      <div className="flex flex-wrap justify-end gap-3">
+        {isLoaded && isAdmin ? (
+          <>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setIsDeleteOpen(true)}
+              disabled={isSubmitting || isDeleting}
+            >
+              {t("actions.delete")}
+            </Button>
+
+            <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+              <AlertDialogContent size="sm">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("teams.deleteTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("teams.deleteDescription", { name: team.name })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>
+                    {t("actions.cancel")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? t("actions.loading") : t("actions.delete")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        ) : null}
+
+        <Button type="submit" disabled={isSubmitting || isDeleting}>
           {isSubmitting ? t("actions.saving") : t("actions.save")}
         </Button>
       </div>
