@@ -15,6 +15,11 @@ import { User, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ImageCropDialog } from "@/components/ui/image-crop-dialog";
+import {
+  IMAGE_UPLOAD_CONTENT_TYPES,
+  IMAGE_UPLOAD_MAX_BYTES,
+  isAllowedImageContentType,
+} from "@/lib/files/image-upload";
 import { formatBytes, type FileWithPreview } from "@/lib/files/upload";
 
 interface AvatarCropOptions {
@@ -33,7 +38,7 @@ interface AvatarUploadProps {
 }
 
 export default function AvatarUpload({
-  maxSize = 2 * 1024 * 1024, // 2MB
+  maxSize = IMAGE_UPLOAD_MAX_BYTES,
   className,
   onFileChange,
   defaultAvatar,
@@ -83,7 +88,7 @@ export default function AvatarUpload({
 
   const validateImageType = useCallback(
     (nextFile: File) => {
-      if (!nextFile.type.startsWith("image/")) {
+      if (!isAllowedImageContentType(nextFile.type)) {
         return t("imageCropper.errors.invalidType");
       }
 
@@ -133,6 +138,13 @@ export default function AvatarUpload({
         return;
       }
 
+      const finalValidationError = validateFinalImageFile(nextFile);
+      if (finalValidationError) {
+        toast.error(finalValidationError);
+        resetInput();
+        return;
+      }
+
       if (cropOptions) {
         setPendingCrop((current) => {
           revokePreview(current?.src);
@@ -141,13 +153,6 @@ export default function AvatarUpload({
             src: URL.createObjectURL(nextFile),
           };
         });
-        return;
-      }
-
-      const finalValidationError = validateFinalImageFile(nextFile);
-      if (finalValidationError) {
-        toast.error(finalValidationError);
-        resetInput();
         return;
       }
 
@@ -260,7 +265,7 @@ export default function AvatarUpload({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept={IMAGE_UPLOAD_CONTENT_TYPES.join(",")}
           className="sr-only"
           onChange={handleFileInputChange}
         />

@@ -61,7 +61,7 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
   const { isAdmin, isLoaded } = useIsAdmin();
   const updateTeam = useMutation(api.clubs.update);
   const removeTeam = useMutation(api.clubs.remove);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const generateUploadUrl = useMutation(api.files.generateClubLogoUploadUrl);
 
   const [name, setName] = useState(team.name);
   // Use slug as nickname since nickname is the slug
@@ -133,7 +133,9 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
       return undefined;
     }
 
-    const uploadUrl = await generateUploadUrl();
+    const uploadUrl = await generateUploadUrl({
+      organizationSlug: orgSlug,
+    });
     const response = await fetch(uploadUrl, {
       method: "POST",
       headers: { "Content-Type": logoFile.file.type },
@@ -171,9 +173,7 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
       });
     } catch (error) {
       console.error("[TeamGeneralForm] Failed to update team:", error);
-      toast.error(
-        error instanceof Error ? error.message : t("errors.generic"),
-      );
+      toast.error(error instanceof Error ? error.message : t("errors.generic"));
     } finally {
       setIsSubmitting(false);
     }
@@ -190,7 +190,8 @@ export function TeamGeneralForm({ team, orgSlug }: TeamGeneralFormProps) {
       const message =
         error instanceof Error ? error.message : t("errors.generic");
       toast.error(
-        message === "Cannot delete a team with associated games. Delete its games first."
+        message ===
+          "Cannot delete a team with associated games. Delete its games first."
           ? t("teams.deleteHasGames")
           : message,
       );

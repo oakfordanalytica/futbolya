@@ -1,20 +1,12 @@
-import { mutation, query } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireOrgAdmin } from "./lib/permissions";
 
-export const generateUploadUrl = mutation({
-  args: {},
+export const generateClubLogoUploadUrl = mutation({
+  args: { organizationSlug: v.string() },
   returns: v.string(),
-  handler: async (ctx): Promise<string> => {
+  handler: async (ctx, args) => {
+    await requireOrgAdmin(ctx, args.organizationSlug);
     return await ctx.storage.generateUploadUrl();
-  },
-});
-
-export const getUrl = query({
-  args: {
-    storageId: v.id("_storage"),
-  },
-  returns: v.union(v.string(), v.null()),
-  handler: async (ctx, args): Promise<string | null> => {
-    return await ctx.storage.getUrl(args.storageId);
   },
 });

@@ -210,9 +210,8 @@ export function usePlayerFormDialogController({
       setIsSubmitting(true);
 
       try {
-        const photoStorageId = await uploadPlayerPhoto(
-          values.photoFile,
-          generateUploadUrl,
+        const photoStorageId = await uploadPlayerPhoto(values.photoFile, () =>
+          generateUploadUrl({ clubSlug }),
         );
         if (isEditMode) {
           const payload = buildPlayerMutationPayload({

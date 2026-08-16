@@ -66,7 +66,7 @@ export function CreateTeamDialog({
   const locale = useLocale();
   const terminology = useSoccerTerminology();
   const createTeamWithDelegate = useMutation(api.clubs.createWithDelegate);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const generateUploadUrl = useMutation(api.files.generateClubLogoUploadUrl);
 
   const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE);
   const [currentColor, setCurrentColor] = useState("#1E3A8A");
@@ -123,7 +123,9 @@ export function CreateTeamDialog({
       return undefined;
     }
 
-    const uploadUrl = await generateUploadUrl();
+    const uploadUrl = await generateUploadUrl({
+      organizationSlug: orgSlug,
+    });
     const response = await fetch(uploadUrl, {
       method: "POST",
       headers: { "Content-Type": logoFile.file.type },

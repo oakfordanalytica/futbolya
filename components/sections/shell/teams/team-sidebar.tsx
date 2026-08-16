@@ -69,7 +69,10 @@ export function TeamSidebar() {
   const userProfileUrl = getTeamUserProfileUrl(locale, orgSlug, teamSlug);
   const afterSignOutUrl = getTenantSignInUrl(locale, orgSlug);
 
-  const team = useQuery(api.clubs.getBySlug, { slug: teamSlug });
+  const team = useQuery(api.clubs.getBySlug, {
+    organizationSlug: orgSlug,
+    slug: teamSlug,
+  });
 
   const { items, settingsHref } = getTeamNavConfig();
 

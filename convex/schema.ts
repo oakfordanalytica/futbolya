@@ -176,7 +176,8 @@ export default defineSchema({
     .index("byOrganization", ["organizationId"])
     .index("bySlug", ["slug"])
     .index("byOrgAndSlug", ["organizationId", "slug"])
-    .index("byDelegate", ["delegateUserId"]),
+    .index("byDelegate", ["delegateUserId"])
+    .index("byLogoStorageId", ["logoStorageId"]),
 
   /**
    * Categories - Age/skill level groups within a club.
@@ -235,7 +236,8 @@ export default defineSchema({
     .index("byClub", ["clubId"])
     .index("byCategory", ["categoryId"])
     .index("byClubAndCategory", ["clubId", "categoryId"])
-    .index("byUser", ["userId"]),
+    .index("byUser", ["userId"])
+    .index("byPhotoStorageId", ["photoStorageId"]),
 
   /**
    * Staff - Links users to clubs as staff members (coaches, etc.).

@@ -57,7 +57,7 @@ export const listSoccerPlayerGameLog = query({
 });
 
 export const generateUploadUrl = mutation({
-  args: {},
+  args: { clubSlug: v.string() },
   returns: v.string(),
   handler: generatePlayerUploadUrlHandler,
 });

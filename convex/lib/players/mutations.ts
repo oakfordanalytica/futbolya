@@ -2,6 +2,10 @@ import type { MutationCtx } from "../../_generated/server";
 import type { Id } from "../../_generated/dataModel";
 import { getCurrentUser } from "../../lib/auth";
 import {
+  deleteImageIfUnreferenced,
+  requireAssignableImage,
+} from "../../lib/files";
+import {
   deriveCategorySelectionFromExistingClubCategory,
   ensureClubCategoryForLeagueSelection,
   getClubLeagueCategoryConfig,
@@ -10,14 +14,13 @@ import {
   requireClubAccess,
   requireClubAccessBySlug,
 } from "../../lib/permissions";
-import {
-  deleteStoredFileIfPresent,
-  getExistingPlayer,
-  normalizeHighlightInput,
-} from "./helpers";
+import { getExistingPlayer, normalizeHighlightInput } from "./helpers";
 
-export async function generatePlayerUploadUrlHandler(ctx: MutationCtx) {
-  await getCurrentUser(ctx);
+export async function generatePlayerUploadUrlHandler(
+  ctx: MutationCtx,
+  args: { clubSlug: string },
+) {
+  await requireClubAccessBySlug(ctx, args.clubSlug);
   return await ctx.storage.generateUploadUrl();
 }
 
@@ -47,6 +50,9 @@ export async function createPlayerHandler(
   await getCurrentUser(ctx);
 
   const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
+  if (args.photoStorageId) {
+    await requireAssignableImage(ctx, args.photoStorageId);
+  }
   const resolvedCategory = await ensureClubCategoryForLeagueSelection(ctx, {
     clubId: club._id,
     leagueCategoryId: args.leagueCategoryId,
@@ -86,8 +92,8 @@ export async function deletePlayerHandler(
   const player = await getExistingPlayer(ctx, args.playerId);
   await requireClubAccess(ctx, player.clubId);
 
-  await deleteStoredFileIfPresent(ctx, player.photoStorageId);
   await ctx.db.delete(args.playerId);
+  await deleteImageIfUnreferenced(ctx, player.photoStorageId);
 
   return null;
 }
@@ -120,6 +126,16 @@ export async function updatePlayerHandler(
 
   const player = await getExistingPlayer(ctx, args.playerId);
   await requireClubAccess(ctx, player.clubId);
+
+  const nextPhotoStorageId = args.photoStorageId;
+  const isPhotoReplacement =
+    nextPhotoStorageId !== undefined &&
+    nextPhotoStorageId !== player.photoStorageId;
+  if (isPhotoReplacement) {
+    await requireAssignableImage(ctx, nextPhotoStorageId, {
+      playerId: player._id,
+    });
+  }
 
   const { playerId, leagueCategoryId, division, ...updates } = args;
   const filteredUpdates: Record<string, unknown> = {};
@@ -167,16 +183,11 @@ export async function updatePlayerHandler(
     filteredUpdates.clubId = player.clubId;
   }
 
-  if (
-    filteredUpdates.photoStorageId &&
-    player.photoStorageId &&
-    filteredUpdates.photoStorageId !== player.photoStorageId
-  ) {
-    await deleteStoredFileIfPresent(ctx, player.photoStorageId);
-  }
-
   if (Object.keys(filteredUpdates).length > 0) {
     await ctx.db.patch(playerId, filteredUpdates);
+  }
+  if (isPhotoReplacement) {
+    await deleteImageIfUnreferenced(ctx, player.photoStorageId);
   }
 
   return null;

@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { query, internalMutation } from "./_generated/server";
-import { requireSuperAdmin } from "./lib/permissions";
+import { getCurrentUser } from "./lib/auth";
+import { deleteImageIfUnreferenced } from "./lib/files";
+import { requireOrgAdmin, requireSuperAdmin } from "./lib/permissions";
 
 const organizationValidator = v.object({
   _id: v.id("organizations"),
@@ -18,10 +20,8 @@ export const getBySlug = query({
   args: { slug: v.string() },
   returns: v.union(organizationValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("organizations")
-      .withIndex("bySlug", (q) => q.eq("slug", args.slug))
-      .unique();
+    const { organization } = await requireOrgAdmin(ctx, args.slug);
+    return organization;
   },
 });
 
@@ -32,7 +32,13 @@ export const getById = query({
   args: { organizationId: v.id("organizations") },
   returns: v.union(organizationValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.organizationId);
+    await getCurrentUser(ctx);
+    const organization = await ctx.db.get(args.organizationId);
+    if (!organization) {
+      return null;
+    }
+    await requireOrgAdmin(ctx, organization.slug);
+    return organization;
   },
 });
 
@@ -43,6 +49,7 @@ export const getByClerkOrgId = query({
   args: { clerkOrgId: v.string() },
   returns: v.union(organizationValidator, v.null()),
   handler: async (ctx, args) => {
+    await requireSuperAdmin(ctx);
     return await ctx.db
       .query("organizations")
       .withIndex("byClerkOrgId", (q) => q.eq("clerkOrgId", args.clerkOrgId))
@@ -232,10 +239,8 @@ export const deleteFromClerk = internalMutation({
         .withIndex("byClub", (q) => q.eq("clubId", club._id))
         .collect();
       for (const player of players) {
-        if (player.photoStorageId) {
-          await ctx.storage.delete(player.photoStorageId);
-        }
         await ctx.db.delete(player._id);
+        await deleteImageIfUnreferenced(ctx, player.photoStorageId);
       }
 
       // Delete staff
@@ -259,10 +264,8 @@ export const deleteFromClerk = internalMutation({
 
     // 4. Delete clubs and their logos
     for (const club of clubs) {
-      if (club.logoStorageId) {
-        await ctx.storage.delete(club.logoStorageId);
-      }
       await ctx.db.delete(club._id);
+      await deleteImageIfUnreferenced(ctx, club.logoStorageId);
     }
 
     // 5. Delete conferences

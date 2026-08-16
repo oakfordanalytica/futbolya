@@ -19,6 +19,7 @@ export default async function TeamSettingsPage({
   const preloadedTeam = await preloadQuery(
     api.clubs.getBySlug,
     {
+      organizationSlug: tenant,
       slug: teamId,
     },
     { token },

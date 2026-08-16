@@ -20,6 +20,7 @@ export default async function TeamDashboardPage({
   const preloadedTeam = await preloadQuery(
     api.clubs.getBySlug,
     {
+      organizationSlug: tenant,
       slug: team,
     },
     { token },

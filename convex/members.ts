@@ -40,6 +40,18 @@ export const getByUserAndOrg = query({
   },
   returns: v.union(membershipValidator, v.null()),
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
+    if (currentUser._id !== args.userId) {
+      const isAdmin = await hasOrgAdminAccess(
+        ctx,
+        currentUser._id,
+        args.organizationId,
+      );
+      if (!isAdmin) {
+        throw new Error("Forbidden");
+      }
+    }
+
     return await ctx.db
       .query("organizationMembers")
       .withIndex("byUserAndOrg", (q) =>
@@ -84,7 +96,7 @@ export const listByOrganization = query({
     );
 
     if (!isAdmin) {
-      return [];
+      throw new Error("Forbidden");
     }
 
     const memberships = await ctx.db
@@ -180,6 +192,11 @@ export const listByUser = query({
     }),
   ),
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
+    if (currentUser._id !== args.userId && !currentUser.isSuperAdmin) {
+      throw new Error("Forbidden");
+    }
+
     const memberships = await ctx.db
       .query("organizationMembers")
       .withIndex("byUserId", (q) => q.eq("userId", args.userId))

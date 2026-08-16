@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { requireOrgAdmin } from "./lib/permissions";
+import { requireOrgAccess, requireOrgAdmin } from "./lib/permissions";
 
 // ============================================================================
 // VALIDATORS
@@ -25,18 +25,12 @@ export const listByLeague = query({
   args: { leagueSlug: v.string() },
   returns: v.array(conferenceValidator),
   handler: async (ctx, args) => {
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("bySlug", (q) => q.eq("slug", args.leagueSlug))
-      .unique();
-
-    if (!org) {
-      return [];
-    }
-
+    const { organization } = await requireOrgAccess(ctx, args.leagueSlug);
     return await ctx.db
       .query("conferences")
-      .withIndex("byOrganization", (q) => q.eq("organizationId", org._id))
+      .withIndex("byOrganization", (q) =>
+        q.eq("organizationId", organization._id),
+      )
       .collect();
   },
 });
@@ -61,7 +55,7 @@ export const create = mutation({
     const existing = await ctx.db
       .query("conferences")
       .withIndex("byOrgAndName", (q) =>
-        q.eq("organizationId", organization._id).eq("name", args.name)
+        q.eq("organizationId", organization._id).eq("name", args.name),
       )
       .unique();
 

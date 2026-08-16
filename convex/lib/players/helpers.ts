@@ -58,15 +58,6 @@ export async function getExistingPlayer(
   return player;
 }
 
-export async function deleteStoredFileIfPresent(
-  ctx: MutationCtx,
-  storageId?: Id<"_storage">,
-) {
-  if (storageId) {
-    await ctx.storage.delete(storageId);
-  }
-}
-
 export function buildPlayerBase(player: Doc<"players">, photoUrl?: string) {
   return {
     _id: player._id,

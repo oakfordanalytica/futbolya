@@ -1,7 +1,13 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
-import { requireOrgAdmin } from "./lib/permissions";
+import { getCurrentUser } from "./lib/auth";
+import { deleteImageIfUnreferenced, requireAssignableImage } from "./lib/files";
+import {
+  requireClubAccess,
+  requireOrgAccess,
+  requireOrgAdmin,
+} from "./lib/permissions";
 
 // ============================================================================
 // VALIDATORS
@@ -78,15 +84,7 @@ export const listByLeague = query({
   args: { orgSlug: v.string() },
   returns: v.array(clubListItemValidator),
   handler: async (ctx, args) => {
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("bySlug", (q) => q.eq("slug", args.orgSlug))
-      .unique();
-
-    if (!org) {
-      return [];
-    }
-
+    const { organization: org } = await requireOrgAdmin(ctx, args.orgSlug);
     const clubs = await ctx.db
       .query("clubs")
       .withIndex("byOrganization", (q) => q.eq("organizationId", org._id))
@@ -170,17 +168,24 @@ export const listByLeague = query({
  * Get a club by its slug.
  */
 export const getBySlug = query({
-  args: { slug: v.string() },
+  args: {
+    organizationSlug: v.string(),
+    slug: v.string(),
+  },
   returns: v.union(clubValidator, v.null()),
   handler: async (ctx, args) => {
+    const { organization } = await requireOrgAccess(ctx, args.organizationSlug);
     const club = await ctx.db
       .query("clubs")
-      .withIndex("bySlug", (q) => q.eq("slug", args.slug))
+      .withIndex("byOrgAndSlug", (q) =>
+        q.eq("organizationId", organization._id).eq("slug", args.slug),
+      )
       .unique();
 
     if (!club) {
       return null;
     }
+    await requireClubAccess(ctx, club._id);
 
     let logoUrl: string | undefined;
     if (club.logoStorageId) {
@@ -202,11 +207,13 @@ export const getById = query({
   args: { clubId: v.id("clubs") },
   returns: v.union(clubValidator, v.null()),
   handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
     const club = await ctx.db.get(args.clubId);
 
     if (!club) {
       return null;
     }
+    await requireClubAccess(ctx, club._id);
 
     let logoUrl: string | undefined;
     if (club.logoStorageId) {
@@ -242,6 +249,9 @@ export const createWithDelegate = mutation({
   returns: createClubResultValidator,
   handler: async (ctx, args) => {
     const { organization } = await requireOrgAdmin(ctx, args.orgSlug);
+    if (args.logoStorageId) {
+      await requireAssignableImage(ctx, args.logoStorageId);
+    }
     const normalizedHeadCoachEmail = args.headCoachEmail?.trim().toLowerCase();
 
     const nickname = requireValidClubNickname(args.nickname);
@@ -332,6 +342,16 @@ export const update = mutation({
 
     await requireOrgAdmin(ctx, org.slug);
 
+    const nextLogoStorageId = args.logoStorageId;
+    const isLogoReplacement =
+      nextLogoStorageId !== undefined &&
+      nextLogoStorageId !== club.logoStorageId;
+    if (isLogoReplacement) {
+      await requireAssignableImage(ctx, nextLogoStorageId, {
+        clubId: club._id,
+      });
+    }
+
     const { clubId, ...updates } = args;
 
     // Filter out undefined values
@@ -363,6 +383,9 @@ export const update = mutation({
 
     if (Object.keys(filteredUpdates).length > 0) {
       await ctx.db.patch(clubId, filteredUpdates);
+    }
+    if (isLogoReplacement) {
+      await deleteImageIfUnreferenced(ctx, club.logoStorageId);
     }
 
     return null;
@@ -411,10 +434,8 @@ export const remove = mutation({
       .withIndex("byClub", (q) => q.eq("clubId", args.clubId))
       .collect();
     for (const player of players) {
-      if (player.photoStorageId) {
-        await ctx.storage.delete(player.photoStorageId);
-      }
       await ctx.db.delete(player._id);
+      await deleteImageIfUnreferenced(ctx, player.photoStorageId);
     }
 
     // Delete staff
@@ -435,12 +456,9 @@ export const remove = mutation({
       await ctx.db.delete(category._id);
     }
 
-    if (club.logoStorageId) {
-      await ctx.storage.delete(club.logoStorageId);
-    }
-
     // Delete the club
     await ctx.db.delete(args.clubId);
+    await deleteImageIfUnreferenced(ctx, club.logoStorageId);
 
     return null;
   },

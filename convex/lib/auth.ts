@@ -19,6 +19,9 @@ export async function getCurrentUser(ctx: QueryCtx | MutationCtx) {
   if (!user) {
     throw new Error("User not found in database");
   }
+  if (!user.isActive) {
+    throw new Error("User is inactive");
+  }
 
   return user;
 }
@@ -34,8 +37,10 @@ export async function getCurrentUserOrNull(ctx: QueryCtx | MutationCtx) {
     return null;
   }
 
-  return await ctx.db
+  const user = await ctx.db
     .query("users")
     .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
     .unique();
+
+  return user?.isActive ? user : null;
 }

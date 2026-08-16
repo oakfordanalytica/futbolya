@@ -20,7 +20,11 @@ export default async function TeamGameDetailPage({
   const { tenant, team, gameId } = await params;
   const token = await getAuthToken();
 
-  const club = await fetchQuery(api.clubs.getBySlug, { slug: team }, { token });
+  const club = await fetchQuery(
+    api.clubs.getBySlug,
+    { organizationSlug: tenant, slug: team },
+    { token },
+  );
 
   if (!club) {
     notFound();

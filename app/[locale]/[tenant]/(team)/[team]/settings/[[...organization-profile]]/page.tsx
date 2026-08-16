@@ -14,7 +14,10 @@ export default function TeamSettingsPage({
 }) {
   const { tenant, team: teamSlug } = use(params);
   const t = useTranslations("Settings.general.organization");
-  const team = useQuery(api.clubs.getBySlug, { slug: teamSlug });
+  const team = useQuery(api.clubs.getBySlug, {
+    organizationSlug: tenant,
+    slug: teamSlug,
+  });
 
   if (!team) {
     return null;

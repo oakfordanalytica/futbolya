@@ -86,7 +86,10 @@ export function TeamStaffTable({ clubSlug, orgSlug }: TeamStaffTableProps) {
   const t = useTranslations("Common");
   const locale = useLocale();
   const staffData = useQuery(api.staff.listAllByClubSlug, { clubSlug });
-  const clubData = useQuery(api.clubs.getBySlug, { slug: clubSlug });
+  const clubData = useQuery(api.clubs.getBySlug, {
+    organizationSlug: orgSlug,
+    slug: clubSlug,
+  });
   const currentUser = useQuery(api.users.me);
   const removeStaff = useMutation(api.staff.removeStaff);
 
