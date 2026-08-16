@@ -1,7 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { locales, routing, type Locale } from "@/i18n/routing";
-import { getTenantAccess } from "@/lib/auth/tenant-access";
+import { getCurrentClerkTenantRole } from "@/lib/auth/tenant-access";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 import { isEnabledStaffRole } from "@/lib/staff/roles";
 
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const tenantAccess = await getTenantAccess(DEFAULT_TENANT_SLUG);
-      if (!tenantAccess.hasAccess || !tenantAccess.isAdmin) {
+      const role = await getCurrentClerkTenantRole(userId);
+      if (role !== "admin" && role !== "superadmin") {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 

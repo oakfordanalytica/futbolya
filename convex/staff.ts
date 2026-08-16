@@ -186,9 +186,26 @@ export const createFromClerkMembership = internalMutation({
     clubId: v.string(), // Convex ID as string from metadata
     staffRole: v.string(),
     categoryId: v.optional(v.string()), // Convex ID as string from metadata
+    organizationSlug: v.optional(v.string()),
+    clerkUpdatedAt: v.optional(v.number()),
   },
   returns: v.union(v.id("staff"), v.null()),
   handler: async (ctx, args) => {
+    if (args.organizationSlug && args.clerkUpdatedAt === undefined) {
+      return null;
+    }
+
+    if (args.clerkUpdatedAt !== undefined) {
+      const user = await ctx.db.get(args.userId);
+      if (
+        !user ||
+        !user.isActive ||
+        user.clerkUpdatedAt !== args.clerkUpdatedAt
+      ) {
+        return null;
+      }
+    }
+
     // Validate clubId
     const club = await ctx.db.get(args.clubId as Id<"clubs">);
     if (!club) {
@@ -196,6 +213,33 @@ export const createFromClerkMembership = internalMutation({
         `[staff.createFromClerkMembership] Club not found: ${args.clubId}`,
       );
       return null;
+    }
+
+    if (args.organizationSlug) {
+      const organizationSlug = args.organizationSlug;
+      const organization = await ctx.db
+        .query("organizations")
+        .withIndex("bySlug", (q) => q.eq("slug", organizationSlug))
+        .unique();
+      if (!organization || club.organizationId !== organization._id) {
+        console.error(
+          `[staff.createFromClerkMembership] Club does not belong to organization: ${organizationSlug}`,
+        );
+        return null;
+      }
+
+      const membership = await ctx.db
+        .query("organizationMembers")
+        .withIndex("byUserAndOrg", (q) =>
+          q.eq("userId", args.userId).eq("organizationId", organization._id),
+        )
+        .unique();
+      if (
+        membership?.role !== "coach" &&
+        membership?.role !== "member"
+      ) {
+        return null;
+      }
     }
 
     // Validate staffRole
@@ -210,14 +254,13 @@ export const createFromClerkMembership = internalMutation({
     let categoryId: Id<"categories"> | undefined;
     if (args.categoryId) {
       const category = await ctx.db.get(args.categoryId as Id<"categories">);
-      if (!category) {
+      if (!category || category.clubId !== club._id) {
         console.error(
-          `[staff.createFromClerkMembership] Category not found: ${args.categoryId}`,
+          `[staff.createFromClerkMembership] Category does not belong to club: ${args.categoryId}`,
         );
-        // Continue without category, don't fail
-      } else {
-        categoryId = category._id;
+        return null;
       }
+      categoryId = category._id;
     }
 
     // Check if staff already exists for this user/club/role combination

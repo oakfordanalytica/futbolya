@@ -3,6 +3,7 @@ import { query, internalMutation } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
 import { hasOrgAdminAccess } from "./lib/permissions";
 import { Id } from "./_generated/dataModel";
+import { isClerkSnapshotStale } from "@/lib/auth/roles";
 
 const roleValidator = v.union(
   v.literal("superadmin"),
@@ -374,31 +375,84 @@ export const deleteFromClerk = internalMutation({
 });
 
 /**
- * Upsert a user's membership for single-tenant mode based on user metadata.
+ * Reconcile single-tenant access from trusted Clerk metadata.
+ * Missing role revokes the synthetic membership and organization staff access.
  */
-export const upsertFromSingleTenant = internalMutation({
+export const syncFromSingleTenant = internalMutation({
   args: {
     clerkUserId: v.string(),
     organizationSlug: v.string(),
-    role: roleValidator,
+    role: v.optional(roleValidator),
+    clerkUpdatedAt: v.optional(v.number()),
   },
-  returns: v.union(v.id("organizationMembers"), v.null()),
+  returns: v.boolean(),
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
       .withIndex("byClerkId", (q) => q.eq("clerkId", args.clerkUserId))
       .unique();
     if (!user) {
-      return null;
+      return false;
     }
 
-    const role = args.role === "member" ? "coach" : args.role;
-    const resolvedRole = user.isSuperAdmin ? "superadmin" : role;
+    if (args.role && args.clerkUpdatedAt === undefined) {
+      return false;
+    }
+
+    if (args.clerkUpdatedAt !== undefined) {
+      if (isClerkSnapshotStale(user.clerkUpdatedAt, args.clerkUpdatedAt)) {
+        return false;
+      }
+      if (args.clerkUpdatedAt !== user.clerkUpdatedAt) {
+        await ctx.db.patch(user._id, {
+          clerkUpdatedAt: args.clerkUpdatedAt,
+        });
+      }
+    }
+
+    if (args.role && !user.isActive) {
+      return false;
+    }
 
     let organization = await ctx.db
       .query("organizations")
       .withIndex("bySlug", (q) => q.eq("slug", args.organizationSlug))
       .unique();
+
+    if (!args.role) {
+      if (!organization) {
+        return true;
+      }
+
+      const organizationId = organization._id;
+      const [membership, staffAssignments] = await Promise.all([
+        ctx.db
+          .query("organizationMembers")
+          .withIndex("byUserAndOrg", (q) =>
+            q.eq("userId", user._id).eq("organizationId", organizationId),
+          )
+          .unique(),
+        ctx.db
+          .query("staff")
+          .withIndex("byUser", (q) => q.eq("userId", user._id))
+          .collect(),
+      ]);
+
+      for (const assignment of staffAssignments) {
+        const club = await ctx.db.get(assignment.clubId);
+        if (club?.organizationId === organizationId) {
+          await ctx.db.delete(assignment._id);
+        }
+      }
+
+      if (membership) {
+        await ctx.db.delete(membership._id);
+      }
+      return true;
+    }
+
+    const role = args.role === "member" ? "coach" : args.role;
+    const resolvedRole = user.isSuperAdmin ? "superadmin" : role;
 
     if (!organization) {
       const organizationId = await ctx.db.insert("organizations", {
@@ -408,7 +462,7 @@ export const upsertFromSingleTenant = internalMutation({
       });
       organization = await ctx.db.get(organizationId);
       if (!organization) {
-        return null;
+        return false;
       }
     }
 
@@ -424,7 +478,7 @@ export const upsertFromSingleTenant = internalMutation({
       if (existingBySyntheticId.role !== resolvedRole) {
         await ctx.db.patch(existingBySyntheticId._id, { role: resolvedRole });
       }
-      return existingBySyntheticId._id;
+      return true;
     }
 
     const existingByUserOrg = await ctx.db
@@ -439,14 +493,15 @@ export const upsertFromSingleTenant = internalMutation({
         role: resolvedRole,
         clerkMembershipId: syntheticMembershipId,
       });
-      return existingByUserOrg._id;
+      return true;
     }
 
-    return await ctx.db.insert("organizationMembers", {
+    await ctx.db.insert("organizationMembers", {
       userId: user._id,
       organizationId: organization._id,
       clerkMembershipId: syntheticMembershipId,
       role: resolvedRole,
     });
+    return true;
   },
 });

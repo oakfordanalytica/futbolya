@@ -120,6 +120,7 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     isActive: v.boolean(),
     isSuperAdmin: v.boolean(),
+    clerkUpdatedAt: v.optional(v.number()),
   })
     .index("byClerkId", ["clerkId"])
     .index("byEmail", ["email"])

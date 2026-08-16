@@ -1,6 +1,12 @@
 export type AppRole = "admin" | "coach";
 export type TenantRole = "superadmin" | "admin" | "coach";
 
+export interface PendingStaffInvite {
+  staffRole: string;
+  clubId: string;
+  categoryId?: string;
+}
+
 interface SessionMetadata {
   role?: unknown;
   isSuperAdmin?: unknown;
@@ -44,6 +50,74 @@ function normalizeAppRole(role: unknown): AppRole | null {
   }
 
   return null;
+}
+
+export function isClerkSnapshotStale(
+  currentUpdatedAt: number | undefined,
+  incomingUpdatedAt: number | undefined,
+): boolean {
+  return (
+    currentUpdatedAt !== undefined &&
+    incomingUpdatedAt !== undefined &&
+    incomingUpdatedAt < currentUpdatedAt
+  );
+}
+
+export function canApplyClerkUserSnapshot(
+  isActive: boolean,
+  currentUpdatedAt: number | undefined,
+  incomingUpdatedAt: number | undefined,
+): boolean {
+  return (
+    isActive && !isClerkSnapshotStale(currentUpdatedAt, incomingUpdatedAt)
+  );
+}
+
+export function roleFromPublicMetadata(
+  publicMetadata: unknown,
+): TenantRole | null {
+  if (!publicMetadata || typeof publicMetadata !== "object") {
+    return null;
+  }
+
+  const metadata = publicMetadata as SessionMetadata;
+  if (
+    metadata.isSuperAdmin === true ||
+    metadata.role === "superadmin" ||
+    metadata.role === "org:superadmin"
+  ) {
+    return "superadmin";
+  }
+
+  return normalizeAppRole(metadata.role);
+}
+
+export function pendingStaffInviteFromPublicMetadata(
+  publicMetadata: unknown,
+): PendingStaffInvite | null {
+  if (!publicMetadata || typeof publicMetadata !== "object") {
+    return null;
+  }
+
+  const pendingStaff = (publicMetadata as { pendingStaff?: unknown })
+    .pendingStaff;
+  if (!pendingStaff || typeof pendingStaff !== "object") {
+    return null;
+  }
+
+  const staffRole = (pendingStaff as { staffRole?: unknown }).staffRole;
+  const clubId = (pendingStaff as { clubId?: unknown }).clubId;
+  const categoryId = (pendingStaff as { categoryId?: unknown }).categoryId;
+
+  if (typeof staffRole !== "string" || typeof clubId !== "string") {
+    return null;
+  }
+
+  return {
+    staffRole,
+    clubId,
+    ...(typeof categoryId === "string" ? { categoryId } : {}),
+  };
 }
 
 export function getAppRoleFromSessionClaims(

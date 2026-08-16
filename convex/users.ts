@@ -6,113 +6,22 @@ import {
 } from "./_generated/server";
 import { v } from "convex/values";
 import { clerkClient } from "./clerk";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "./lib/tenancy";
+import {
+  canApplyClerkUserSnapshot,
+  roleFromPublicMetadata,
+} from "@/lib/auth/roles";
+import { processPendingStaffInvite } from "./lib/pending_staff_invite";
 
 type SingleTenantAppRole = "admin" | "coach";
 
-type CurrentUserWithMemberships = {
-  clerkId: string;
-  isSuperAdmin: boolean;
-  memberships: Array<{
-    organizationSlug: string;
-    role: "superadmin" | "admin" | "coach" | "member";
-  }>;
-};
-
-type SingleTenantResolvedRole = "superadmin" | "admin" | "coach";
-
-type PendingStaffInvite = {
-  staffRole: string;
-  clubId: string;
-  categoryId?: string;
-};
-
-function resolveSingleTenantRole(data: {
-  publicMetadata?: {
-    role?: unknown;
-    isSuperAdmin?: unknown;
-  };
-}): SingleTenantResolvedRole {
-  if (data.publicMetadata?.isSuperAdmin === true) {
-    return "superadmin";
+async function requireCurrentSingleTenantAdmin(clerkUserId: string) {
+  const user = await clerkClient.users.getUser(clerkUserId);
+  const role = roleFromPublicMetadata(user.publicMetadata);
+  if (role !== "admin" && role !== "superadmin") {
+    throw new Error("Forbidden");
   }
-
-  const role = data.publicMetadata?.role;
-  if (role === "superadmin" || role === "org:superadmin") {
-    return "superadmin";
-  }
-  if (role === "admin" || role === "org:admin") {
-    return "admin";
-  }
-  if (role === "coach" || role === "member" || role === "org:member") {
-    return "coach";
-  }
-  return "coach";
-}
-
-function getPendingStaffInvite(
-  publicMetadata: unknown,
-): PendingStaffInvite | null {
-  if (!publicMetadata || typeof publicMetadata !== "object") {
-    return null;
-  }
-
-  const pendingStaff = (publicMetadata as { pendingStaff?: unknown })
-    .pendingStaff;
-  if (!pendingStaff || typeof pendingStaff !== "object") {
-    return null;
-  }
-
-  const staffRole = (pendingStaff as { staffRole?: unknown }).staffRole;
-  const clubId = (pendingStaff as { clubId?: unknown }).clubId;
-  const categoryId = (pendingStaff as { categoryId?: unknown }).categoryId;
-
-  if (typeof staffRole !== "string" || typeof clubId !== "string") {
-    return null;
-  }
-
-  return {
-    staffRole,
-    clubId,
-    ...(typeof categoryId === "string" ? { categoryId } : {}),
-  };
-}
-
-async function processPendingStaffInvite(args: {
-  ctx: {
-    runQuery: Function;
-    runMutation: Function;
-  };
-  clerkUserId: string;
-  publicMetadata: unknown;
-}) {
-  const pendingStaff = getPendingStaffInvite(args.publicMetadata);
-  if (!pendingStaff) {
-    return;
-  }
-
-  const user = await args.ctx.runQuery(internal.users.getByClerkId, {
-    clerkId: args.clerkUserId,
-  });
-
-  if (!user) {
-    return;
-  }
-
-  await args.ctx.runMutation(internal.staff.createFromClerkMembership, {
-    userId: user._id,
-    clubId: pendingStaff.clubId,
-    staffRole: pendingStaff.staffRole,
-    ...(pendingStaff.categoryId ? { categoryId: pendingStaff.categoryId } : {}),
-  });
-
-  await clerkClient.users.updateUserMetadata(args.clerkUserId, {
-    publicMetadata: {
-      ...(args.publicMetadata as Record<string, unknown>),
-      pendingStaff: undefined,
-    },
-  });
 }
 
 /**
@@ -131,6 +40,7 @@ export const me = query({
       imageUrl: v.optional(v.string()),
       isActive: v.boolean(),
       isSuperAdmin: v.boolean(),
+      clerkUpdatedAt: v.optional(v.number()),
       memberships: v.array(
         v.object({
           organizationId: v.id("organizations"),
@@ -197,8 +107,8 @@ export const me = query({
 });
 
 /**
- * Self-heal the current Clerk user into Convex and ensure synthetic single-tenant
- * membership/staff assignment exists before protected layouts resolve access.
+ * Self-heal the current Clerk user into Convex and reconcile access from
+ * trusted Clerk invitation metadata before protected layouts resolve access.
  */
 export const syncCurrentUser = action({
   args: {},
@@ -224,21 +134,30 @@ export const syncCurrentUser = action({
           email_address: email.emailAddress,
         })),
         public_metadata: clerkUser.publicMetadata,
+        updated_at: clerkUser.updatedAt,
       },
     });
 
     if (isSingleTenantMode()) {
-      await ctx.runMutation(internal.members.upsertFromSingleTenant, {
-        clerkUserId: clerkUser.id,
-        organizationSlug: DEFAULT_TENANT_SLUG,
-        role: resolveSingleTenantRole(clerkUser),
-      });
+      const role = roleFromPublicMetadata(clerkUser.publicMetadata);
+      const accessSynced = await ctx.runMutation(
+        internal.members.syncFromSingleTenant,
+        {
+          clerkUserId: clerkUser.id,
+          organizationSlug: DEFAULT_TENANT_SLUG,
+          clerkUpdatedAt: clerkUser.updatedAt,
+          ...(role ? { role } : {}),
+        },
+      );
 
-      await processPendingStaffInvite({
-        ctx,
-        clerkUserId: clerkUser.id,
-        publicMetadata: clerkUser.publicMetadata,
-      });
+      if (accessSynced && role === "coach") {
+        await processPendingStaffInvite({
+          ctx,
+          clerkUserId: clerkUser.id,
+          clerkUpdatedAt: clerkUser.updatedAt,
+          publicMetadata: clerkUser.publicMetadata,
+        });
+      }
     }
 
     return null;
@@ -261,6 +180,7 @@ export const getById = query({
       imageUrl: v.optional(v.string()),
       isActive: v.boolean(),
       isSuperAdmin: v.boolean(),
+      clerkUpdatedAt: v.optional(v.number()),
     }),
     v.null(),
   ),
@@ -329,6 +249,8 @@ export const upsertFromClerk = internalMutation({
     const lastName = data.last_name || "";
     const imageUrl = data.image_url || data.profile_image_url || undefined;
     const isSuperAdmin = data.public_metadata?.isSuperAdmin === true;
+    const clerkUpdatedAt =
+      typeof data.updated_at === "number" ? data.updated_at : undefined;
 
     const existingUser = await ctx.db
       .query("users")
@@ -336,6 +258,16 @@ export const upsertFromClerk = internalMutation({
       .unique();
 
     if (existingUser) {
+      if (
+        !canApplyClerkUserSnapshot(
+          existingUser.isActive,
+          existingUser.clerkUpdatedAt,
+          clerkUpdatedAt,
+        )
+      ) {
+        return existingUser._id;
+      }
+
       await ctx.db.patch(existingUser._id, {
         email,
         firstName,
@@ -343,6 +275,7 @@ export const upsertFromClerk = internalMutation({
         imageUrl,
         isActive: true,
         isSuperAdmin,
+        ...(clerkUpdatedAt !== undefined ? { clerkUpdatedAt } : {}),
       });
       return existingUser._id;
     }
@@ -355,6 +288,7 @@ export const upsertFromClerk = internalMutation({
       imageUrl,
       isActive: true,
       isSuperAdmin,
+      ...(clerkUpdatedAt !== undefined ? { clerkUpdatedAt } : {}),
     });
     return userId;
   },
@@ -376,6 +310,7 @@ export const getByClerkId = internalQuery({
       imageUrl: v.optional(v.string()),
       isActive: v.boolean(),
       isSuperAdmin: v.boolean(),
+      clerkUpdatedAt: v.optional(v.number()),
     }),
     v.null(),
   ),
@@ -407,19 +342,6 @@ export const deactivateUser = internalMutation({
   },
 });
 
-function hasAdminAccessForOrg(
-  user: CurrentUserWithMemberships,
-  organizationSlug: string,
-): boolean {
-  if (user.isSuperAdmin) {
-    return true;
-  }
-
-  const membership = user.memberships.find(
-    (item) => item.organizationSlug === organizationSlug,
-  );
-  return membership?.role === "admin" || membership?.role === "superadmin";
-}
 
 /**
  * Update a user's role in single-tenant mode by writing to Clerk publicMetadata.
@@ -441,16 +363,13 @@ export const setSingleTenantRole = action({
       throw new Error("Organization not found");
     }
 
-    const currentUser = await ctx.runQuery(api.users.me, {});
-    if (!currentUser) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
       throw new Error("Unauthorized");
     }
+    await requireCurrentSingleTenantAdmin(identity.subject);
 
-    if (!hasAdminAccessForOrg(currentUser, args.organizationSlug)) {
-      throw new Error("Forbidden");
-    }
-
-    if (currentUser.clerkId === args.clerkUserId) {
+    if (identity.subject === args.clerkUserId) {
       throw new Error("You cannot change your own role");
     }
 
@@ -464,17 +383,21 @@ export const setSingleTenantRole = action({
       throw new Error("Cannot update role for a SuperAdmin");
     }
 
-    await clerkClient.users.updateUserMetadata(args.clerkUserId, {
-      publicMetadata: {
-        ...(targetUser.publicMetadata ?? {}),
-        role: args.role as SingleTenantAppRole,
+    const updatedUser = await clerkClient.users.updateUserMetadata(
+      args.clerkUserId,
+      {
+        publicMetadata: {
+          ...(targetUser.publicMetadata ?? {}),
+          role: args.role as SingleTenantAppRole,
+        },
       },
-    });
+    );
 
-    await ctx.runMutation(internal.members.upsertFromSingleTenant, {
+    await ctx.runMutation(internal.members.syncFromSingleTenant, {
       clerkUserId: args.clerkUserId,
       organizationSlug: args.organizationSlug,
       role: args.role,
+      clerkUpdatedAt: updatedUser.updatedAt,
     });
 
     return null;
@@ -500,16 +423,13 @@ export const deleteSingleTenantUser = action({
       throw new Error("Organization not found");
     }
 
-    const currentUser = await ctx.runQuery(api.users.me, {});
-    if (!currentUser) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
       throw new Error("Unauthorized");
     }
+    await requireCurrentSingleTenantAdmin(identity.subject);
 
-    if (!hasAdminAccessForOrg(currentUser, args.organizationSlug)) {
-      throw new Error("Forbidden");
-    }
-
-    if (currentUser.clerkId === args.clerkUserId) {
+    if (identity.subject === args.clerkUserId) {
       throw new Error("You cannot delete your own account");
     }
 
@@ -525,6 +445,10 @@ export const deleteSingleTenantUser = action({
 
     await clerkClient.users.deleteUser(args.clerkUserId);
 
+    await ctx.runMutation(internal.members.syncFromSingleTenant, {
+      clerkUserId: args.clerkUserId,
+      organizationSlug: args.organizationSlug,
+    });
     await ctx.runMutation(internal.users.deactivateUser, {
       clerkId: args.clerkUserId,
     });
