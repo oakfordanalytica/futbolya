@@ -11,7 +11,6 @@ import { processPendingStaffInvite } from "./lib/pending_staff_invite";
 const CLERK_WEBHOOK_PATH = "/clerk-webhook";
 const SINGLE_TENANT_MODE = isSingleTenantMode();
 
-
 const handleClerkWebhook = httpAction(async (ctx, request) => {
   const event = await validateClerkRequest(request);
   if (!event) {
@@ -128,12 +127,6 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
 
       case "user.deleted":
         if (event.data?.id) {
-          if (SINGLE_TENANT_MODE) {
-            await ctx.runMutation(internal.members.syncFromSingleTenant, {
-              clerkUserId: event.data.id,
-              organizationSlug: DEFAULT_TENANT_SLUG,
-            });
-          }
           await ctx.runMutation(internal.users.deactivateUser, {
             clerkId: event.data.id,
           });
@@ -210,6 +203,7 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
             if (user) {
               await ctx.runMutation(internal.staff.createFromClerkMembership, {
                 userId: user._id,
+                membershipId: membershipResult,
                 clubId: publicMetadata.clubId,
                 staffRole: publicMetadata.staffRole,
                 categoryId: publicMetadata.categoryId,

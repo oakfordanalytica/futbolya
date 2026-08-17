@@ -13,6 +13,6 @@ export async function syncCurrentUser(token?: string) {
   try {
     await fetchAction(api.users.syncCurrentUser, {}, { token: resolvedToken });
   } catch {
-    // Access checks still have fallback paths; avoid turning sync delays into hard failures.
+    // Access checks fail closed while Clerk/Convex synchronization recovers.
   }
 }

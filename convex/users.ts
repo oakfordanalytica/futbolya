@@ -4,24 +4,73 @@ import {
   internalMutation,
   internalQuery,
 } from "./_generated/server";
+import type { ActionCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { clerkClient } from "./clerk";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "./lib/tenancy";
 import {
   canApplyClerkUserSnapshot,
   roleFromPublicMetadata,
 } from "@/lib/auth/roles";
+import { getCurrentUserOrNull } from "./lib/auth";
+import { revokeAllUserAccess } from "./lib/access_revocation";
 import { processPendingStaffInvite } from "./lib/pending_staff_invite";
 
 type SingleTenantAppRole = "admin" | "coach";
 
-async function requireCurrentSingleTenantAdmin(clerkUserId: string) {
-  const user = await clerkClient.users.getUser(clerkUserId);
-  const role = roleFromPublicMetadata(user.publicMetadata);
+async function requireCurrentSingleTenantAdmin(
+  ctx: ActionCtx,
+  clerkUserId: string,
+  organizationSlug: string,
+) {
+  const currentUser = await ctx.runQuery(api.users.me, {});
+  const membership = currentUser?.memberships.find(
+    (item) => item.organizationSlug === organizationSlug,
+  );
+  const hasLocalAdminAccess =
+    currentUser?.isSuperAdmin ||
+    membership?.role === "admin" ||
+    membership?.role === "superadmin";
+  if (!hasLocalAdminAccess) {
+    throw new Error("Forbidden");
+  }
+
+  const clerkUser = await clerkClient.users.getUser(clerkUserId);
+  const role = roleFromPublicMetadata(clerkUser.publicMetadata);
   if (role !== "admin" && role !== "superadmin") {
     throw new Error("Forbidden");
   }
+}
+
+async function getManagedSingleTenantUser(
+  ctx: ActionCtx,
+  clerkUserId: string,
+  organizationSlug: string,
+) {
+  const user = await ctx.runQuery(internal.users.getByClerkId, {
+    clerkId: clerkUserId,
+  });
+  if (!user?.isActive) {
+    throw new Error("User not found");
+  }
+
+  const organization = await ctx.runQuery(api.organizations.getBySlug, {
+    slug: organizationSlug,
+  });
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
+  const membership = await ctx.runQuery(api.members.getByUserAndOrg, {
+    userId: user._id,
+    organizationId: organization._id,
+  });
+  if (!membership) {
+    throw new Error("User does not belong to this organization");
+  }
+
+  return await clerkClient.users.getUser(clerkUserId);
 }
 
 /**
@@ -58,16 +107,7 @@ export const me = query({
     v.null(),
   ),
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) {
       return null;
     }
@@ -185,15 +225,7 @@ export const getById = query({
     v.null(),
   ),
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const currentUser = await ctx.db
-      .query("users")
-      .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
+    const currentUser = await getCurrentUserOrNull(ctx);
     if (!currentUser) {
       return null;
     }
@@ -335,13 +367,13 @@ export const deactivateUser = internalMutation({
       .unique();
 
     if (user) {
+      await revokeAllUserAccess(ctx, user._id);
       await ctx.db.patch(user._id, { isActive: false });
     }
 
     return null;
   },
 });
-
 
 /**
  * Update a user's role in single-tenant mode by writing to Clerk publicMetadata.
@@ -367,13 +399,21 @@ export const setSingleTenantRole = action({
     if (!identity) {
       throw new Error("Unauthorized");
     }
-    await requireCurrentSingleTenantAdmin(identity.subject);
+    await requireCurrentSingleTenantAdmin(
+      ctx,
+      identity.subject,
+      args.organizationSlug,
+    );
 
     if (identity.subject === args.clerkUserId) {
       throw new Error("You cannot change your own role");
     }
 
-    const targetUser = await clerkClient.users.getUser(args.clerkUserId);
+    const targetUser = await getManagedSingleTenantUser(
+      ctx,
+      args.clerkUserId,
+      args.organizationSlug,
+    );
     const targetRole = targetUser.publicMetadata?.role;
     const isTargetSuperAdmin =
       targetUser.publicMetadata?.isSuperAdmin === true ||
@@ -427,13 +467,21 @@ export const deleteSingleTenantUser = action({
     if (!identity) {
       throw new Error("Unauthorized");
     }
-    await requireCurrentSingleTenantAdmin(identity.subject);
+    await requireCurrentSingleTenantAdmin(
+      ctx,
+      identity.subject,
+      args.organizationSlug,
+    );
 
     if (identity.subject === args.clerkUserId) {
       throw new Error("You cannot delete your own account");
     }
 
-    const targetUser = await clerkClient.users.getUser(args.clerkUserId);
+    const targetUser = await getManagedSingleTenantUser(
+      ctx,
+      args.clerkUserId,
+      args.organizationSlug,
+    );
     const targetRole = targetUser.publicMetadata?.role;
     const isTargetSuperAdmin =
       targetUser.publicMetadata?.isSuperAdmin === true ||
@@ -445,10 +493,6 @@ export const deleteSingleTenantUser = action({
 
     await clerkClient.users.deleteUser(args.clerkUserId);
 
-    await ctx.runMutation(internal.members.syncFromSingleTenant, {
-      clerkUserId: args.clerkUserId,
-      organizationSlug: args.organizationSlug,
-    });
     await ctx.runMutation(internal.users.deactivateUser, {
       clerkId: args.clerkUserId,
     });

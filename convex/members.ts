@@ -4,6 +4,7 @@ import { getCurrentUser } from "./lib/auth";
 import { hasOrgAdminAccess } from "./lib/permissions";
 import { Id } from "./_generated/dataModel";
 import { isClerkSnapshotStale } from "@/lib/auth/roles";
+import { revokeOrganizationAccess } from "./lib/access_revocation";
 
 const roleValidator = v.union(
   v.literal("superadmin"),
@@ -384,7 +385,11 @@ export const deleteFromClerk = internalMutation({
       .unique();
 
     if (membership) {
-      await ctx.db.delete(membership._id);
+      await revokeOrganizationAccess(
+        ctx,
+        membership.userId,
+        membership.organizationId,
+      );
     }
 
     return null;
@@ -427,48 +432,21 @@ export const syncFromSingleTenant = internalMutation({
       }
     }
 
-    if (args.role && !user.isActive) {
-      return false;
-    }
+    const effectiveRole = user.isActive ? args.role : undefined;
 
     let organization = await ctx.db
       .query("organizations")
       .withIndex("bySlug", (q) => q.eq("slug", args.organizationSlug))
       .unique();
 
-    if (!args.role) {
-      if (!organization) {
-        return true;
-      }
-
-      const organizationId = organization._id;
-      const [membership, staffAssignments] = await Promise.all([
-        ctx.db
-          .query("organizationMembers")
-          .withIndex("byUserAndOrg", (q) =>
-            q.eq("userId", user._id).eq("organizationId", organizationId),
-          )
-          .unique(),
-        ctx.db
-          .query("staff")
-          .withIndex("byUser", (q) => q.eq("userId", user._id))
-          .collect(),
-      ]);
-
-      for (const assignment of staffAssignments) {
-        const club = await ctx.db.get(assignment.clubId);
-        if (club?.organizationId === organizationId) {
-          await ctx.db.delete(assignment._id);
-        }
-      }
-
-      if (membership) {
-        await ctx.db.delete(membership._id);
+    if (!effectiveRole) {
+      if (organization) {
+        await revokeOrganizationAccess(ctx, user._id, organization._id);
       }
       return true;
     }
 
-    const role = args.role === "member" ? "coach" : args.role;
+    const role = effectiveRole === "member" ? "coach" : effectiveRole;
     const resolvedRole = user.isSuperAdmin ? "superadmin" : role;
 
     if (!organization) {

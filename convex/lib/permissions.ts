@@ -30,7 +30,10 @@ export async function hasOrgAdminAccess(
   organizationId: Id<"organizations">,
 ): Promise<boolean> {
   const user = await ctx.db.get(userId);
-  if (user?.isSuperAdmin) {
+  if (!user?.isActive) {
+    return false;
+  }
+  if (user.isSuperAdmin) {
     return true;
   }
 
@@ -62,8 +65,20 @@ export async function hasClubStaffAccess(
   clubId: Id<"clubs">,
 ): Promise<boolean> {
   const user = await ctx.db.get(userId);
-  if (user?.isSuperAdmin) {
+  if (!user?.isActive) {
+    return false;
+  }
+  if (user.isSuperAdmin) {
     return true;
+  }
+
+  const club = await ctx.db.get(clubId);
+  if (!club) {
+    return false;
+  }
+  const membership = await getOrgMembership(ctx, userId, club.organizationId);
+  if (membership?.role !== "coach" && membership?.role !== "member") {
+    return false;
   }
 
   const staffAssignment = await getStaffAssignment(ctx, userId, clubId);
@@ -206,7 +221,11 @@ export async function requireClubAccess(
     };
   }
 
-  const staffAssignment = await getStaffAssignment(ctx, user._id, club._id);
+  const canUseStaffAssignment =
+    membership?.role === "coach" || membership?.role === "member";
+  const staffAssignment = canUseStaffAssignment
+    ? await getStaffAssignment(ctx, user._id, club._id)
+    : null;
   if (staffAssignment) {
     return {
       user,

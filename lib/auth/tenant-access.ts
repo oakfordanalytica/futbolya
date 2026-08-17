@@ -4,11 +4,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { getAuthToken } from "@/lib/auth/auth";
-import {
-  roleFromPublicMetadata,
-  roleFromSessionClaims,
-  type TenantRole,
-} from "@/lib/auth/roles";
+import { roleFromPublicMetadata, type TenantRole } from "@/lib/auth/roles";
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 
 interface TenantAccess {
@@ -38,20 +34,29 @@ function normalizeMembershipRole(
 export async function getCurrentClerkTenantRole(
   userId: string,
 ): Promise<TenantRole | null> {
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  return roleFromPublicMetadata(user.publicMetadata);
-}
-
-function resolveSingleTenantFallbackRole(args: {
-  publicMetadata?: unknown;
-  sessionClaims?: unknown;
-}): TenantRole | null {
-  if (args.publicMetadata !== undefined) {
-    return roleFromPublicMetadata(args.publicMetadata);
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
   }
 
-  return roleFromSessionClaims(args.sessionClaims);
+  const currentUser = await fetchQuery(api.users.me, {}, { token });
+  if (!currentUser) {
+    return null;
+  }
+  const membership = currentUser.memberships.find(
+    (item) => item.organizationSlug === DEFAULT_TENANT_SLUG,
+  );
+  const localRole = currentUser.isSuperAdmin
+    ? "superadmin"
+    : normalizeMembershipRole(membership?.role);
+  if (!localRole) {
+    return null;
+  }
+
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+  const clerkRole = roleFromPublicMetadata(user.publicMetadata);
+  return clerkRole === localRole ? clerkRole : null;
 }
 
 /**
@@ -70,60 +75,35 @@ export async function getTenantAccess(
     }
 
     const resolvedToken = token ?? (await getAuthToken());
-    if (resolvedToken) {
-      try {
-        const currentUser = await fetchQuery(
-          api.users.me,
-          {},
-          { token: resolvedToken },
-        );
-
-        if (currentUser?.isSuperAdmin) {
-          return { hasAccess: true, isAdmin: true, role: "superadmin" };
-        }
-
-        const membership = currentUser?.memberships.find(
-          (item) => item.organizationSlug === DEFAULT_TENANT_SLUG,
-        );
-        const role = normalizeMembershipRole(membership?.role);
-        if (role) {
-          return {
-            hasAccess: true,
-            isAdmin: role === "admin" || role === "superadmin",
-            role,
-          };
-        }
-      } catch {
-        // Fall back to Clerk session metadata while the Convex user record catches up.
-      }
+    if (!resolvedToken) {
+      return { hasAccess: false, isAdmin: false, role: null };
     }
 
     try {
-      const role = await getCurrentClerkTenantRole(authObject.userId);
-
-      if (!role) {
+      const currentUser = await fetchQuery(
+        api.users.me,
+        {},
+        { token: resolvedToken },
+      );
+      if (!currentUser) {
         return { hasAccess: false, isAdmin: false, role: null };
       }
 
+      if (currentUser.isSuperAdmin) {
+        return { hasAccess: true, isAdmin: true, role: "superadmin" };
+      }
+
+      const membership = currentUser.memberships.find(
+        (item) => item.organizationSlug === DEFAULT_TENANT_SLUG,
+      );
+      const role = normalizeMembershipRole(membership?.role);
       return {
-        hasAccess: true,
+        hasAccess: Boolean(role),
         isAdmin: role === "admin" || role === "superadmin",
         role,
       };
     } catch {
-      const role = resolveSingleTenantFallbackRole({
-        sessionClaims: authObject.sessionClaims,
-      });
-
-      if (!role) {
-        return { hasAccess: false, isAdmin: false, role: null };
-      }
-
-      return {
-        hasAccess: true,
-        isAdmin: role === "admin" || role === "superadmin",
-        role,
-      };
+      return { hasAccess: false, isAdmin: false, role: null };
     }
   }
 

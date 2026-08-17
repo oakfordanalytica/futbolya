@@ -3,11 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import {
-  isAdminFromSessionClaims,
-  isSuperAdminFromSessionClaims,
-  roleFromSessionClaims,
-} from "@/lib/auth/roles";
+
 import { DEFAULT_TENANT_SLUG, isSingleTenantMode } from "@/lib/tenancy/config";
 
 const SINGLE_TENANT_MODE = isSingleTenantMode();
@@ -19,14 +15,10 @@ const SINGLE_TENANT_MODE = isSingleTenantMode();
  * @returns Object containing isAdmin boolean and loading state
  */
 export function useIsAdmin() {
-  const { has, isLoaded, sessionClaims } = useAuth();
+  const { has, isLoaded } = useAuth();
   const currentUser = useQuery(api.users.me, SINGLE_TENANT_MODE ? {} : "skip");
 
   if (SINGLE_TENANT_MODE) {
-    const fallbackIsSuperAdmin = isSuperAdminFromSessionClaims(sessionClaims);
-    const fallbackRole = roleFromSessionClaims(sessionClaims);
-    const fallbackIsAdmin = isAdminFromSessionClaims(sessionClaims);
-
     const membership = currentUser?.memberships.find(
       (item) => item.organizationSlug === DEFAULT_TENANT_SLUG,
     );
@@ -38,19 +30,18 @@ export function useIsAdmin() {
           ? "coach"
           : null;
 
-    const isSuperAdmin = currentUser?.isSuperAdmin ?? fallbackIsSuperAdmin;
-    const isAdmin = currentUser
-      ? isSuperAdmin ||
-        membership?.role === "admin" ||
-        membership?.role === "superadmin"
-      : fallbackIsAdmin;
+    const isSuperAdmin = currentUser?.isSuperAdmin ?? false;
+    const isAdmin =
+      isSuperAdmin ||
+      membership?.role === "admin" ||
+      membership?.role === "superadmin";
 
     return {
       isAdmin,
       isSuperAdmin,
       isOrgAdmin: false,
-      role: currentRole ?? fallbackRole,
-      isLoaded,
+      role: currentRole,
+      isLoaded: isLoaded && currentUser !== undefined,
     };
   }
 

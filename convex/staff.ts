@@ -3,6 +3,7 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { getCurrentUserOrNull } from "./lib/auth";
 import {
+  getOrgMembership,
   hasOrgAdminAccess,
   requireClubAccess,
 } from "./lib/permissions";
@@ -101,7 +102,7 @@ export const listAllByClubSlug = query({
         ? categoryMap.get(staff.categoryId)
         : undefined;
 
-      if (!user) continue;
+      if (!user?.isActive) continue;
 
       result.push({
         _id: staff._id,
@@ -151,6 +152,11 @@ export const listMyClubSlugsByOrganization = query({
       return [...new Set(clubs.map((club) => club.slug))].sort();
     }
 
+    const membership = await getOrgMembership(ctx, user._id, organization._id);
+    if (membership?.role !== "coach" && membership?.role !== "member") {
+      return [];
+    }
+
     const staffAssignments = await ctx.db
       .query("staff")
       .withIndex("byUser", (q) => q.eq("userId", user._id))
@@ -183,6 +189,7 @@ export const listMyClubSlugsByOrganization = query({
 export const createFromClerkMembership = internalMutation({
   args: {
     userId: v.id("users"),
+    membershipId: v.optional(v.id("organizationMembers")),
     clubId: v.string(), // Convex ID as string from metadata
     staffRole: v.string(),
     categoryId: v.optional(v.string()), // Convex ID as string from metadata
@@ -191,19 +198,22 @@ export const createFromClerkMembership = internalMutation({
   },
   returns: v.union(v.id("staff"), v.null()),
   handler: async (ctx, args) => {
+    if (!args.membershipId && !args.organizationSlug) {
+      return null;
+    }
     if (args.organizationSlug && args.clerkUpdatedAt === undefined) {
       return null;
     }
 
-    if (args.clerkUpdatedAt !== undefined) {
-      const user = await ctx.db.get(args.userId);
-      if (
-        !user ||
-        !user.isActive ||
-        user.clerkUpdatedAt !== args.clerkUpdatedAt
-      ) {
-        return null;
-      }
+    const user = await ctx.db.get(args.userId);
+    if (!user?.isActive) {
+      return null;
+    }
+    if (
+      args.clerkUpdatedAt !== undefined &&
+      user.clerkUpdatedAt !== args.clerkUpdatedAt
+    ) {
+      return null;
     }
 
     // Validate clubId
@@ -213,6 +223,18 @@ export const createFromClerkMembership = internalMutation({
         `[staff.createFromClerkMembership] Club not found: ${args.clubId}`,
       );
       return null;
+    }
+
+    if (args.membershipId) {
+      const membership = await ctx.db.get(args.membershipId);
+      if (
+        !membership ||
+        membership.userId !== user._id ||
+        membership.organizationId !== club.organizationId ||
+        (membership.role !== "coach" && membership.role !== "member")
+      ) {
+        return null;
+      }
     }
 
     if (args.organizationSlug) {
@@ -234,10 +256,7 @@ export const createFromClerkMembership = internalMutation({
           q.eq("userId", args.userId).eq("organizationId", organization._id),
         )
         .unique();
-      if (
-        membership?.role !== "coach" &&
-        membership?.role !== "member"
-      ) {
+      if (membership?.role !== "coach" && membership?.role !== "member") {
         return null;
       }
     }
