@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useMemo, type ReactNode } from "react";
 import type {
   FootballLineup,
@@ -26,8 +24,8 @@ function FieldPlaceholder({
   return (
     <div
       className={cn(
-        "relative aspect-[2/3] w-full overflow-hidden rounded-lg border-2 border-white/40",
-        "bg-gradient-to-b from-green-500 to-green-600 dark:from-green-700 dark:to-green-800",
+        "relative aspect-2/3 w-full overflow-hidden rounded-lg border-2 border-white/40",
+        "bg-linear-to-b from-green-500 to-green-600 dark:from-green-700 dark:to-green-800",
         "p-2",
       )}
     >
@@ -51,10 +49,7 @@ function FieldPlaceholder({
 export function MatchLineupsTabPanel({
   lineup,
   fallbackPlayers,
-  orgSlug,
-  routeScope,
-  currentClubSlug,
-  teamClubSlug,
+  getPlayerHref,
   eventMarkers,
   substitutionData,
   pendingFormationDescription,
@@ -67,10 +62,7 @@ export function MatchLineupsTabPanel({
 }: {
   lineup: FootballLineup;
   fallbackPlayers: FootballLineupPlayer[];
-  orgSlug: string;
-  routeScope: "org" | "team";
-  currentClubSlug?: string;
-  teamClubSlug: string;
+  getPlayerHref?: (player: FootballLineupPlayer) => string | null;
   eventMarkers: Map<string, string[]>;
   substitutionData: PlayerSubstitutionData;
   pendingFormationDescription: string;
@@ -133,10 +125,7 @@ export function MatchLineupsTabPanel({
       <MatchLineupsPlayersList
         lineup={lineup}
         playersById={playersById}
-        orgSlug={orgSlug}
-        routeScope={routeScope}
-        currentClubSlug={currentClubSlug}
-        teamClubSlug={teamClubSlug}
+        getPlayerHref={getPlayerHref}
         eventMarkers={eventMarkers}
         substitutionsByOutgoingPlayer={
           substitutionData.substitutionsByOutgoingPlayer
@@ -146,6 +135,7 @@ export function MatchLineupsTabPanel({
         nameLabel={nameLabel}
         substitutesLabel={substitutesLabel}
         emptyLabel={emptyLabel}
+        enteredForLabel={enteredForLabel}
       />
     </div>
   );

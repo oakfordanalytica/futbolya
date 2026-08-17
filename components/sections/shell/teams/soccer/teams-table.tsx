@@ -12,7 +12,7 @@ import {
   type SoccerTeamRow,
 } from "@/components/sections/shell/teams/soccer/teams-columns";
 import { CreateTeamDialog } from "@/components/sections/shell/teams/soccer/create-team-dialog";
-import { TeamsGamesWeekStrip } from "@/components/sections/shell/teams/soccer/teams-games-week-strip";
+import { GamesDateStrip } from "@/components/patterns/games-date-strip";
 import { ROUTES } from "@/lib/navigation/routes";
 
 interface SoccerTeamsTableProps {
@@ -43,7 +43,28 @@ export function SoccerTeamsTable({
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      <TeamsGamesWeekStrip games={games ?? []} orgSlug={orgSlug} />
+      <GamesDateStrip
+        games={(games ?? []).map((game) => ({
+          id: game._id,
+          href: ROUTES.org.games.detail(orgSlug, game._id),
+          date: game.date,
+          startTime: game.startTime,
+          category: game.category,
+          status: game.status,
+          home: {
+            name: game.homeTeamName,
+            logoUrl: game.homeTeamLogo,
+            score: game.homeScore,
+          },
+          away: {
+            name: game.awayTeamName,
+            logoUrl: game.awayTeamLogo,
+            score: game.awayScore,
+          },
+        }))}
+        previousLabel={t("actions.previous")}
+        nextLabel={t("actions.next")}
+      />
 
       <DataTable
         columns={teamColumns}

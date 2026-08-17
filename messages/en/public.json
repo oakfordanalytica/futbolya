@@ -1,0 +1,80 @@
+{
+  "metadata": {
+    "title": "Futbolya | Management and live matches",
+    "description": "Manage soccer leagues, clubs, and matches, and follow every game minute by minute."
+  },
+  "nav": {
+    "label": "Public navigation",
+    "skip": "Skip to content",
+    "product": "Product",
+    "games": "Matches",
+    "signIn": "Sign in",
+    "language": "Select language"
+  },
+  "hero": {
+    "eyebrow": "Connected soccer, from start to finish",
+    "title": "The whole competition. One place.",
+    "description": "Futbolya brings league and club operations together with a public experience for following every match in real time.",
+    "viewLive": "View live matches",
+    "manage": "Manage my league"
+  },
+  "product": {
+    "leagueTitle": "Organized league",
+    "leagueDescription": "Seasons, categories, teams, and schedules under one structure.",
+    "clubsTitle": "Coordinated clubs",
+    "liveTitle": "Live matches",
+    "liveDescription": "Score, status, and events updated reactively for every supporter."
+  },
+  "live": {
+    "eyebrow": "Public scoreboard",
+    "title": "Live matches",
+    "description": "Follow the score and match events without signing in.",
+    "emptyTitle": "No matches are live",
+    "emptyDescription": "Matches will appear here when minute-by-minute coverage begins.",
+    "open": "View match",
+    "versus": "VS",
+    "automatic": "Updates automatically",
+    "viewAll": "View all matches"
+  },
+  "gamesPage": {
+    "metadataTitle": "Matches and standings | Futbolya",
+    "metadataDescription": "Browse live matches, upcoming fixtures, results, and the season table.",
+    "title": "Matches",
+    "liveTitle": "Playing now",
+    "liveEmpty": "No matches are live right now.",
+    "upcomingTitle": "Upcoming matches",
+    "upcomingEmpty": "No upcoming matches are scheduled.",
+    "recentTitle": "Latest results",
+    "recentEmpty": "No results have been published yet."
+  },
+  "standings": {
+    "eyebrow": "Season",
+    "title": "League table",
+    "gamesCount": "{count, plural, one {# match} other {# matches}} included",
+    "empty": "The table will appear when the season has results.",
+    "columns": {
+      "team": "Team",
+      "played": "GP",
+      "won": "W",
+      "drawn": "D",
+      "lost": "L",
+      "difference": "GD",
+      "points": "PTS"
+    }
+  },
+  "game": {
+    "back": "Back to all matches",
+    "notFoundTitle": "Match unavailable",
+    "notFoundDescription": "This link does not belong to an available public match.",
+    "timeline": "Minute by minute",
+    "statsTitle": "Statistics",
+    "noEventsTitle": "No events yet",
+    "noEventsDescription": "Goals, cards, and substitutions will appear here during the match.",
+    "home": "Home",
+    "away": "Away",
+    "scoreAnnouncement": "{home} {homeScore}, {away} {awayScore}",
+    "versusAnnouncement": "{home} versus {away}",
+    "minute": "Min. {minute}"
+  },
+  "footer": "Sports management and live matches."
+}

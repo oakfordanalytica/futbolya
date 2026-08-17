@@ -1,5 +1,5 @@
 import type { QueryCtx } from "../../_generated/server";
-import type { Id } from "../../_generated/dataModel";
+import type { Doc, Id } from "../../_generated/dataModel";
 import { buildPlayerFullName } from "@/lib/players/name";
 import { didPlayerParticipate } from "@/lib/soccer/stats-domain";
 import {
@@ -9,6 +9,85 @@ import {
   roundToSingleDecimal,
 } from "./utils";
 import type { SeasonStatsAggregate } from "./validators";
+
+export type SeasonTeamStanding = {
+  clubId: Id<"clubs">;
+  gamesPlayed: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  cleanSheets: number;
+};
+
+export function buildSeasonTeamStandings(games: Array<Doc<"games">>) {
+  const standings = new Map<Id<"clubs">, SeasonTeamStanding>();
+  const getOrCreate = (clubId: Id<"clubs">) => {
+    const existing = standings.get(clubId);
+    if (existing) {
+      return existing;
+    }
+
+    const created: SeasonTeamStanding = {
+      clubId,
+      gamesPlayed: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      points: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      cleanSheets: 0,
+    };
+    standings.set(clubId, created);
+    return created;
+  };
+
+  for (const game of games) {
+    if (
+      !isOperationallyCompleted(game.status) ||
+      typeof game.homeScore !== "number" ||
+      typeof game.awayScore !== "number"
+    ) {
+      continue;
+    }
+
+    const home = getOrCreate(game.homeClubId);
+    const away = getOrCreate(game.awayClubId);
+    home.gamesPlayed += 1;
+    away.gamesPlayed += 1;
+    home.goalsFor += game.homeScore;
+    home.goalsAgainst += game.awayScore;
+    away.goalsFor += game.awayScore;
+    away.goalsAgainst += game.homeScore;
+
+    if (game.awayScore === 0) {
+      home.cleanSheets += 1;
+    }
+    if (game.homeScore === 0) {
+      away.cleanSheets += 1;
+    }
+
+    if (game.homeScore > game.awayScore) {
+      home.wins += 1;
+      home.points += 3;
+      away.losses += 1;
+    } else if (game.awayScore > game.homeScore) {
+      away.wins += 1;
+      away.points += 3;
+      home.losses += 1;
+    } else {
+      home.draws += 1;
+      away.draws += 1;
+      home.points += 1;
+      away.points += 1;
+    }
+  }
+
+  return standings;
+}
 
 export async function buildSeasonStatsAggregate(
   ctx: QueryCtx,
@@ -62,16 +141,7 @@ export async function buildSeasonStatsAggregate(
     substitutionsOut: number;
   };
 
-  type TeamSeasonAggregate = {
-    clubId: Id<"clubs">;
-    gamesPlayed: number;
-    wins: number;
-    draws: number;
-    losses: number;
-    points: number;
-    goalsFor: number;
-    goalsAgainst: number;
-    cleanSheets: number;
+  type TeamSeasonAggregate = SeasonTeamStanding & {
     corners: number;
     freeKicks: number;
     yellowCards: number;
@@ -82,35 +152,23 @@ export async function buildSeasonStatsAggregate(
   };
 
   const playerAggregates = new Map<Id<"players">, PlayerSeasonAggregate>();
-  const teamAggregates = new Map<Id<"clubs">, TeamSeasonAggregate>();
-
-  const getOrCreateTeamAggregate = (clubId: Id<"clubs">) => {
-    const existing = teamAggregates.get(clubId);
-    if (existing) {
-      return existing;
-    }
-
-    const created: TeamSeasonAggregate = {
-      clubId,
-      gamesPlayed: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      points: 0,
-      goalsFor: 0,
-      goalsAgainst: 0,
-      cleanSheets: 0,
-      corners: 0,
-      freeKicks: 0,
-      yellowCards: 0,
-      redCards: 0,
-      penaltiesAttempted: 0,
-      penaltiesScored: 0,
-      substitutions: 0,
-    };
-    teamAggregates.set(clubId, created);
-    return created;
-  };
+  const teamAggregates = new Map<Id<"clubs">, TeamSeasonAggregate>(
+    Array.from(buildSeasonTeamStandings(completedGames)).map(
+      ([clubId, standing]) => [
+        clubId,
+        {
+          ...standing,
+          corners: 0,
+          freeKicks: 0,
+          yellowCards: 0,
+          redCards: 0,
+          penaltiesAttempted: 0,
+          penaltiesScored: 0,
+          substitutions: 0,
+        },
+      ],
+    ),
+  );
 
   const allGamePlayerStats = await Promise.all(
     completedGames.map((game) =>
@@ -133,40 +191,8 @@ export async function buildSeasonStatsAggregate(
     const game = completedGames[index];
     const gamePlayerStats = allGamePlayerStats[index];
     const gameTeamStats = allGameTeamStats[index];
-    const homeScore = game.homeScore ?? 0;
-    const awayScore = game.awayScore ?? 0;
-
-    const homeAggregate = getOrCreateTeamAggregate(game.homeClubId);
-    const awayAggregate = getOrCreateTeamAggregate(game.awayClubId);
-
-    homeAggregate.gamesPlayed += 1;
-    awayAggregate.gamesPlayed += 1;
-    homeAggregate.goalsFor += homeScore;
-    homeAggregate.goalsAgainst += awayScore;
-    awayAggregate.goalsFor += awayScore;
-    awayAggregate.goalsAgainst += homeScore;
-
-    if (awayScore === 0) {
-      homeAggregate.cleanSheets += 1;
-    }
-    if (homeScore === 0) {
-      awayAggregate.cleanSheets += 1;
-    }
-
-    if (homeScore > awayScore) {
-      homeAggregate.wins += 1;
-      homeAggregate.points += 3;
-      awayAggregate.losses += 1;
-    } else if (awayScore > homeScore) {
-      awayAggregate.wins += 1;
-      awayAggregate.points += 3;
-      homeAggregate.losses += 1;
-    } else {
-      homeAggregate.draws += 1;
-      awayAggregate.draws += 1;
-      homeAggregate.points += 1;
-      awayAggregate.points += 1;
-    }
+    const homeAggregate = teamAggregates.get(game.homeClubId)!;
+    const awayAggregate = teamAggregates.get(game.awayClubId)!;
 
     const teamStatsByClub = new Map(
       gameTeamStats.map((stat) => [stat.clubId, stat]),

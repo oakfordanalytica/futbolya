@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../../_generated/dataModel";
 import type { StoredGameStatus } from "@/lib/games/status";
+import { gameEventType } from "../game_events/validators";
 
 export const gender = v.union(
   v.literal("male"),
@@ -34,6 +35,139 @@ export const gameMatchPhase = v.union(
   v.literal("second_half"),
   v.literal("finished"),
 );
+
+const publicTeamValidator = v.object({
+  name: v.string(),
+  logoUrl: v.optional(v.string()),
+  color: v.optional(v.string()),
+});
+
+const publicGameFields = {
+  id: v.id("games"),
+  date: v.string(),
+  startTime: v.string(),
+  category: v.string(),
+  gender,
+  status: gameStatus,
+  homeScore: v.number(),
+  awayScore: v.number(),
+  matchStartedAt: v.optional(v.number()),
+  matchEndedAt: v.optional(v.number()),
+  matchPhase: v.optional(gameMatchPhase),
+  firstHalfStartedAt: v.optional(v.number()),
+  firstHalfEndedAt: v.optional(v.number()),
+  secondHalfStartedAt: v.optional(v.number()),
+  secondHalfEndedAt: v.optional(v.number()),
+  firstHalfAddedMinutes: v.optional(v.number()),
+  secondHalfAddedMinutes: v.optional(v.number()),
+  homeTeam: publicTeamValidator,
+  awayTeam: publicTeamValidator,
+};
+
+export const publicGameSummaryValidator = v.object(publicGameFields);
+
+const publicTeamStatsValidator = v.object({
+  goals: v.number(),
+  corners: v.number(),
+  freeKicks: v.number(),
+  yellowCards: v.number(),
+  redCards: v.number(),
+  penaltiesAttempted: v.number(),
+  penaltiesScored: v.number(),
+  substitutions: v.number(),
+});
+
+export const publicGameGroupsValidator = v.object({
+  live: v.array(publicGameSummaryValidator),
+  upcoming: v.array(publicGameSummaryValidator),
+  recent: v.array(publicGameSummaryValidator),
+});
+
+export const publicSeasonTableValidator = v.object({
+  season: v.object({
+    name: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+  }),
+  gamesCount: v.number(),
+  teams: v.array(
+    v.object({
+      name: v.string(),
+      logoUrl: v.optional(v.string()),
+      gamesPlayed: v.number(),
+      wins: v.number(),
+      draws: v.number(),
+      losses: v.number(),
+      goalsFor: v.number(),
+      goalsAgainst: v.number(),
+      goalDifference: v.number(),
+      points: v.number(),
+    }),
+  ),
+});
+
+const publicLineupPlayerValidator = v.object({
+  playerId: v.string(),
+  playerName: v.string(),
+  lastName: v.string(),
+  jerseyNumber: v.optional(v.number()),
+  photoUrl: v.optional(v.string()),
+  position: v.optional(v.string()),
+});
+
+const publicPlayerGameStatsValidator = v.object({
+  playerId: v.string(),
+  playerName: v.string(),
+  isStarter: v.boolean(),
+  goals: v.optional(v.number()),
+  yellowCards: v.optional(v.number()),
+  redCards: v.optional(v.number()),
+  penaltiesAttempted: v.optional(v.number()),
+  penaltiesScored: v.optional(v.number()),
+  substitutionsIn: v.optional(v.number()),
+  substitutionsOut: v.optional(v.number()),
+});
+
+const publicLineupValidator = v.object({
+  formation: v.optional(v.string()),
+  slots: v.array(
+    v.object({
+      id: v.string(),
+      x: v.number(),
+      y: v.number(),
+      role: v.union(v.literal("goalkeeper"), v.literal("outfield")),
+      player: v.optional(publicLineupPlayerValidator),
+    }),
+  ),
+  starters: v.array(publicLineupPlayerValidator),
+  substitutes: v.array(publicLineupPlayerValidator),
+});
+
+export const publicGameDetailValidator = v.object({
+  ...publicGameFields,
+  lineups: v.object({
+    home: publicLineupValidator,
+    away: publicLineupValidator,
+  }),
+  teamStats: v.object({
+    home: publicTeamStatsValidator,
+    away: publicTeamStatsValidator,
+  }),
+  playerStats: v.object({
+    home: v.array(publicPlayerGameStatsValidator),
+    away: v.array(publicPlayerGameStatsValidator),
+  }),
+  events: v.array(
+    v.object({
+      sequence: v.number(),
+      side: v.union(v.literal("home"), v.literal("away")),
+      type: gameEventType,
+      minute: v.number(),
+      playerId: v.optional(v.string()),
+      relatedPlayerId: v.optional(v.string()),
+    }),
+  ),
+});
 
 export const gameValidator = v.object({
   _id: v.id("games"),

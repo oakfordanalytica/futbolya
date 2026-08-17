@@ -1,0 +1,612 @@
+// convex/campus.ts
+
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
+import type { DismissalRole } from "../lib/role-utils";
+import {
+    getActiveCampuses,
+    getCampusSettings,
+    getCampusGrades,
+    validateUserAccess,
+    userHasAccessToCampusById,
+} from "./helpers";
+
+type CampusUser = Doc<"users">;
+
+function isSuperadmin(role: string): boolean {
+    return role === "superadmin";
+}
+
+function filterCampusesForUser(
+    campuses: Doc<"campusSettings">[],
+    user: CampusUser,
+    role: DismissalRole
+) {
+    if (isSuperadmin(role)) return campuses;
+    const assigned = new Set(user.assignedCampuses);
+    return campuses.filter((campus) => assigned.has(campus._id));
+}
+
+function assertCampusAccess(
+    user: CampusUser,
+    role: DismissalRole,
+    campusId: Id<"campusSettings">
+) {
+    if (!userHasAccessToCampusById(user, campusId, role)) {
+        throw new Error("No access to this campus");
+    }
+}
+
+/**
+ * Generate upload URL for campus logo
+ */
+export const generateUploadUrl = mutation(async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+});
+
+/**
+ * Get URL for a stored campus logo
+ */
+export const getLogoUrl = query({
+    args: { storageId: v.id("_storage") },
+    handler: async (ctx, args) => {
+        return await ctx.storage.getUrl(args.storageId);
+    },
+});
+
+/**
+ * Get all campuses
+ */
+export const getAll = query({
+    args: {
+        isActive: v.optional(v.boolean()),
+        status: v.optional(
+            v.union(
+                v.literal("active"),
+                v.literal("inactive"),
+                v.literal("maintenance"),
+            ),
+        ),
+    },
+    handler: async (ctx, args) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx);
+            let campuses: Doc<"campusSettings">[];
+
+            // Filter by status if provided
+            if (args.status !== undefined) {
+                campuses = await ctx.db
+                    .query("campusSettings")
+                    .withIndex("by_status", (q) => q.eq("status", args.status!))
+                    .collect();
+            }
+            // Filter by isActive if provided
+            else if (args.isActive !== undefined) {
+                campuses = await ctx.db
+                    .query("campusSettings")
+                    .withIndex("by_active", (q) => q.eq("isActive", args.isActive!))
+                    .collect();
+            }
+            // Return all campuses
+            else {
+                campuses = await ctx.db.query("campusSettings").collect();
+            }
+
+            return filterCampusesForUser(campuses, user, role);
+        } catch {
+            return [];
+        }
+    },
+});
+
+/**
+ * List all active campuses
+ */
+export const listActive = query({
+    handler: async (ctx) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx);
+            const campuses = await getActiveCampuses(ctx.db);
+            return filterCampusesForUser(campuses, user, role);
+        } catch {
+            return [];
+        }
+    }
+});
+
+/**
+ * Get campus settings by name
+ */
+export const get = query({
+    args: { campusName: v.string() },
+    handler: async (ctx, args) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx);
+            const campus = await getCampusSettings(ctx.db, args.campusName);
+            if (!campus) return null;
+            if (isSuperadmin(role)) return campus;
+            return user.assignedCampuses.includes(campus._id) ? campus : null;
+        } catch {
+            return null;
+        }
+    }
+});
+
+/**
+ * Get campus by ID
+ */
+export const getById = query({
+    args: { campusId: v.id("campusSettings") },
+    handler: async (ctx, args) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx);
+            const campus = await ctx.db.get(args.campusId);
+            if (!campus) return null;
+            if (isSuperadmin(role)) return campus;
+            return user.assignedCampuses.includes(args.campusId) ? campus : null;
+        } catch {
+            return null;
+        }
+    }
+});
+
+/**
+ * Get available grades for a campus
+ */
+export const getAvailableGrades = query({
+    args: { campusId: v.id("campusSettings") },
+    handler: async (ctx, args) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx);
+            assertCampusAccess(user, role, args.campusId);
+            return await getCampusGrades(ctx.db, args.campusId);
+        } catch {
+            return [];
+        }
+    }
+});
+
+/**
+ * Create new campus
+ */
+export const create = mutation({
+    args: {
+        campusName: v.string(),
+        description: v.optional(v.string()),
+        code: v.optional(v.string()),
+        logoStorageId: v.optional(v.id("_storage")),
+        directorId: v.optional(v.id("users")),
+        directorName: v.optional(v.string()),
+        directorEmail: v.optional(v.string()),
+        directorPhone: v.optional(v.string()),
+        address: v.optional(
+            v.object({
+                street: v.optional(v.string()),
+                city: v.optional(v.string()),
+                state: v.optional(v.string()),
+                zipCode: v.optional(v.string()),
+                country: v.optional(v.string()),
+            }),
+        ),
+        availableGrades: v.optional(
+            v.array(
+                v.object({
+                    name: v.string(),
+                    code: v.string(),
+                    order: v.number(),
+                    isActive: v.boolean(),
+                }),
+            ),
+        ),
+    },
+    handler: async (ctx, args) => {
+        const { user } = await validateUserAccess(ctx, ["superadmin"]);
+        const userId = user._id;
+
+        // Validate required fields
+        if (!args.campusName.trim()) {
+            throw new Error("Campus name is required");
+        }
+
+        // Check if campus already exists
+        const existing = await getCampusSettings(
+            ctx.db,
+            args.campusName.trim(),
+        );
+        if (existing) {
+            throw new Error("Campus already exists");
+        }
+
+        // Create campus
+        const campusId = await ctx.db.insert("campusSettings", {
+            campusName: args.campusName.trim(),
+            description: args.description,
+            code: args.code,
+            timezone: "America/New_York", // Default timezone
+            dismissalStartTime: undefined,
+            dismissalEndTime: undefined,
+            logoStorageId: args.logoStorageId,
+            directorId: args.directorId,
+            directorName: args.directorName,
+            directorEmail: args.directorEmail,
+            directorPhone: args.directorPhone,
+            address: args.address,
+            availableGrades: args.availableGrades,
+            allowMultipleStudentsPerCar: true, // Always true
+            requireCarNumber: true, // Always true
+            isActive: true,
+            status: "active",
+            createdAt: Date.now(),
+            createdBy: userId,
+            metrics: {
+                totalStudents: 0,
+                totalStaff: 0,
+                activeStudents: 0,
+                activeStaff: 0,
+                lastUpdated: Date.now(),
+            },
+        });
+
+        return campusId;
+    },
+});
+
+/**
+ * Update campus settings (superadmin only)
+ */
+export const update = mutation({
+    args: {
+        campusId: v.id("campusSettings"),
+        updates: v.object({
+            campusName: v.optional(v.string()),
+            description: v.optional(v.string()),
+            code: v.optional(v.string()),
+            logoStorageId: v.optional(v.union(v.id("_storage"), v.null())),
+            directorId: v.optional(v.union(v.id("users"), v.null())),
+            directorName: v.optional(v.string()),
+            directorEmail: v.optional(v.string()),
+            directorPhone: v.optional(v.string()),
+            address: v.optional(
+                v.object({
+                    street: v.optional(v.string()),
+                    city: v.optional(v.string()),
+                    state: v.optional(v.string()),
+                    zipCode: v.optional(v.string()),
+                    country: v.optional(v.string()),
+                }),
+            ),
+            availableGrades: v.optional(
+                v.array(
+                    v.object({
+                        name: v.string(),
+                        code: v.string(),
+                        order: v.number(),
+                        isActive: v.boolean(),
+                    }),
+                ),
+            ),
+            status: v.optional(
+                v.union(
+                    v.literal("active"),
+                    v.literal("inactive"),
+                    v.literal("maintenance"),
+                ),
+            ),
+        }),
+    },
+    handler: async (ctx, args) => {
+        const { user, role } = await validateUserAccess(ctx, ["principal", "admin", "superadmin"]);
+        const userId = user._id;
+
+        if (!isSuperadmin(role) && !user.assignedCampuses.includes(args.campusId)) {
+            throw new Error("No access to this campus");
+        }
+
+        const campus = await ctx.db.get(args.campusId);
+        if (!campus) {
+            throw new Error("Campus not found");
+        }
+
+        const updates: any = { ...args.updates };
+
+        // Trim string fields
+        if (updates.campusName !== undefined) {
+            updates.campusName = updates.campusName.trim();
+        }
+
+        // Convert null to undefined for optional fields
+        if (updates.logoStorageId === null) {
+            updates.logoStorageId = undefined;
+        }
+        if (updates.directorId === null) {
+            updates.directorId = undefined;
+        }
+
+        // Handle empty arrays - convert to undefined to clear the field
+        if (
+            updates.availableGrades !== undefined &&
+            updates.availableGrades.length === 0
+        ) {
+            updates.availableGrades = undefined;
+        }
+
+        await ctx.db.patch(args.campusId, {
+            ...updates,
+            updatedAt: Date.now(),
+            updatedBy: userId,
+        });
+
+        return args.campusId;
+    },
+});
+
+/**
+ * Delete campus (superadmin only)
+ * Also deletes associated logo from storage if it exists
+ */
+export const deleteCampus = mutation({
+    args: { campusId: v.id("campusSettings") },
+    handler: async (ctx, args) => {
+        await validateUserAccess(ctx, ["superadmin"]);
+
+        // Get the campus to verify it exists and check for logo
+        const campus = await ctx.db.get(args.campusId);
+
+        if (!campus) {
+            throw new Error("Campus not found");
+        }
+
+        // Delete logo from storage if exists
+        if (campus.logoStorageId) {
+            await ctx.storage.delete(campus.logoStorageId);
+        }
+
+        // Delete the campus
+        await ctx.db.delete(args.campusId);
+    },
+});
+
+/**
+ * Save campus logo
+ */
+export const saveCampusLogo = mutation({
+    args: {
+        campusId: v.id("campusSettings"),
+        storageId: v.id("_storage"),
+    },
+    handler: async (ctx, args) => {
+        const { user, role } = await validateUserAccess(ctx, ["principal", "admin", "superadmin"]);
+        if (!isSuperadmin(role) && !user.assignedCampuses.includes(args.campusId)) {
+            throw new Error("No access to this campus");
+        }
+        const userId = user._id;
+
+        await ctx.db.patch(args.campusId, {
+            logoStorageId: args.storageId,
+            updatedAt: Date.now(),
+            updatedBy: userId,
+        });
+    },
+});
+
+/**
+ * Delete campus logo
+ */
+export const deleteCampusLogo = mutation({
+    args: {
+        campusId: v.id("campusSettings"),
+    },
+    handler: async (ctx, args) => {
+        const { user, role } = await validateUserAccess(ctx, ["principal", "admin", "superadmin"]);
+        if (!isSuperadmin(role) && !user.assignedCampuses.includes(args.campusId)) {
+            throw new Error("No access to this campus");
+        }
+        const userId = user._id;
+
+        const campus = await ctx.db.get(args.campusId);
+
+        if (!campus) {
+            throw new Error("Campus not found");
+        }
+
+        if (campus.logoStorageId) {
+            await ctx.storage.delete(campus.logoStorageId);
+        }
+
+        await ctx.db.patch(args.campusId, {
+            logoStorageId: undefined,
+            updatedAt: Date.now(),
+            updatedBy: userId,
+        });
+    },
+});
+
+/**
+ * Get campus statistics
+ */
+export const getStats = query({
+    args: { campusId: v.id("campusSettings") },
+    handler: async (ctx, args) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx);
+            assertCampusAccess(user, role, args.campusId);
+
+            // Get campus to find name for queue queries
+            const campus = await ctx.db.get(args.campusId);
+            if (!campus) return null;
+
+            // Get active students count (filter by campuses array)
+            const allActiveStudents = await ctx.db
+                .query("students")
+                .withIndex("by_active", q => q.eq("isActive", true))
+                .collect();
+
+            const activeStudents = allActiveStudents.filter(s => s.campuses.includes(args.campusId));
+
+            // Get current queue count (uses campusName as string)
+            const currentQueue = await ctx.db
+                .query("dismissalQueue")
+                .withIndex("by_campus_status", q =>
+                    q.eq("campusLocation", campus.campusName).eq("status", "waiting")
+                )
+                .collect();
+
+            // Get today's completed pickups (uses campusName as string)
+            const today = new Date().toISOString().split('T')[0];
+            const todayPickups = await ctx.db
+                .query("dismissalHistory")
+                .withIndex("by_campus_date", q =>
+                    q.eq("campusLocation", campus.campusName).eq("date", today)
+                )
+                .collect();
+
+            // Students with assigned cars
+            const studentsWithCars = activeStudents.filter(s => s.carNumber > 0);
+
+            // Unique car numbers
+            const uniqueCarNumbers = new Set(studentsWithCars.map(s => s.carNumber));
+
+            // Grade distribution
+            const gradeDistribution = activeStudents.reduce((acc, student) => {
+                acc[student.grade] = (acc[student.grade] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            return {
+                campus: campus.campusName,
+                totalStudents: activeStudents.length,
+                studentsWithCars: studentsWithCars.length,
+                uniqueCarCount: uniqueCarNumbers.size,
+                currentQueueSize: currentQueue.length,
+                todayPickups: todayPickups.length,
+                todayStudentsPickedUp: todayPickups.reduce((sum, p) => sum + p.studentIds.length, 0),
+                gradeDistribution,
+                averageStudentsPerCar: uniqueCarNumbers.size > 0 ?
+                    Math.round((studentsWithCars.length / uniqueCarNumbers.size) * 10) / 10 : 0
+            };
+        } catch {
+            return null;
+        }
+    }
+});
+
+/**
+ * Get campus options for dropdowns
+ * Returns both ID and name for proper mapping between UI and database
+ */
+export const getOptions = query({
+    handler: async (ctx) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx);
+            const campuses = await getActiveCampuses(ctx.db);
+            const scopedCampuses = filterCampusesForUser(campuses, user, role);
+
+            return scopedCampuses.map(campus => ({
+                id: campus._id, // Campus ID for database operations
+                value: campus.campusName, // For backward compatibility
+                label: campus.campusName,
+                isActive: campus.isActive
+            }));
+        } catch {
+            return [];
+        }
+    }
+});
+
+/**
+ * Get students by campus (for metrics)
+ */
+export const getStudentsByCampus = query({
+    args: {
+        campusId: v.id("campusSettings"),
+        isActive: v.optional(v.boolean()),
+    },
+    handler: async (ctx, args) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx);
+            assertCampusAccess(user, role, args.campusId);
+
+            const isActiveFilter = args.isActive ?? true;
+            const allStudents = await ctx.db
+                .query("students")
+                .withIndex("by_active", (q) => q.eq("isActive", isActiveFilter))
+                .collect();
+
+            // Filter by campus
+            const students = allStudents.filter(s => s.campuses.includes(args.campusId));
+
+            return students;
+        } catch {
+            return [];
+        }
+    },
+});
+
+/**
+ * Get staff by campus (for metrics)
+ */
+export const getStaffByCampus = query({
+    args: {
+        campusId: v.id("campusSettings"),
+        isActive: v.optional(v.boolean()),
+    },
+    handler: async (ctx, args) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx, ["principal", "admin", "superadmin"]);
+            assertCampusAccess(user, role, args.campusId);
+
+            // Get all users assigned to this campus (by ID)
+            const allUsers = await ctx.db.query("users").collect();
+
+            const campusUsers = allUsers.filter((candidate) =>
+                candidate.assignedCampuses.includes(args.campusId),
+            );
+
+            if (args.isActive !== undefined) {
+                return campusUsers.filter(
+                    (candidate) => candidate.isActive === args.isActive,
+                );
+            }
+
+            return campusUsers;
+        } catch {
+            return [];
+        }
+    },
+});
+
+/**
+ * Get principal users for director selection.
+ * Keeps original function name for backward compatibility with current frontend.
+ */
+export const getPrincipals = query({
+    handler: async (ctx) => {
+        try {
+            const { user, role } = await validateUserAccess(ctx, ["principal", "admin", "superadmin"]);
+            const allUsers = await ctx.db
+                .query("users")
+                .filter((q) => q.eq(q.field("isActive"), true))
+                .collect();
+
+            const eligible = allUsers.filter((candidate) =>
+                candidate.role === "principal"
+            );
+
+            const scoped = isSuperadmin(role)
+                ? eligible
+                : eligible.filter((candidate) =>
+                    user.assignedCampuses.some((campusId) => candidate.assignedCampuses.includes(campusId))
+                );
+
+            return scoped.map((candidate) => ({
+                id: candidate._id,
+                name: candidate.fullName || `${candidate.firstName || ""} ${candidate.lastName || ""}`.trim() || candidate.username || "Unknown",
+                email: candidate.email,
+                phone: candidate.phone,
+            }));
+        } catch {
+            return [];
+        }
+    },
+});

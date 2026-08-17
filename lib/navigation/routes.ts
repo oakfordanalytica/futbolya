@@ -19,6 +19,11 @@ export const ROUTES = {
     organizations: "/organizations",
   },
 
+  public: {
+    games: "/games",
+    liveGame: (gameId: string) => `/live/${gameId}`,
+  },
+
   tenant: {
     auth: {
       signIn: (orgSlug: string) => `/${orgSlug}/sign-in`,

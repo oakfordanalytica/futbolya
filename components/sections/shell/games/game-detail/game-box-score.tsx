@@ -20,8 +20,10 @@ import {
   emptyTeamTotals,
   formatPenaltySummary,
   type PlayerBoxScoreRow,
+  type PlayerGameStats,
   type TeamGameTotals,
 } from "@/lib/soccer/game-stats";
+import { cn } from "@/lib/utils";
 
 interface Team {
   name: string;
@@ -47,12 +49,14 @@ function TeamBoxScore({
   bench,
   totals,
   t,
+  className,
 }: {
   team: Team;
   starters: PlayerBoxScoreRow[];
   bench: PlayerBoxScoreRow[];
   totals: TeamGameTotals;
   t: (key: string) => string;
+  className?: string;
 }) {
   const primaryColor = team.primaryColor?.trim() || "#6b7280";
 
@@ -88,7 +92,7 @@ function TeamBoxScore({
   };
 
   return (
-    <div className="overflow-hidden rounded-md border">
+    <div className={cn("overflow-hidden rounded-md border", className)}>
       <div
         className="flex items-center gap-3 border-b p-3"
         style={{
@@ -119,7 +123,7 @@ function TeamBoxScore({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="sticky left-0 z-10 min-w-[160px] bg-muted/50 py-2 text-[10px] sm:text-[11px]">
+              <TableHead className="sticky left-0 z-10 min-w-40 bg-muted/50 py-2 text-[10px] sm:text-[11px]">
                 {t("games.boxScoreLabels.starters")}
               </TableHead>
               <TableHead className="w-12 py-2 text-center text-[10px] sm:text-[11px]">
@@ -208,9 +212,66 @@ function TeamBoxScore({
   );
 }
 
-export function GameBoxScore({ game }: GameBoxScoreProps) {
-  const t = useTranslations("Common");
+interface GameBoxScoreTablesProps {
+  homeTeam: Team;
+  awayTeam: Team;
+  homeStats: PlayerGameStats[];
+  awayStats: PlayerGameStats[];
+  homeTotals: TeamGameTotals;
+  awayTotals: TeamGameTotals;
+  className?: string;
+  tableClassName?: string;
+}
 
+export function GameBoxScoreTables({
+  homeTeam,
+  awayTeam,
+  homeStats,
+  awayStats,
+  homeTotals,
+  awayTotals,
+  className,
+  tableClassName,
+}: GameBoxScoreTablesProps) {
+  const t = useTranslations("Common");
+  const homeData = transformTeamStats(homeStats, homeTotals);
+  const awayData = transformTeamStats(awayStats, awayTotals);
+  const hasStats =
+    homeStats.length > 0 ||
+    awayStats.length > 0 ||
+    Object.values(homeData.totals).some((value) => value > 0) ||
+    Object.values(awayData.totals).some((value) => value > 0);
+
+  return (
+    <div className={cn("w-full min-w-0 space-y-6 pt-3", className)}>
+      <TeamBoxScore
+        team={homeTeam}
+        starters={homeData.starters}
+        bench={homeData.bench}
+        totals={homeData.totals}
+        t={t}
+        className={tableClassName}
+      />
+
+      <TeamBoxScore
+        team={awayTeam}
+        starters={awayData.starters}
+        bench={awayData.bench}
+        totals={awayData.totals}
+        t={t}
+        className={tableClassName}
+      />
+
+      {!hasStats ? (
+        <p className="text-center text-xs text-muted-foreground">
+          {t("games.boxScoreNote")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function GameBoxScore({ game }: GameBoxScoreProps) {
   const gameStats = useQuery(api.games.getGamePlayerStats, {
     gameId: game._id as Id<"games">,
   });
@@ -227,43 +288,14 @@ export function GameBoxScore({ game }: GameBoxScoreProps) {
     primaryColor: game.awayTeamColor,
   };
 
-  const homeData = gameStats
-    ? transformTeamStats(gameStats.homeStats, gameStats.homeTeamStats)
-    : { starters: [], bench: [], totals: emptyTeamTotals };
-
-  const awayData = gameStats
-    ? transformTeamStats(gameStats.awayStats, gameStats.awayTeamStats)
-    : { starters: [], bench: [], totals: emptyTeamTotals };
-
-  const hasStats =
-    (gameStats?.homeStats?.length ?? 0) > 0 ||
-    (gameStats?.awayStats?.length ?? 0) > 0 ||
-    Object.values(homeData.totals).some((value) => value > 0) ||
-    Object.values(awayData.totals).some((value) => value > 0);
-
   return (
-    <div className="w-full min-w-0 space-y-6 pt-3">
-      <TeamBoxScore
-        team={homeTeam}
-        starters={homeData.starters}
-        bench={homeData.bench}
-        totals={homeData.totals}
-        t={t}
-      />
-
-      <TeamBoxScore
-        team={awayTeam}
-        starters={awayData.starters}
-        bench={awayData.bench}
-        totals={awayData.totals}
-        t={t}
-      />
-
-      {!hasStats ? (
-        <p className="text-center text-xs text-muted-foreground">
-          {t("games.boxScoreNote")}
-        </p>
-      ) : null}
-    </div>
+    <GameBoxScoreTables
+      homeTeam={homeTeam}
+      awayTeam={awayTeam}
+      homeStats={gameStats?.homeStats ?? []}
+      awayStats={gameStats?.awayStats ?? []}
+      homeTotals={gameStats?.homeTeamStats ?? emptyTeamTotals}
+      awayTotals={gameStats?.awayTeamStats ?? emptyTeamTotals}
+    />
   );
 }

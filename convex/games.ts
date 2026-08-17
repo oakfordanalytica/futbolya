@@ -6,6 +6,10 @@ import {
   gameValidator,
   gender,
   playerStatsValidator,
+  publicGameDetailValidator,
+  publicGameGroupsValidator,
+  publicGameSummaryValidator,
+  publicSeasonTableValidator,
   seasonPlayerLeaderValidator,
   seasonPlayerStatsRowValidator,
   seasonTeamLeaderValidator,
@@ -16,16 +20,50 @@ import {
 import {
   getByIdHandler,
   getGamePlayerStatsHandler,
+  getPublicByIdHandler,
+  getPublicSeasonTableHandler,
   getSeasonLeadersHandler,
   getSeasonStatsTableHandler,
   listByClubSlugHandler,
   listByLeagueSlugHandler,
+  listPublicGamesHandler,
+  listPublicLiveHandler,
 } from "./lib/games/queries";
 import {
   createGameHandler,
   removeGameHandler,
   updateGameHandler,
 } from "./lib/games/mutations";
+
+// Deliberately public: only returns a bounded, sanitized live-game allowlist.
+export const listPublicLive = query({
+  args: { orgSlug: v.string() },
+  returns: v.array(publicGameSummaryValidator),
+  handler: listPublicLiveHandler,
+});
+
+// Deliberately public: bounded fixtures and results with the same sanitized DTO.
+export const listPublicGames = query({
+  args: { orgSlug: v.string(), anchorDate: v.string() },
+  returns: publicGameGroupsValidator,
+  handler: listPublicGamesHandler,
+});
+
+// Deliberately public: team-only standings reuse the season aggregate while
+// excluding player identities and internal entity IDs.
+export const getPublicSeasonTable = query({
+  args: { orgSlug: v.string() },
+  returns: v.union(publicSeasonTableValidator, v.null()),
+  handler: getPublicSeasonTableHandler,
+});
+
+// Deliberately public by link before, during, and after a match; the DTO includes
+// the displayed lineup while excluding internal player IDs, coordinates, and permissions.
+export const getPublicById = query({
+  args: { orgSlug: v.string(), gameId: v.string() },
+  returns: v.union(publicGameDetailValidator, v.null()),
+  handler: getPublicByIdHandler,
+});
 
 export const listByLeagueSlug = query({
   args: { orgSlug: v.string() },

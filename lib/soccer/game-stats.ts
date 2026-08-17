@@ -1,7 +1,7 @@
 import { didPlayerParticipate } from "./stats-domain";
 
 export interface PlayerGameStats {
-  _id: string;
+  _id?: string;
   playerId: string;
   playerName: string;
   cometNumber?: string;
@@ -47,7 +47,7 @@ export interface TransformedTeamStats {
 
 function mapPlayerToBoxScoreRow(stat: PlayerGameStats): PlayerBoxScoreRow {
   return {
-    id: stat._id,
+    id: stat._id ?? stat.playerId,
     name: stat.playerName,
     cometNumber: stat.cometNumber ?? "",
     goals: stat.goals ?? 0,

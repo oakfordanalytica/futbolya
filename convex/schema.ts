@@ -330,6 +330,13 @@ export default defineSchema({
   })
     .index("byOrganization", ["organizationId"])
     .index("byOrganizationAndSeason", ["organizationId", "seasonId"])
+    .index("byOrganizationAndStatus", ["organizationId", "status"])
+    .index("byOrganizationStatusDateTime", [
+      "organizationId",
+      "status",
+      "date",
+      "startTime",
+    ])
     .index("byHomeClub", ["homeClubId"])
     .index("byAwayClub", ["awayClubId"])
     .index("byDate", ["date"])

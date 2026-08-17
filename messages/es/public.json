@@ -1,0 +1,80 @@
+{
+  "metadata": {
+    "title": "Futbolya | Gestión y partidos en vivo",
+    "description": "Gestiona ligas, clubes y partidos de fútbol, y sigue cada encuentro minuto a minuto."
+  },
+  "nav": {
+    "label": "Navegación pública",
+    "skip": "Saltar al contenido",
+    "product": "Producto",
+    "games": "Partidos",
+    "signIn": "Acceder",
+    "language": "Seleccionar idioma"
+  },
+  "hero": {
+    "eyebrow": "Fútbol conectado, de principio a fin",
+    "title": "Toda la competición. Un solo lugar.",
+    "description": "Futbolya reúne la operación de ligas y clubes con una experiencia pública para seguir cada partido en tiempo real.",
+    "viewLive": "Ver partidos en vivo",
+    "manage": "Gestionar mi liga"
+  },
+  "product": {
+    "leagueTitle": "Liga organizada",
+    "leagueDescription": "Temporadas, categorías, equipos y calendario bajo una misma estructura.",
+    "clubsTitle": "Clubes coordinados",
+    "liveTitle": "Partidos en directo",
+    "liveDescription": "Marcador, estado y eventos actualizados de forma reactiva para todos los seguidores."
+  },
+  "live": {
+    "eyebrow": "Marcador público",
+    "title": "Partidos en vivo",
+    "description": "Sigue el marcador y los eventos del encuentro sin iniciar sesión.",
+    "emptyTitle": "No hay partidos en vivo",
+    "emptyDescription": "Los encuentros aparecerán aquí cuando comience el minuto a minuto.",
+    "open": "Ver partido",
+    "versus": "VS",
+    "automatic": "Actualización automática",
+    "viewAll": "Ver todos los partidos"
+  },
+  "gamesPage": {
+    "metadataTitle": "Partidos y clasificación | Futbolya",
+    "metadataDescription": "Consulta partidos en vivo, próximos encuentros, resultados y la tabla de la temporada.",
+    "title": "Partidos",
+    "liveTitle": "Ahora en juego",
+    "liveEmpty": "No hay partidos en vivo en este momento.",
+    "upcomingTitle": "Próximos partidos",
+    "upcomingEmpty": "No hay próximos partidos programados.",
+    "recentTitle": "Últimos resultados",
+    "recentEmpty": "Todavía no hay resultados publicados."
+  },
+  "standings": {
+    "eyebrow": "Temporada",
+    "title": "Tabla de posiciones",
+    "gamesCount": "{count, plural, one {# partido} other {# partidos}} computados",
+    "empty": "La clasificación aparecerá cuando haya resultados de temporada.",
+    "columns": {
+      "team": "Equipo",
+      "played": "PJ",
+      "won": "G",
+      "drawn": "E",
+      "lost": "P",
+      "difference": "DG",
+      "points": "PTS"
+    }
+  },
+  "game": {
+    "back": "Volver a todos los partidos",
+    "notFoundTitle": "Partido no disponible",
+    "notFoundDescription": "El enlace no corresponde a un partido público disponible.",
+    "timeline": "Minuto a minuto",
+    "statsTitle": "Estadísticas",
+    "noEventsTitle": "Todavía no hay eventos",
+    "noEventsDescription": "Los goles, tarjetas y cambios aparecerán aquí durante el encuentro.",
+    "home": "Local",
+    "away": "Visitante",
+    "scoreAnnouncement": "{home} {homeScore}, {away} {awayScore}",
+    "versusAnnouncement": "{home} contra {away}",
+    "minute": "Min. {minute}"
+  },
+  "footer": "Gestión deportiva y partidos en vivo."
+}

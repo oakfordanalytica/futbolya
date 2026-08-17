@@ -15,15 +15,21 @@ const DEFAULT_TENANT_SIGN_IN_PATH = `/${DEFAULT_TENANT_SLUG}/sign-in`;
 const DEFAULT_TENANT_SIGN_UP_PATH = `/${DEFAULT_TENANT_SLUG}/sign-up`;
 const DEFAULT_TENANT_TEAMS_PATH = `/${DEFAULT_TENANT_SLUG}/teams`;
 
-// Only sign-in and sign-up routes are public.
+// Public marketing, spectator, sign-in, and sign-up routes.
 // Note: `createRouteMatcher("/:locale/...")` matches *any* first segment, not just our supported locales.
 // Always expand locale patterns explicitly to avoid redirect loops.
 const isPublicRoute = createRouteMatcher([
+  "/",
+  "/games(.*)",
+  "/live(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/:slug/sign-in(.*)",
   "/:slug/sign-up(.*)",
   ...locales.flatMap((locale) => [
+    `/${locale}`,
+    `/${locale}/games(.*)`,
+    `/${locale}/live(.*)`,
     `/${locale}/sign-in(.*)`,
     `/${locale}/sign-up(.*)`,
     `/${locale}/:slug/sign-in(.*)`,
@@ -56,6 +62,8 @@ const RESERVED_PATHS = new Set([
   "sign-in",
   "sign-up",
   "organizations",
+  "games",
+  "live",
   "api",
   "_next",
   "static",

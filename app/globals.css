@@ -36,6 +36,10 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-public-ink: var(--public-ink);
+  --color-public-paper: var(--public-paper);
+  --color-public-fog: var(--public-fog);
+  --color-public-sky: var(--public-sky);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -94,6 +98,10 @@
 
 :root,
 [data-theme="zinc"] {
+  --public-ink: oklch(0.2 0.048 225);
+  --public-paper: oklch(0.985 0.004 90);
+  --public-fog: oklch(0.94 0.009 220);
+  --public-sky: oklch(0.72 0.13 220);
   --radius: 0.65rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -1407,4 +1415,14 @@ html[data-theme="twitter"] body {
   --shadow-xl:
     0px 8px 15px 0px hsl(0 0% 0% / 0.4), 0px 8px 10px -1px hsl(0 0% 0% / 0.4);
   --shadow-2xl: 0px 8px 15px 0px hsl(0 0% 0% / 1);
+}
+
+@keyframes public-team-glow-drift {
+  from {
+    transform: translate3d(-6%, -3%, 0) scale(0.96) rotate(-2deg);
+  }
+
+  to {
+    transform: translate3d(6%, 4%, 0) scale(1.05) rotate(2deg);
+  }
 }
