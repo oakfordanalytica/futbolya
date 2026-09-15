@@ -67,6 +67,8 @@ export function TeamHeader({ team, orgSlug, routeScope }: TeamHeaderProps) {
     }
   };
 
+  // Both logos load directly from storage, as in the teams table, to avoid
+  // depending on Vercel's image optimization quota.
   return (
     <section
       className={cn(
@@ -84,7 +86,7 @@ export function TeamHeader({ team, orgSlug, routeScope }: TeamHeaderProps) {
               src={team.logoUrl}
               alt=""
               fill
-              sizes="100vw"
+              unoptimized
               className="object-contain object-center scale-[2.5] md:scale-[3] translate-x-[8%]"
               style={{ opacity: hasColoredBg ? 0.12 : 0.05 }}
             />
@@ -134,12 +136,12 @@ export function TeamHeader({ team, orgSlug, routeScope }: TeamHeaderProps) {
         </div>
 
         {team.logoUrl && (
-          <div className="flex justify-center ">
+          <div className="relative mx-auto size-[180px]">
             <Image
               src={team.logoUrl}
               alt={team.name}
-              width={180}
-              height={0}
+              fill
+              unoptimized
               className="object-contain select-none"
               draggable={false}
               onDragStart={(e) => e.preventDefault()}
