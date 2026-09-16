@@ -1,5 +1,5 @@
+import { getPlayerInputErrors } from "@/lib/players/input";
 import { format, parse } from "date-fns";
-import { Id } from "@/convex/_generated/dataModel";
 import { normalizeCountryValue } from "@/lib/countries/countries";
 import {
   deriveDivisionFromCategoryName,
@@ -54,27 +54,25 @@ export function isPlayerFormValid(
   values: PlayerFormValues,
   horizontalDivisionsEnabled: boolean,
 ): boolean {
-  return Boolean(
-    values.firstName.trim() &&
-      values.lastName.trim() &&
-      values.secondLastName.trim() &&
-      values.dateOfBirth &&
-      values.documentNumber.trim() &&
-      values.gender &&
-      values.jerseyNumber.trim() &&
-      values.cometNumber.trim() &&
-      values.position &&
-      values.dominantProfile &&
-      values.country &&
-      values.leagueCategoryId &&
-      (!horizontalDivisionsEnabled || values.division),
+  if (
+    !values.dateOfBirth ||
+    !values.gender ||
+    !values.leagueCategoryId ||
+    (horizontalDivisionsEnabled && !values.division)
+  )
+    return false;
+  return (
+    getPlayerInputErrors(
+      buildPlayerMutationPayload({ values }),
+      format(new Date(), "yyyy-MM-dd"),
+    ).length === 0
   );
 }
 
 export function buildPlayerMutationPayload(args: { values: PlayerFormValues }) {
   const { values } = args;
 
-  if (!values.dateOfBirth || !values.gender || !values.dominantProfile) {
+  if (!values.dateOfBirth || !values.gender) {
     throw new Error("Player form payload is incomplete");
   }
 
@@ -83,42 +81,21 @@ export function buildPlayerMutationPayload(args: { values: PlayerFormValues }) {
   return {
     firstName: values.firstName.trim(),
     lastName: values.lastName.trim(),
-    secondLastName: values.secondLastName.trim(),
+    secondLastName: values.secondLastName.trim() || undefined,
     dateOfBirth: format(values.dateOfBirth, "yyyy-MM-dd"),
     documentNumber: values.documentNumber.trim(),
     gender: values.gender,
-    jerseyNumber: parseInt(values.jerseyNumber, 10),
+    jerseyNumber: values.jerseyNumber.trim()
+      ? Number(values.jerseyNumber)
+      : undefined,
     leagueCategoryId: values.leagueCategoryId,
     division: values.division || undefined,
     cometNumber: values.cometNumber.trim(),
     fifaId: values.fifaId.trim() || undefined,
     position: values.position,
-    dominantProfile: values.dominantProfile,
-    height: values.height ? parseInt(values.height, 10) : undefined,
-    weight: values.weight ? parseInt(values.weight, 10) : undefined,
+    dominantProfile: values.dominantProfile || undefined,
+    height: values.height ? Number(values.height.replace(",", ".")) : undefined,
+    weight: values.weight ? Number(values.weight.replace(",", ".")) : undefined,
     country: normalizedCountry || undefined,
   };
-}
-
-export async function uploadPlayerPhoto(
-  photoFile: PlayerFormValues["photoFile"],
-  generateUploadUrl: () => Promise<string>,
-): Promise<Id<"_storage"> | undefined> {
-  if (!photoFile || !(photoFile.file instanceof File)) {
-    return undefined;
-  }
-
-  const uploadUrl = await generateUploadUrl();
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: { "Content-Type": photoFile.file.type },
-    body: photoFile.file,
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to upload photo");
-  }
-
-  const { storageId } = await response.json();
-  return storageId as Id<"_storage">;
 }

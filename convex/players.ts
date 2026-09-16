@@ -1,4 +1,8 @@
 import { v } from "convex/values";
+import {
+  getPlayerManagementContextHandler,
+  importPlayersHandler,
+} from "./lib/players/import";
 import { mutation, query } from "./_generated/server";
 import {
   addPlayerHighlightHandler,
@@ -18,6 +22,8 @@ import {
 } from "./lib/players/queries";
 import {
   dominantProfileValidator,
+  createPlayerArgs,
+  importPlayersArgs,
   playerGameLogRowValidator,
   playerGender,
   playerHighlightValidator,
@@ -62,27 +68,31 @@ export const generateUploadUrl = mutation({
   handler: generatePlayerUploadUrlHandler,
 });
 
+export const getPlayerManagementContext = query({
+  args: { organizationSlug: v.string(), clubSlug: v.string() },
+  returns: v.union(
+    v.object({ clubId: v.id("clubs"), clubName: v.string() }),
+    v.null(),
+  ),
+  handler: getPlayerManagementContextHandler,
+});
+
+export const importPlayers = mutation({
+  args: importPlayersArgs,
+  returns: v.object({
+    imported: v.number(),
+    skipped: v.array(
+      v.object({
+        sourceRow: v.number(),
+        reason: v.union(v.literal("existing"), v.literal("conflict")),
+      }),
+    ),
+  }),
+  handler: importPlayersHandler,
+});
+
 export const createPlayer = mutation({
-  args: {
-    clubSlug: v.string(),
-    firstName: v.string(),
-    lastName: v.string(),
-    secondLastName: v.string(),
-    photoStorageId: v.optional(v.id("_storage")),
-    dateOfBirth: v.string(),
-    documentNumber: v.string(),
-    gender: playerGender,
-    jerseyNumber: v.optional(v.number()),
-    leagueCategoryId: v.string(),
-    division: v.optional(v.string()),
-    cometNumber: v.string(),
-    fifaId: v.optional(v.string()),
-    position: v.optional(v.string()),
-    dominantProfile: dominantProfileValidator,
-    height: v.optional(v.number()),
-    weight: v.optional(v.number()),
-    country: v.optional(v.string()),
-  },
+  args: createPlayerArgs,
   returns: v.id("players"),
   handler: createPlayerHandler,
 });

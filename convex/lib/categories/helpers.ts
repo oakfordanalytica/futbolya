@@ -2,6 +2,7 @@ import type { MutationCtx, QueryCtx } from "../../_generated/server";
 import type { Doc, Id } from "../../_generated/dataModel";
 import {
   DEFAULT_DIVISION,
+  getDivisionOptions,
   buildCategoryName,
   deriveDivisionFromCategoryName,
   findLeagueAgeCategoryByAgeGroup,
@@ -144,6 +145,13 @@ export async function ensureClubCategoryForLeagueSelection(
     throw new Error(
       "Division is required when horizontal divisions are enabled",
     );
+  }
+
+  if (
+    horizontalDivisions.enabled &&
+    !getDivisionOptions(horizontalDivisions.type).includes(explicitDivision)
+  ) {
+    throw new Error("Selected division is not enabled for this league");
   }
 
   const normalizedDivisionValue = explicitDivision || DEFAULT_DIVISION;

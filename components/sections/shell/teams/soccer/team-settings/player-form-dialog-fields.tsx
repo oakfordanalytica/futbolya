@@ -97,13 +97,14 @@ export function PlayerFormDialogFields({
             </Field>
 
             <Field>
-              <FieldLabel>{t("players.secondLastName")}</FieldLabel>
+              <FieldLabel>
+                {t("players.secondLastName")} ({t("playerImport.optional")})
+              </FieldLabel>
               <Input
                 value={values.secondLastName}
                 onChange={(event) =>
                   setField("secondLastName", event.target.value)
                 }
-                required
                 placeholder={t("players.secondLastName")}
               />
             </Field>
@@ -166,14 +167,15 @@ export function PlayerFormDialogFields({
           </Field>
 
           <Field>
-            <FieldLabel>{t("players.jerseyNumber")}</FieldLabel>
+            <FieldLabel>
+              {t("players.jerseyNumber")} ({t("playerImport.optional")})
+            </FieldLabel>
             <Input
               type="number"
               min="0"
               max="99"
               value={values.jerseyNumber}
               onChange={(event) => setField("jerseyNumber", event.target.value)}
-              required
               placeholder={t("players.jerseyNumber")}
             />
           </Field>
@@ -218,7 +220,9 @@ export function PlayerFormDialogFields({
           </Field>
 
           <Field>
-            <FieldLabel>{t("players.country")}</FieldLabel>
+            <FieldLabel>
+              {t("players.country")} ({t("playerImport.optional")})
+            </FieldLabel>
             <CountryCombobox
               value={values.country}
               onValueChange={(value) => setField("country", value)}
@@ -257,7 +261,9 @@ export function PlayerFormDialogFields({
           </Field>
 
           <Field>
-            <FieldLabel>{t("players.dominantProfile")}</FieldLabel>
+            <FieldLabel>
+              {t("players.dominantProfile")} ({t("playerImport.optional")})
+            </FieldLabel>
             <Select
               value={values.dominantProfile}
               onValueChange={(value) =>
@@ -332,8 +338,8 @@ export function PlayerFormDialogFields({
             <FieldLabel>{t("players.height")}</FieldLabel>
             <Input
               type="number"
-              min="100"
-              max="250"
+              step="any"
+              min="0"
               value={values.height}
               onChange={(event) => setField("height", event.target.value)}
               placeholder="cm"
@@ -344,8 +350,8 @@ export function PlayerFormDialogFields({
             <FieldLabel>{t("players.weight")}</FieldLabel>
             <Input
               type="number"
-              min="30"
-              max="200"
+              step="any"
+              min="0"
               value={values.weight}
               onChange={(event) => setField("weight", event.target.value)}
               placeholder="kg"

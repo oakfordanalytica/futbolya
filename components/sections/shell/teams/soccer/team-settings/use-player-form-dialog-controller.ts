@@ -1,5 +1,9 @@
 "use client";
+import { uploadPlayerPhoto } from "@/lib/files/upload-player-photo";
 
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { ConvexError } from "convex/values";
 import { format } from "date-fns";
 import {
   FormEvent,
@@ -18,7 +22,6 @@ import {
   buildPlayerMutationPayload,
   createPlayerFormValues,
   isPlayerFormValid,
-  uploadPlayerPhoto,
 } from "./player-form-dialog.helpers";
 import type {
   PlayerFormDialogProps,
@@ -46,9 +49,11 @@ export function usePlayerFormDialogController({
   | "horizontalDivisions"
   | "player"
 >) {
+  const t = useTranslations("Common.playerImport");
   const createPlayer = useMutation(api.players.createPlayer);
   const updatePlayer = useMutation(api.players.updatePlayer);
-  const generateUploadUrl = useMutation(api.players.generateUploadUrl);
+  const preparePhoto = useMutation(api.playerPhotos.prepare);
+  const registerPhoto = useMutation(api.playerPhotos.register);
 
   const isEditMode = Boolean(player);
   const [values, setValues] = useState<PlayerFormValues>(() =>
@@ -201,7 +206,6 @@ export function usePlayerFormDialogController({
         !isFormValid ||
         !values.dateOfBirth ||
         !values.gender ||
-        !values.dominantProfile ||
         !values.leagueCategoryId
       ) {
         return;
@@ -210,9 +214,14 @@ export function usePlayerFormDialogController({
       setIsSubmitting(true);
 
       try {
-        const photoStorageId = await uploadPlayerPhoto(values.photoFile, () =>
-          generateUploadUrl({ clubSlug }),
-        );
+        const photoStorageId =
+          values.photoFile?.file instanceof File
+            ? await uploadPlayerPhoto(
+                values.photoFile.file,
+                (sha256) => preparePhoto({ clubSlug, sha256 }),
+                registerPhoto,
+              )
+            : undefined;
         if (isEditMode) {
           const payload = buildPlayerMutationPayload({
             values,
@@ -238,6 +247,13 @@ export function usePlayerFormDialogController({
         resetForm();
         onOpenChange(false);
       } catch (error) {
+        toast.error(
+          t(
+            error instanceof ConvexError && error.data?.code === "PLAYER_EXISTS"
+              ? "playerExists"
+              : "saveError",
+          ),
+        );
         console.error(
           `[PlayerFormDialog] Failed to ${isEditMode ? "update" : "create"} player:`,
           error,
@@ -248,7 +264,8 @@ export function usePlayerFormDialogController({
     },
     [
       createPlayer,
-      generateUploadUrl,
+      preparePhoto,
+      registerPhoto,
       isEditMode,
       isFormValid,
       onOpenChange,
@@ -257,6 +274,7 @@ export function usePlayerFormDialogController({
       clubSlug,
       horizontalDivisions.enabled,
       updatePlayer,
+      t,
       values,
     ],
   );

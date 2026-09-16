@@ -5,7 +5,10 @@ import {
   isAllowedImageContentType,
 } from "@/lib/files/image-upload";
 
+import { getCurrentUser } from "./auth";
+
 type ImageOwner = {
+  uploadClubId?: Id<"clubs">;
   clubId?: Id<"clubs">;
   playerId?: Id<"players">;
 };
@@ -28,6 +31,15 @@ export async function requireAssignableImage(
   storageId: Id<"_storage">,
   owner: ImageOwner = {},
 ) {
+  const pending = await ctx.db
+    .query("playerPhotoUploads")
+    .withIndex("byStorageId", (q) => q.eq("storageId", storageId))
+    .unique();
+  if (pending) {
+    const user = await getCurrentUser(ctx);
+    if (pending.userId !== user._id || pending.clubId !== owner.uploadClubId)
+      throw new Error("Image upload belongs to another user or club");
+  }
   const metadata = await ctx.db.system.get(storageId);
   if (!metadata) {
     throw new Error("Uploaded image not found");

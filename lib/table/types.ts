@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 
 export interface FilterOption {
@@ -26,6 +27,7 @@ export interface DataTableProps<TData> {
   nextLabel?: string;
   selectedRowsLabel?: (selected: number, total: number) => string;
   initialSorting?: SortingState;
+  toolbarActions?: ReactNode;
   onCreate?: () => void;
   onExport?: (rows: TData[]) => void;
   onRowClick?: (row: TData) => void;

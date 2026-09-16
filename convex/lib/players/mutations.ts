@@ -1,3 +1,18 @@
+import { consumePlayerPhotoUpload } from "./photo_uploads";
+import type { Infer } from "convex/values";
+import { createPlayerArgs } from "./validators";
+import { ConvexError } from "convex/values";
+import {
+  createPlayerIdentityIndex,
+  normalizePlayerIdentifier,
+} from "@/lib/players/input";
+import {
+  getClubPlayerIdentities,
+  getPlayerPositions,
+  insertPlayer,
+  validatePlayerInput,
+  validatePlayerChanges,
+} from "./write_helpers";
 import type { MutationCtx } from "../../_generated/server";
 import type { Id } from "../../_generated/dataModel";
 import { getCurrentUser } from "../../lib/auth";
@@ -26,61 +41,39 @@ export async function generatePlayerUploadUrlHandler(
 
 export async function createPlayerHandler(
   ctx: MutationCtx,
-  args: {
-    clubSlug: string;
-    firstName: string;
-    lastName: string;
-    secondLastName: string;
-    photoStorageId?: Id<"_storage">;
-    dateOfBirth: string;
-    documentNumber: string;
-    gender: "male" | "female" | "mixed";
-    jerseyNumber?: number;
-    leagueCategoryId: string;
-    division?: string;
-    cometNumber: string;
-    fifaId?: string;
-    position?: string;
-    dominantProfile: "left" | "right" | "both";
-    height?: number;
-    weight?: number;
-    country?: string;
-  },
+  args: Infer<typeof createPlayerArgs>,
 ) {
-  await getCurrentUser(ctx);
-
-  const { club } = await requireClubAccessBySlug(ctx, args.clubSlug);
-  if (args.photoStorageId) {
-    await requireAssignableImage(ctx, args.photoStorageId);
+  const { clubSlug, leagueCategoryId, division, photoStorageId, ...fields } =
+    args;
+  const { club } = await requireClubAccessBySlug(ctx, clubSlug);
+  const [existing, positions] = await Promise.all([
+    getClubPlayerIdentities(ctx, club._id),
+    getPlayerPositions(ctx, club.organizationId),
+  ]);
+  if (createPlayerIdentityIndex(existing).match(fields) !== "new") {
+    throw new ConvexError({ code: "PLAYER_EXISTS" });
+  }
+  const input = validatePlayerInput(fields, positions);
+  if (photoStorageId) {
+    await requireAssignableImage(ctx, photoStorageId, {
+      uploadClubId: club._id,
+    });
+    await consumePlayerPhotoUpload(ctx, photoStorageId, club._id);
   }
   const resolvedCategory = await ensureClubCategoryForLeagueSelection(ctx, {
     clubId: club._id,
-    leagueCategoryId: args.leagueCategoryId,
+    leagueCategoryId,
     gender: args.gender,
-    division: args.division,
+    division,
   });
 
-  return await ctx.db.insert("players", {
-    firstName: args.firstName,
-    lastName: args.lastName,
-    secondLastName: args.secondLastName,
-    photoStorageId: args.photoStorageId,
-    dateOfBirth: args.dateOfBirth,
-    documentNumber: args.documentNumber,
-    gender: args.gender,
-    jerseyNumber: args.jerseyNumber,
-    clubId: club._id,
-    categoryId: resolvedCategory.categoryId,
-    sportType: "soccer",
-    cometNumber: args.cometNumber,
-    fifaId: args.fifaId,
-    position: args.position,
-    dominantProfile: args.dominantProfile,
-    height: args.height,
-    weight: args.weight,
-    country: args.country,
-    status: "active",
-  });
+  return await insertPlayer(
+    ctx,
+    club._id,
+    resolvedCategory.categoryId,
+    input,
+    photoStorageId,
+  );
 }
 
 export async function deletePlayerHandler(
@@ -127,6 +120,28 @@ export async function updatePlayerHandler(
   const player = await getExistingPlayer(ctx, args.playerId);
   await requireClubAccess(ctx, player.clubId);
 
+  await validatePlayerChanges(ctx, player, args);
+
+  if (args.documentNumber !== undefined || args.cometNumber !== undefined) {
+    const identity = {
+      documentNumber: args.documentNumber ?? player.documentNumber,
+      cometNumber: args.cometNumber ?? player.cometNumber,
+    };
+    const existing = await getClubPlayerIdentities(ctx, player.clubId);
+    if (
+      createPlayerIdentityIndex(
+        existing.filter((other) => other._id !== player._id),
+      ).match(identity) !== "new"
+    ) {
+      throw new ConvexError({ code: "PLAYER_EXISTS" });
+    }
+    for (const key of ["documentNumber", "cometNumber"] as const) {
+      if (args[key] !== undefined) {
+        args[key] = normalizePlayerIdentifier(args[key]);
+      }
+    }
+  }
+
   const nextPhotoStorageId = args.photoStorageId;
   const isPhotoReplacement =
     nextPhotoStorageId !== undefined &&
@@ -134,7 +149,9 @@ export async function updatePlayerHandler(
   if (isPhotoReplacement) {
     await requireAssignableImage(ctx, nextPhotoStorageId, {
       playerId: player._id,
+      uploadClubId: player.clubId,
     });
+    await consumePlayerPhotoUpload(ctx, nextPhotoStorageId, player.clubId);
   }
 
   const { playerId, leagueCategoryId, division, ...updates } = args;

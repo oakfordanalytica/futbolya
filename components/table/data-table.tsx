@@ -64,6 +64,7 @@ export function DataTable<TData>({
   selectedRowsLabel,
   initialSorting,
   onCreate,
+  toolbarActions,
   onExport,
   onRowClick,
 }: DataTableProps<TData>) {
@@ -144,9 +145,9 @@ export function DataTable<TData>({
 
   return (
     <div className="w-full">
-      <div className="flex items-center gap-2 pb-4">
+      <div className="flex flex-wrap items-center gap-2 pb-4">
         {filterColumnInstance ? (
-          <InputGroup className="bg-card">
+          <InputGroup className="flex-[1_1_16rem] bg-card">
             <InputGroupAddon>
               <MagnifyingGlassIcon />
             </InputGroupAddon>
@@ -156,7 +157,6 @@ export function DataTable<TData>({
               onChange={(event) =>
                 filterColumnInstance.setFilterValue(event.target.value)
               }
-              className="max-w-sm"
             />
           </InputGroup>
         ) : null}
@@ -173,13 +173,14 @@ export function DataTable<TData>({
             />
           </div>
         ) : null}
+        {toolbarActions}
         {onCreate && (
           <Button onClick={onCreate} size="icon" className="">
             <Plus className="size-4 " />
           </Button>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           {useInlineDesktopFilters &&
           filterConfigs &&
           filterConfigs.length > 0 ? (

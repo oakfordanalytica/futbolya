@@ -108,6 +108,13 @@ const lineupTemplateValidator = v.object({
 // ============================================================================
 
 export default defineSchema({
+  playerPhotoUploads: defineTable({
+    userId: v.id("users"),
+    clubId: v.id("clubs"),
+    sha256: v.string(),
+    storageId: v.optional(v.id("_storage")),
+  }).index("byStorageId", ["storageId"]),
+
   /**
    * Users - Synced from Clerk via webhooks.
    * All authenticated users: superadmins, admins, delegates, coaches, players.

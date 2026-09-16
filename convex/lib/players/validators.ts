@@ -14,6 +14,46 @@ export const dominantProfileValidator = v.union(
   v.literal("both"),
 );
 
+export const playerInputFields = {
+  firstName: v.string(),
+  lastName: v.string(),
+  secondLastName: v.optional(v.string()),
+  dateOfBirth: v.string(),
+  documentNumber: v.string(),
+  cometNumber: v.string(),
+  position: v.optional(v.string()),
+  jerseyNumber: v.optional(v.number()),
+  dominantProfile: v.optional(dominantProfileValidator),
+  height: v.optional(v.number()),
+  weight: v.optional(v.number()),
+  country: v.optional(v.string()),
+  fifaId: v.optional(v.string()),
+};
+
+export const createPlayerArgs = v.object({
+  clubSlug: v.string(),
+  ...playerInputFields,
+  photoStorageId: v.optional(v.id("_storage")),
+  gender: playerGender,
+  leagueCategoryId: v.string(),
+  division: v.optional(v.string()),
+});
+
+export const importPlayersArgs = v.object({
+  clubId: v.id("clubs"),
+  organizationSlug: v.string(),
+  leagueCategoryId: v.string(),
+  gender: playerGender,
+  division: v.optional(v.string()),
+  players: v.array(
+    v.object({
+      sourceRow: v.number(),
+      photoStorageId: v.optional(v.id("_storage")),
+      ...playerInputFields,
+    }),
+  ),
+});
+
 export const playerViewerAccessLevel = v.union(
   v.literal("superadmin"),
   v.literal("admin"),

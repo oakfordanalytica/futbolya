@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -31,11 +33,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  FileSpreadsheet,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { PlayerFormDialog } from "./player-form-dialog";
 import { ROUTES, TEAM_ROUTES } from "@/lib/navigation/routes";
 import { getCountryLabel } from "@/lib/countries/countries";
 import { buildPlayerFullName, buildPlayerInitials } from "@/lib/players/name";
+
+const PlayerImportDialog = dynamic(() =>
+  import("./player-import-dialog").then((module) => module.PlayerImportDialog),
+);
 
 interface PlayerRow {
   _id: string;
@@ -122,6 +134,11 @@ export function TeamPlayersTable({
   const router = useRouter();
   const t = useTranslations("Common");
   const deletePlayer = useMutation(api.players.deletePlayer);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const managementContext = useQuery(
+    api.players.getPlayerManagementContext,
+    clubSlug ? { organizationSlug: orgSlug, clubSlug } : "skip",
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [playerToEdit, setPlayerToEdit] = useState<PlayerRow | null>(null);
   const [playerToDelete, setPlayerToDelete] = useState<PlayerRow | null>(null);
@@ -416,11 +433,46 @@ export function TeamPlayersTable({
     router.push(href);
   };
 
-  const canCreate = Boolean(enableCreate ?? clubSlug);
+  const canCreate = Boolean((enableCreate ?? clubSlug) && managementContext);
 
   return (
     <>
       <DataTable
+        toolbarActions={
+          canCreate && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" aria-label={t("players.create")}>
+                  <Plus />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      if (!clubSlug) {
+                        return;
+                      }
+                      setDialogClubSlug(clubSlug);
+                      setPlayerToEdit(null);
+                      setIsDialogOpen(true);
+                    }}
+                  >
+                    <Plus />
+                    {t("players.create")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => setIsImportOpen(true)}
+                    disabled={!teamConfig}
+                  >
+                    <FileSpreadsheet />
+                    {t("playerImport.title")}
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
         columns={columns}
         data={players}
         filterColumn="search"
@@ -430,19 +482,22 @@ export function TeamPlayersTable({
         desktopFilterVariant="inline"
         emptyMessage={t("players.emptyMessage")}
         onRowClick={handlePlayerRowClick}
-        onCreate={
-          canCreate
-            ? () => {
-                if (!clubSlug) {
-                  return;
-                }
-                setDialogClubSlug(clubSlug);
-                setPlayerToEdit(null);
-                setIsDialogOpen(true);
-              }
-            : undefined
-        }
       />
+
+      {isImportOpen && managementContext && clubSlug && (
+        <PlayerImportDialog
+          clubId={managementContext.clubId}
+          clubSlug={clubSlug}
+          clubName={managementContext.clubName}
+          organizationSlug={orgSlug}
+          existingPlayers={players}
+          ageCategories={ageCategories}
+          enabledGenders={enabledGenders}
+          horizontalDivisions={horizontalDivisions}
+          positions={positions}
+          onClose={() => setIsImportOpen(false)}
+        />
+      )}
 
       {dialogClubSlug && (
         <PlayerFormDialog
