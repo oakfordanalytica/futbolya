@@ -26,7 +26,7 @@ export function Avatar({
       className={clsx(
         className,
         // Basic layout
-        "inline-grid shrink-0 align-middle [--avatar-radius:20%] *:col-start-1 *:row-start-1",
+        "inline-grid aspect-square shrink-0 grid-cols-1 grid-rows-1 overflow-hidden align-middle [--avatar-radius:20%] *:col-start-1 *:row-start-1",
         // Border radius
         square
           ? "rounded-(--avatar-radius) *:rounded-(--avatar-radius)"

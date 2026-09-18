@@ -190,7 +190,10 @@ export function usePlayerImportController({
           }),
         );
         const failed = batch.find((result) => result.status === "rejected");
-        if (failed) throw failed.reason;
+        if (failed) {
+          setError("photoUploadError");
+          return;
+        }
         players.push(
           ...batch.flatMap((result) =>
             result.status === "fulfilled" ? [result.value] : [],

@@ -61,17 +61,22 @@ function identifier(value: Cell): string {
 }
 
 export function parseRegistrationDate(value: string, today: string): string {
-  // Text dates use the template's Colombian day/month/year convention.
+  // Ambiguous dates use the template's Colombian day/month/year convention.
   // Never pass free-form text to Date.parse (browser/locale dependent).
-  const iso = value.match(/(?:^|\s)(\d{4})-(\d{2})-(\d{2})(?=$|[\s,;])/);
-  const local = value.match(
-    /(?:^|\s)(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})(?=$|[\s,;])/,
+  const iso = value.match(
+    /(?:^|\s)(\d{4})-(\d{2})-(\d{2})(?=$|[\s,;]|[-–—]\s*(?:\p{L}|$))/u,
   );
-  const result = iso
-    ? `${iso[1]}-${iso[2]}-${iso[3]}`
-    : local
-      ? `${local[3]}-${local[2].padStart(2, "0")}-${local[1].padStart(2, "0")}`
-      : "";
+  const local = value.match(
+    /(?:^|\s)(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})(?=$|[\s,;]|[-–—]\s*(?:\p{L}|$))/u,
+  );
+  let result = "";
+  if (iso) result = `${iso[1]}-${iso[2]}-${iso[3]}`;
+  else if (local) {
+    let [, day, month, year] = local;
+    // Accept month/day only when it cannot be mistaken for day/month.
+    if (Number(month) > 12 && Number(day) <= 12) [day, month] = [month, day];
+    result = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
   return isPlayerBirthDate(result, today) ? result : "";
 }
 

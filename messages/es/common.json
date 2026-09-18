@@ -745,6 +745,7 @@
     "optional": "opcional",
     "playerExists": "Ya existe un jugador con ese documento o número Comet en este club.",
     "saveError": "No se pudo confirmar el guardado. Comprueba tu acceso al club, la categoría y los datos e inténtalo de nuevo. Los jugadores existentes se omitirán al reintentar.",
+    "photoUploadError": "No se pudieron subir o validar las fotos. No se ha guardado ningún jugador en este intento. Inténtalo de nuevo o desmarca las fotos para importar sin ellas.",
     "templateError": "El archivo no tiene los encabezados y la sección de jugadores de la plantilla esperada.",
     "tooManyRows": "La importación admite hasta 100 jugadores por archivo.",
     "fileTypeError": "Selecciona un archivo .xlsx. Los archivos .xls o .csv no son compatibles.",

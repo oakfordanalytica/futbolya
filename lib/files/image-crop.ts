@@ -1,3 +1,5 @@
+import { hasTransparentPixels } from "./image-transparency";
+
 type PixelCrop = {
   x: number;
   y: number;
@@ -33,22 +35,6 @@ function getBlobQuality(mimeType: string) {
   return mimeType === "image/jpeg" || mimeType === "image/webp"
     ? LOSSY_IMAGE_QUALITY
     : undefined;
-}
-
-function hasTransparentPixels(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-) {
-  const imageData = context.getImageData(0, 0, width, height).data;
-
-  for (let index = 3; index < imageData.length; index += 4) {
-    if (imageData[index] < 255) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 async function canvasToBlob(
@@ -107,9 +93,7 @@ export async function createCroppedImageFile({
   );
 
   const containsTransparency = hasTransparentPixels(
-    context,
-    outputWidth,
-    outputHeight,
+    context.getImageData(0, 0, outputWidth, outputHeight).data,
   );
   const preferredMimeType = "image/webp";
   const fallbackMimeType = containsTransparency ? "image/png" : "image/jpeg";

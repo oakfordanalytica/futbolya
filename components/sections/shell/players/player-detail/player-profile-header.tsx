@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/navigation/routes";
 import { getCountryLabel } from "@/lib/countries/countries";
 import { buildPlayerFullName } from "@/lib/players/name";
+import { PlayerProfilePhoto } from "./player-profile-photo";
 
 interface PlayerProfileHeaderProps {
   player: {
@@ -227,19 +228,16 @@ export function PlayerProfileHeader({
         )}
 
         {player.photoUrl ? (
-          <div className="pointer-events-none absolute bottom-0 left-3 z-20 h-[172px] w-[172px] sm:left-8 sm:h-[182px] sm:w-[182px] lg:left-16 lg:h-[274px] lg:w-[274px]">
-            <Image
-              src={player.photoUrl}
-              alt={buildPlayerFullName(
-                player.firstName,
-                player.lastName,
-                player.secondLastName,
-              )}
-              fill
-              sizes="(max-width: 640px) 172px, (max-width: 1024px) 182px, 274px"
-              className="object-contain object-bottom"
-            />
-          </div>
+          <PlayerProfilePhoto
+            key={player.photoUrl}
+            src={player.photoUrl}
+            alt={buildPlayerFullName(
+              player.firstName,
+              player.lastName,
+              player.secondLastName,
+            )}
+            primaryColor={primaryColor}
+          />
         ) : (
           <div className="pointer-events-none absolute bottom-1 left-6 z-20 flex size-[4.5rem] items-center justify-center rounded-full border border-white/25 bg-black/15 text-3xl font-black sm:size-24 lg:size-32">
             {firstName.charAt(0)}
@@ -247,8 +245,8 @@ export function PlayerProfileHeader({
           </div>
         )}
 
-        <div className="relative z-10 flex h-full flex-col">
-          <div className="flex items-start justify-between px-4 pt-2 md:px-6 md:pt-6">
+        <div className="relative flex h-full flex-col">
+          <div className="relative z-30 flex items-start justify-between px-4 pt-2 md:px-6 md:pt-6">
             {player.clubLogoUrl && (
               <Link
                 href={ROUTES.org.teams.detail(orgSlug, player.clubSlug)}
@@ -277,7 +275,7 @@ export function PlayerProfileHeader({
             )}
           </div>
 
-          <div className="relative flex flex-1 items-end px-4 pb-0 md:px-6 lg:items-center">
+          <div className="relative z-10 flex flex-1 items-end px-4 pb-0 md:px-6 lg:items-center">
             <div className="w-full -translate-y-10 pb-0 pl-[178px] pr-1 sm:-translate-y-2 sm:pb-1 sm:pl-[210px] sm:pr-2 lg:-translate-y-12 lg:pl-[392px] lg:pr-10">
               <p className="max-w-full truncate text-[10px] font-semibold leading-tight text-white/92 sm:text-[11px] lg:text-[12px]">
                 {metaBits.join(" | ")}

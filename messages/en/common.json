@@ -745,6 +745,7 @@
     "optional": "optional",
     "playerExists": "A player with that document or Comet number already exists in this club.",
     "saveError": "Saving could not be confirmed. Check your club access, category and data, then try again. Existing players will be skipped on retry.",
+    "photoUploadError": "Photos could not be uploaded or validated. No players have been saved in this attempt. Try again or uncheck the photos to import without them.",
     "templateError": "The file does not contain the expected template headers and player section.",
     "tooManyRows": "You can import up to 100 players per file.",
     "fileTypeError": "Select an .xlsx file. The .xls and .csv formats are not supported.",

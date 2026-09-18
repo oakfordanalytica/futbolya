@@ -1,4 +1,4 @@
-import { ConvexError } from "convex/values";
+import { Base64, ConvexError } from "convex/values";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { internal } from "../../_generated/api";
@@ -41,10 +41,17 @@ export async function registerPlayerPhotoHandler(
   )
     throw new ConvexError("Invalid photo upload");
   const metadata = await ctx.db.system.get(args.storageId);
+  // Production _storage returns base64; also support the documented hex format.
+  // Keep the ticket's hex format so already-open clients can finish uploading.
+  const base64Digest = Base64.fromByteArray(
+    Uint8Array.from(upload.sha256.match(/../g) ?? [], (byte) =>
+      parseInt(byte, 16),
+    ),
+  );
   if (
     !metadata ||
     metadata._creationTime < upload._creationTime ||
-    metadata.sha256 !== upload.sha256
+    (metadata.sha256 !== upload.sha256 && metadata.sha256 !== base64Digest)
   )
     throw new ConvexError("Invalid photo upload");
   const existing = await ctx.db

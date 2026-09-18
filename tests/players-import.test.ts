@@ -221,8 +221,29 @@ test("parses dates strictly without UTC shifting or rollover", () => {
     "01/01/27",
     "2027-01-01",
     "unknown",
+    "28/02/20100",
+    "28/02/2010-123",
+    "2010-02-28-123",
   ])
     assert.equal(parseRegistrationDate(value, today), "");
+});
+
+test("accepts birthplace dashes and unambiguous month/day dates from filled sheets", () => {
+  for (const value of [
+    "28/02/2010-Cali",
+    "28/02/2010 - Cali",
+    "28-02-2010–Cali",
+    "28.02.2010—Cali",
+    "2010-02-28-Cali",
+    "28/02/2010-",
+  ])
+    assert.equal(parseRegistrationDate(value, today), "2010-02-28", value);
+  assert.equal(
+    parseRegistrationDate("04/19/2008  CALI VALLE DEL CAUCA", today),
+    "2008-04-19",
+  );
+  // Ambiguous dates retain the template's day/month convention.
+  assert.equal(parseRegistrationDate("04/05/2008-Cali", today), "2008-05-04");
 });
 
 test("preserves invalid measures for correction and keeps decimal weights", () => {
@@ -477,6 +498,7 @@ const digest = "a".repeat(64);
 async function photoUpload(
   state: ReturnType<typeof backend>,
   photoId = "photo",
+  storedDigest = Buffer.from(digest, "hex").toString("base64"),
 ) {
   const prepared = await preparePlayerPhotoHandler(state.ctx, {
     clubSlug: "globaltalent",
@@ -485,7 +507,7 @@ async function photoUpload(
   state.tables._storage.push({
     _id: photoId,
     _creationTime: Date.now() + 1,
-    sha256: digest,
+    sha256: storedDigest,
     contentType: "image/png",
     size: 100,
   });
@@ -496,6 +518,10 @@ async function photoUpload(
   });
   return { ...prepared, storageId };
 }
+
+test("photo registration also accepts the documented hexadecimal metadata format", async () => {
+  await photoUpload(backend(), "photo", digest);
+});
 
 test("imports the registered photo, consumes its ticket and skips reimport without deleting the photo", async () => {
   const state = backend();
@@ -519,6 +545,7 @@ test("imports the registered photo, consumes its ticket and skips reimport witho
 test("photo registration enforces digest, size, ownership, club and expiry", async () => {
   for (const change of [
     { sha256: "wrong" },
+    { sha256: Buffer.from("b".repeat(64), "hex").toString("base64") },
     { size: 3 * 1024 * 1024 },
     { contentType: "text/html" },
     { _creationTime: 0 },
@@ -531,7 +558,7 @@ test("photo registration enforces digest, size, ownership, club and expiry", asy
     state.tables._storage.push({
       _id: "photo",
       _creationTime: Date.now() + 1,
-      sha256: digest,
+      sha256: Buffer.from(digest, "hex").toString("base64"),
       contentType: "image/png",
       size: 100,
       ...change,
@@ -637,7 +664,7 @@ test("registration is idempotent and requires the preparing user", async () => {
   );
 });
 
-test("shared client uploader sends a hex SHA-256 digest compatible with Convex system metadata", async (t) => {
+test("shared client uploader sends the hexadecimal SHA-256 required by the upload ticket", async (t) => {
   const { uploadPlayerPhoto } = await import(
     "../lib/files/upload-player-photo"
   );
