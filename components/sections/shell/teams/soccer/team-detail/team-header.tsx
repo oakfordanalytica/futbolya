@@ -125,10 +125,11 @@ export function TeamHeader({ team, orgSlug, routeScope }: TeamHeaderProps) {
           </div>
           <Button
             asChild
-            className="rounded-full ring-1 bg-transparent hover:bg-transparent"
+            variant="secondary"
+            className="rounded-full border border-border shadow-sm"
             size="sm"
           >
-            <Link href={settingsHref}>
+            <Link href={settingsHref} aria-label={t("actions.settings")}>
               <Settings className="size-4" />
               <span className="hidden md:block">{t("actions.settings")}</span>
             </Link>

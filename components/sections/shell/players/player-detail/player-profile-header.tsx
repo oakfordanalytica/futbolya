@@ -266,8 +266,10 @@ export function PlayerProfileHeader({
               <Button
                 type="button"
                 onClick={onEdit}
-                className="rounded-full ring-1 bg-transparent hover:bg-transparent"
+                variant="secondary"
+                className="rounded-full border border-border shadow-sm"
                 size="sm"
+                aria-label={t("actions.edit")}
               >
                 <Settings className="size-4" />
                 <span className="hidden md:block">{t("actions.edit")}</span>
